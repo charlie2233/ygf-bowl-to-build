@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a validated, production-oriented YGF-owned beta that turns a qualifying purchase into one atomic code redemption, a 3,000-credit wallet, and four useful AI workflows, while also shipping campaign operations, legal copy, analytics, and print assets.
+**Goal:** Build a validated, production-oriented YGF-owned beta that turns a qualifying purchase into one effortless QR-scan or code redemption, a 3,000-credit AI balance, four useful task shortcuts, and an optional OpenRouter-style model choice, while also shipping campaign operations, legal copy, analytics, and print assets.
 
 **Architecture:** Use Next.js 16 App Router with a server-side campaign domain layer, interchangeable in-memory and Supabase repositories, Supabase SSR authentication, and an OpenAI-compatible provider adapter configured for OpenRouter or a gateway. Business rules live outside route handlers. Supabase RPCs provide transaction boundaries for redemption and spend/refund operations; development demo mode uses the same interfaces and deterministic fixtures.
 
@@ -15,7 +15,7 @@
 1. The complete beta ships all four workflows. The report's "one task page" is treated as the first vertical slice, not the launch boundary.
 2. Every successful redemption creates exactly 3,000 non-cash Build Credits that expire 14 days after redemption.
 3. A task reserves 120 Build Credits before provider execution. Success commits the reservation; provider failure refunds it. The separate provider-cost ledger enforces a USD hard cap of $0.25 per user.
-4. Beta codes are scratch-card or receipt-insert codes. Automated POS printing is outside this repository.
+4. Beta claims are scratch-card or receipt-insert codes with the same single-use value printed as text and encoded in a QR URL fragment. Scanning pre-fills the claim without placing the code in requests, referrers, or retained browser history. Automated POS printing is outside this repository.
 5. The public validation step checks syntax and generic eligibility before sign-in without revealing code state. Authenticated redemption performs the authoritative atomic check.
 6. Development uses `BOWL7K2A` and an in-memory repository only when `YGF_DEMO_MODE=true`. Production refuses demo mode and requires Supabase configuration.
 7. OpenRouter-compatible inference is the live beta adapter. `YGF_PROVIDER_BASE_URL` permits a compatible gateway URL. No key or secret is committed.
@@ -24,6 +24,9 @@
 10. Google, Apple, and magic-link UI is implemented through Supabase. Provider-console configuration remains an external launch gate.
 11. OpenRouter connection promotion appears only after a completed task. OAuth execution is not enabled until partner credentials and approved partner terms exist.
 12. Privacy-preserving abuse controls use HMAC-derived, short-lived network/device signals; raw IP addresses and full plaintext codes are never stored.
+13. The first-use promise is `Eat → scan or enter code → choose a task → get a result`. A signed-in user who scans a valid receipt QR should need at most one confirmation tap before reaching the wallet; no profile setup is required.
+14. The wallet behaves like a deliberately simpler OpenRouter: one visible AI balance can fund multiple allowlisted models, but task-first defaults hide model complexity. An `Advanced: choose a model` control is optional, uses friendly capability labels, and never exposes provider keys or billing setup.
+15. The supplied `南加大杨国福` folder currently contains a cost workbook but no standalone or embedded photos. The generated bowl visual is the beta fallback; replacing it with a manager-supplied, rights-cleared YGF food photo is a named launch gate.
 
 ## Design lock
 
@@ -39,7 +42,7 @@
   - `docs/design/concepts/wallet.png`
   - `docs/design/concepts/task-study-success.png`
   - `docs/design/concepts/poster-a.png`
-- Production hero asset: `public/media/malatang-hero.png`.
+- Production beta hero asset: `public/media/malatang-hero.png`. Keep attribution/source metadata in `docs/design/media-ledger.md`; replace the generated fallback when a manager-supplied, rights-cleared YGF photo is available.
 
 ## File map
 
@@ -73,6 +76,7 @@
 - Create: `components/site-header.tsx`
 - Create: `lib/content/campaign.ts`
 - Create: `tests/unit/campaign-content.test.ts`
+- Create: `docs/design/media-ledger.md`
 - Copy: source reports, accepted concepts, poster concept, and `public/media/malatang-hero.png`
 
 - [ ] **Step 1: Add a failing content-contract test**
@@ -109,7 +113,7 @@ Implement the design lock as CSS custom properties, typography, focus-visible st
 
 - [ ] **Step 5: Copy and inspect project-bound design/source assets**
 
-Copy both user-supplied reports to `docs/source/`, all accepted concepts to `docs/design/concepts/`, the poster concept to the same folder, and the standalone food image to `public/media/malatang-hero.png`. Use `view_image` on the copied image and verify its aspect, crop, and lack of text/logos.
+Copy both user-supplied reports to `docs/source/`, all accepted concepts to `docs/design/concepts/`, the poster concept to the same folder, and the generated food fallback to `public/media/malatang-hero.png`. Record the source, generated status, inspection result, and real-YGF-photo replacement gate in `docs/design/media-ledger.md`. Use `view_image` on the copied image and verify its aspect, crop, and lack of text/logos.
 
 - [ ] **Step 6: Verify and commit**
 
@@ -124,12 +128,14 @@ Commit: `chore: bootstrap YGF beta and design system`
 **Files:**
 - Create: `lib/campaign/types.ts`
 - Create: `lib/campaign/code.ts`
+- Create: `lib/campaign/claim-url.ts`
 - Create: `lib/campaign/credits.ts`
 - Create: `lib/campaign/rate-limit.ts`
 - Create: `lib/repositories/campaign-repository.ts`
 - Create: `lib/repositories/memory-campaign-repository.ts`
 - Create: `supabase/migrations/202607260001_campaign.sql`
 - Create: `tests/unit/code.test.ts`
+- Create: `tests/unit/claim-url.test.ts`
 - Create: `tests/unit/credits.test.ts`
 - Create: `tests/integration/memory-repository.test.ts`
 - Create: `docs/architecture.md`
@@ -143,6 +149,13 @@ it("normalizes and hashes a code without retaining plaintext", async () => {
   expect(await hashCode("BOWL7K2A")).not.toContain("BOWL7K2A");
 });
 
+it("round-trips a receipt claim through a URL fragment", () => {
+  const url = buildClaimUrl("https://build.ygf.example", "BOWL7K2A");
+  expect(url).toBe("https://build.ygf.example/redeem#code=BOWL7K2A");
+  expect(parseClaimFragment(new URL(url).hash)).toBe("BOWL7K2A");
+  expect(new URL(url).search).toBe("");
+});
+
 it("reserves 120 credits and refuses an overdraw", () => {
   expect(reserveCredits({ remaining: 3000, amount: 120 }).remaining).toBe(2880);
   expect(() => reserveCredits({ remaining: 100, amount: 120 })).toThrow("INSUFFICIENT_CREDITS");
@@ -151,13 +164,13 @@ it("reserves 120 credits and refuses an overdraw", () => {
 
 - [ ] **Step 2: Run tests and verify RED**
 
-Run: `pnpm vitest run tests/unit/code.test.ts tests/unit/credits.test.ts`
+Run: `pnpm vitest run tests/unit/code.test.ts tests/unit/claim-url.test.ts tests/unit/credits.test.ts`
 
 Expected: FAIL because campaign modules do not exist.
 
 - [ ] **Step 3: Implement pure domain functions**
 
-Implement eight-character uppercase code normalization, SHA-256 hashing, HMAC abuse-signal hashing, constant-time comparisons where applicable, 120-credit reservations, refunds, expiry checks, and the $0.25 per-user provider-cost ceiling. Keep provider dollars separate from consumer Build Credits.
+Implement eight-character uppercase code normalization, SHA-256 hashing, HMAC abuse-signal hashing, constant-time comparisons where applicable, receipt claim URL construction/parsing, 120-credit reservations, refunds, expiry checks, and the $0.25 per-user provider-cost ceiling. Claim URLs put the normalized code only in `#code=`, reject unexpected origins/paths/keys, and never send it as a query parameter. Keep provider dollars separate from consumer Build Credits.
 
 - [ ] **Step 4: Define repository interfaces and the memory adapter**
 
@@ -169,7 +182,7 @@ Create `profiles`, `promo_batches`, `promo_codes`, `wallets`, `ledger_entries`, 
 
 - [ ] **Step 6: Verify schema and repository behavior**
 
-Run: `pnpm vitest run tests/unit/code.test.ts tests/unit/credits.test.ts tests/integration/memory-repository.test.ts`
+Run: `pnpm vitest run tests/unit/code.test.ts tests/unit/claim-url.test.ts tests/unit/credits.test.ts tests/integration/memory-repository.test.ts`
 
 Expected: valid code redeems once, duplicate redemption returns `CODE_ALREADY_REDEEMED`, expired and revoked codes return their states, spend/refund is idempotent, and no plaintext code appears in serialized repository state.
 
@@ -260,6 +273,12 @@ it("redeems once and initializes a 14-day wallet", async () => {
   expect(daysBetween(response.body.wallet.createdAt, response.body.wallet.expiresAt)).toBe(14);
   expect((await redeemForTest({ code: "BOWL7K2A", userId: "second-user" })).status).toBe(409);
 });
+
+it("pre-fills a scanned receipt claim and removes it from browser history", async () => {
+  renderRedeemAt("/redeem#code=BOWL7K2A");
+  expect(await screen.findByLabelText("Receipt code")).toHaveValue("BOWL7K2A");
+  expect(window.location.hash).toBe("");
+});
 ```
 
 - [ ] **Step 2: Run tests and verify RED**
@@ -274,11 +293,11 @@ Use `@supabase/ssr` browser/server clients and Next.js 16 `proxy.ts` cookie refr
 
 - [ ] **Step 4: Implement validation and atomic redemption**
 
-Validate format and generic eligibility before auth, then redirect through auth with the code stored in a short-lived signed, httpOnly cookie. Derive user identity server-side, enforce rate limits, call the repository transaction, clear the cookie, and return typed errors without exposing code hashes or database details.
+On first client render, parse an allowed `#code=` claim, pre-fill the form, and immediately remove the fragment with `history.replaceState`. Validate format and generic eligibility before auth, then redirect through auth with the code stored in a short-lived signed, httpOnly cookie. Derive user identity server-side, enforce rate limits, call the repository transaction, clear the cookie, and return typed errors without exposing code hashes or database details. A returning signed-in user with an accepted scanned claim proceeds with one confirmation tap and no profile form.
 
 - [ ] **Step 5: Implement UI fidelity**
 
-Match `redeem.png` and `wallet.png` at desktop and mobile sizes. Wallet shows remaining credits, dynamic expiry, mathematically correct usage, four task launches, and no partner promotion before a successful task.
+Match `redeem.png` and `wallet.png` at desktop and mobile sizes. Wallet leads with `Your AI balance`, remaining credits, dynamic expiry, mathematically correct usage, and four large task shortcuts. Add a collapsed `Advanced: choose a model` control with `Best for this task` selected by default. Do not show partner promotion before a successful task.
 
 - [ ] **Step 6: Verify**
 
@@ -294,6 +313,7 @@ Commit: `feat: add atomic redemption and wallet`
 - Create: `lib/content/tasks.ts`
 - Create: `lib/content/menu.ts`
 - Create: `lib/providers/provider.ts`
+- Create: `lib/providers/model-catalog.ts`
 - Create: `lib/providers/demo-provider.ts`
 - Create: `lib/providers/openrouter-provider.ts`
 - Create: `lib/providers/index.ts`
@@ -308,6 +328,7 @@ Commit: `feat: add atomic redemption and wallet`
 - Create: `components/task/result-panel.tsx`
 - Create: `components/task/partner-cta.tsx`
 - Create: `tests/unit/task-presets.test.ts`
+- Create: `tests/unit/model-catalog.test.ts`
 - Create: `tests/integration/run-task.test.ts`
 - Create: `tests/unit/task-shell.test.tsx`
 
@@ -329,11 +350,16 @@ it("refunds credits when the provider fails", async () => {
   expect(result.error).toBe("PROVIDER_UNAVAILABLE");
   expect(result.remainingCredits).toBe(3000);
 });
+
+it("defaults to the task-recommended model and rejects models outside the allowlist", async () => {
+  expect(recommendedModel("study").id).toBeTruthy();
+  await expect(runTaskForTest({ model: "unlisted/provider-model" })).rejects.toThrow("MODEL_NOT_ALLOWED");
+});
 ```
 
 - [ ] **Step 2: Run tests and verify RED**
 
-Run: `pnpm vitest run tests/unit/task-presets.test.ts tests/integration/run-task.test.ts tests/unit/task-shell.test.tsx`
+Run: `pnpm vitest run tests/unit/task-presets.test.ts tests/unit/model-catalog.test.ts tests/integration/run-task.test.ts tests/unit/task-shell.test.tsx`
 
 Expected: FAIL because task modules do not exist.
 
@@ -343,7 +369,7 @@ Provide four exact preset sets from the report. Enforce 1–12,000 character tex
 
 - [ ] **Step 4: Implement providers and spend orchestration**
 
-The provider interface returns output, input/output token use, request ID, model, and optional USD estimate. The demo provider returns deterministic useful structured output. The OpenRouter-compatible adapter uses server-only credentials, timeout/abort, no debug echo, attribution headers, safe error mapping, and model allowlisting.
+The provider interface returns output, input/output token use, request ID, model, and optional USD estimate. Define a small server-owned model catalog with friendly capability labels, per-task defaults, and exact provider IDs; do not fetch or expose an unbounded provider catalog. The demo provider returns deterministic useful structured output. The OpenRouter-compatible adapter uses server-only credentials, timeout/abort, no debug echo, attribution headers, safe error mapping, and model allowlisting.
 
 - [ ] **Step 5: Implement reserve-call-commit/refund**
 
@@ -351,11 +377,11 @@ Derive the user server-side, apply per-user request and USD limits, reserve 120 
 
 - [ ] **Step 6: Implement task and history UI**
 
-Match `task-study-success.png` with a two-column desktop workspace and one-column mobile flow. Partner CTA renders only when at least one session completed. History lists metadata and only explicitly saved outputs.
+Match `task-study-success.png` with a two-column desktop workspace and one-column mobile flow. Keep the default generation path model-free; the optional advanced selector uses friendly labels and explains that all choices spend the same 120 beta credits. Partner CTA renders only when at least one session completed. History lists metadata and only explicitly saved outputs.
 
 - [ ] **Step 7: Verify**
 
-Run: `pnpm vitest run tests/unit/task-presets.test.ts tests/integration/run-task.test.ts tests/unit/task-shell.test.tsx`
+Run: `pnpm vitest run tests/unit/task-presets.test.ts tests/unit/model-catalog.test.ts tests/integration/run-task.test.ts tests/unit/task-shell.test.tsx`
 
 Expected: all four workflows, insufficient balance, expired wallet, provider failure/refund, duplicate idempotency, provider-cost cap, and CTA gating pass.
 
@@ -465,7 +491,7 @@ Expected: FAIL because campaign outputs do not exist.
 
 - [ ] **Step 3: Implement deterministic vector assets**
 
-Rebuild Poster Concept A with the generated bowl image, code-native/vector text, line icons, and a real QR that resolves to `/offer?utm_source=<asset>`. Preserve required quiet zones and add the complete fine print. Derive the specified poster, counter, feed, story, and horizontal sizes from one tokenized renderer.
+Rebuild Poster Concept A with the generated beta bowl image, code-native/vector text, line icons, and a real public campaign QR that resolves to `/offer?utm_source=<asset>`. Separately, make the private code-batch generator emit print-ready claim rows containing both the human-readable code and a QR resolving to `/redeem#code=<same-code>`; plaintext claim outputs remain ignored under `private/` and are never committed. Preserve required quiet zones and add the complete fine print. Derive the specified poster, counter, feed, story, and horizontal sizes from one tokenized renderer.
 
 - [ ] **Step 4: Render and visually inspect PDFs**
 
@@ -473,7 +499,7 @@ Render the 24x36 poster and 5x7 card to PDF, then use `pdftoppm` and `view_image
 
 - [ ] **Step 5: Write complete operations docs**
 
-Document checkout qualification, code handoff, invalid/used/expired handling, manager-only revocation and reissue, privacy-safe escalation, 10–20-person soft-test cases, launch gates, rollback, and who must verify menu/prices and external account configuration.
+Document checkout qualification, paired text-code/claim-QR handoff, the difference between public campaign and private receipt QRs, invalid/used/expired handling, manager-only revocation and reissue, privacy-safe escalation, 10–20-person soft-test cases, launch gates, rollback, and who must verify menu/prices, the replacement YGF photo, and external account configuration.
 
 - [ ] **Step 6: Verify**
 
@@ -511,6 +537,12 @@ test("offer to first useful result", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Your study guide" })).toBeVisible();
   await expect(page.getByText("2,880")).toBeVisible();
 });
+
+test("receipt QR pre-fills the same claim without retaining it in the URL", async ({ page }) => {
+  await page.goto("/redeem#code=BOWL7K2A");
+  await expect(page.getByLabel("Receipt code")).toHaveValue("BOWL7K2A");
+  await expect(page).toHaveURL(/\/redeem$/);
+});
 ```
 
 - [ ] **Step 2: Run Playwright and verify RED**
@@ -539,7 +571,7 @@ Expected: all pass with no warnings that indicate broken behavior.
 
 - [ ] **Step 5: Browser/IAB fidelity QA**
 
-Use the built-in browser first. Verify `/`, `/offer`, `/redeem`, `/wallet`, all four task routes, `/history`, error states, legal pages, staff page, admin pages, and post-success partner gating. Capture desktop at 1536×1024 and mobile at 390×844. Use `view_image` on accepted concepts and latest screenshots in the same pass.
+Use the built-in browser first. Verify `/`, `/offer`, typed-code and receipt-QR `/redeem` entry, `/wallet`, the default task-first path, the optional model chooser, all four task routes, `/history`, error states, legal pages, staff page, admin pages, and post-success partner gating. Capture desktop at 1536×1024 and mobile at 390×844. Use `view_image` on accepted concepts and latest screenshots in the same pass.
 
 - [ ] **Step 6: Close the fidelity ledger**
 
@@ -557,6 +589,8 @@ Commit: `test: verify YGF beta release readiness`
 
 - All local quality commands pass.
 - Browser happy path reaches a useful result and deducts exactly 120 credits.
+- A receipt QR and its printed code redeem the same single-use claim; scanning pre-fills it and removes the fragment from the visible URL/history before network submission.
+- The default path requires no model knowledge, while an advanced user can select only a friendly, server-allowlisted model.
 - Duplicate, expired, revoked, blocked, throttled, provider-failure, and refund behavior is proven.
 - Public legal/safety/disclaimer copy is visible and consistent.
 - All four workflows work in demo mode and use the same provider contract in live mode.
@@ -565,4 +599,4 @@ Commit: `test: verify YGF beta release readiness`
 - Poster and counter-card PDFs render cleanly and QR codes decode.
 - Desktop/mobile screenshots match the accepted concepts with no material visual mismatch.
 - Git history contains scoped commits; remote branch and repository commit are verified after push.
-- External launch gates are named honestly: provider/auth console credentials, manager-verified menu/prices/allergens, printed materials, staff training, soft-test completion, live deployment, and university/provider policy re-verification.
+- External launch gates are named honestly: provider/auth console credentials, a manager-supplied rights-cleared YGF photo, manager-verified menu/prices/allergens, printed materials, staff training, soft-test completion, live deployment, and university/provider policy re-verification.

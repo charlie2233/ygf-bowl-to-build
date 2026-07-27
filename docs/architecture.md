@@ -69,18 +69,23 @@ RPCs enforce one wallet per user and one redemption per claim.
 
 The memory adapter performs every state transition in one synchronous critical
 section after hashing input. It returns defensive copies so callers cannot
-mutate repository state. The Supabase implementation must map the same
-interface to the four schema RPCs:
+mutate repository state. The production Supabase adapter must run on the server
+and map the same interface to the four schema RPCs:
 
 - `redeem_campaign_code`
 - `reserve_campaign_spend`
 - `commit_campaign_spend`
 - `refund_campaign_spend`
 
-Each RPC derives identity from `auth.uid()`, uses schema-qualified objects and a
-fixed `search_path`, locks the authoritative row with `FOR UPDATE`, and writes
-the wallet plus ledger transition in one database transaction. External
-provider calls never occur inside an RPC.
+The spend RPCs derive identity from `auth.uid()`. Redemption is a stricter
+boundary: `redeem_campaign_code` accepts a `p_user_id` that the server adapter
+derives from the authenticated session and is executable only by
+`service_role`. Browser Supabase clients must never receive that credential or
+invoke the RPC. The route must authenticate, record the bounded abuse signal,
+and enforce its attempt budget before the privileged call. Every RPC uses
+schema-qualified objects and a fixed `search_path`, locks the authoritative row
+with `FOR UPDATE`, and writes the wallet plus ledger transition in one database
+transaction. External provider calls never occur inside an RPC.
 
 Idempotency keys are scoped by user and operation. The first result stores
 balance snapshots in the ledger. An exact retry returns that first snapshot;
@@ -113,8 +118,11 @@ transitions.
 Every campaign table has RLS enabled and forced. Authenticated users receive
 read access only to their own profile, wallet, ledger, sessions, events, and
 partner-connection rows. Active provider policy is readable for model
-selection. Direct wallet and ledger writes are not granted; only the
-identity-checking RPCs mutate those tables.
+selection. Direct wallet and ledger writes are not granted. Spend mutations use
+identity-checking RPCs. The redemption mutation is granted only to
+`service_role` and requires the server-derived account UUID as an explicit
+argument, so `anon` and `authenticated` clients cannot bypass route-level
+attempt controls by calling it directly.
 
 Campaign administrators are identified by the database-owned
 `profiles.campaign_role`, evaluated through a fixed-search-path

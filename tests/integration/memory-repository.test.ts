@@ -523,6 +523,54 @@ describe("Supabase campaign migration contract", () => {
       : sql.slice(start, end + 3);
   }
 
+  function assertSecureRedeemBoundary(candidateSql: string) {
+    const grants = Array.from(
+      candidateSql.matchAll(
+        /grant\s+execute\s+on\s+function\s+public\.redeem_campaign_code\s*\([^;]*\)\s+to\s+[^;]+;/gi,
+      ),
+      (match) => match[0],
+    );
+    const revoke = candidateSql.match(
+      /revoke\s+all\s+on\s+function\s+public\.redeem_campaign_code\s*\(\s*uuid\s*,\s*text\s*,\s*text\s*\)\s+from\s+([^;]+);/i,
+    );
+
+    if (
+      /create\s+or\s+replace\s+function\s+public\.redeem_campaign_code\s*\(\s*p_code_hash\s+text\s*,\s*p_idempotency_key\s+text\s*\)/i.test(
+        candidateSql,
+      ) ||
+      /redeem_campaign_code\s*\(\s*text\s*,\s*text\s*\)/i.test(
+        candidateSql,
+      )
+    ) {
+      throw new Error("legacy redemption overload remains");
+    }
+    if (!revoke) {
+      throw new Error("privileged redemption revoke is missing");
+    }
+    for (const role of ["public", "anon", "authenticated"]) {
+      if (!new RegExp(`\\b${role}\\b`, "i").test(revoke[1])) {
+        throw new Error(`privileged redemption does not revoke ${role}`);
+      }
+    }
+    if (
+      grants.length === 0 ||
+      !grants.some((grant) =>
+        /redeem_campaign_code\s*\(\s*uuid\s*,\s*text\s*,\s*text\s*\)\s+to\s+service_role\s*;/i.test(
+          grant,
+        ),
+      )
+    ) {
+      throw new Error("service-role redemption grant is missing");
+    }
+    if (
+      grants.some((grant) =>
+        /\bto\b[^;]*\b(?:public|anon|authenticated)\b/i.test(grant),
+      )
+    ) {
+      throw new Error("unsafe redemption grant remains");
+    }
+  }
+
   it("creates every campaign table with RLS and at least one policy", () => {
     expect(existsSync(migrationPath)).toBe(true);
 
@@ -572,7 +620,11 @@ describe("Supabase campaign migration contract", () => {
 
       expect(body).toContain("security definer");
       expect(body).toContain("set search_path = pg_catalog");
-      expect(body).toContain("auth.uid()");
+      if (name === "redeem_campaign_code") {
+        expect(body).toContain("v_user_id uuid := p_user_id");
+      } else {
+        expect(body).toContain("auth.uid()");
+      }
       expect(body).toMatch(/\bfor update\b/i);
       if (
         name === "commit_campaign_spend" ||
@@ -588,13 +640,51 @@ describe("Supabase campaign migration contract", () => {
           "i",
         ),
       );
-      expect(sql).toMatch(
-        new RegExp(
-          `grant execute on function public\\.${name}\\b[\\s\\S]*? to authenticated`,
-          "i",
-        ),
-      );
+      if (name !== "redeem_campaign_code") {
+        expect(sql).toMatch(
+          new RegExp(
+            `grant execute on function public\\.${name}\\b[^;]*? to authenticated`,
+            "i",
+          ),
+        );
+      }
     }
+  });
+
+  it("keeps privileged redemption behind the service-role boundary", () => {
+    const redeemBody = functionBody("redeem_campaign_code");
+
+    expect(redeemBody).toMatch(
+      /redeem_campaign_code\(\s*p_user_id uuid,\s*p_code_hash text,\s*p_idempotency_key text\s*\)/i,
+    );
+    expect(redeemBody).toContain("v_user_id uuid := p_user_id");
+    expect(redeemBody).not.toContain("auth.uid()");
+    expect(() => assertSecureRedeemBoundary(sql)).not.toThrow();
+    expect(() =>
+      assertSecureRedeemBoundary(
+        `${sql}
+          GRANT EXECUTE ON FUNCTION public.redeem_campaign_code(
+            uuid, text, text
+          ) TO authenticated;`,
+      ),
+    ).toThrow(/unsafe redemption grant/i);
+    expect(() =>
+      assertSecureRedeemBoundary(
+        `${sql}
+          CREATE OR REPLACE FUNCTION PUBLIC.REDEEM_CAMPAIGN_CODE(
+            P_CODE_HASH TEXT,
+            P_IDEMPOTENCY_KEY TEXT
+          ) RETURNS void LANGUAGE sql AS 'SELECT';`,
+      ),
+    ).toThrow(/legacy redemption overload/i);
+    expect(() =>
+      assertSecureRedeemBoundary(
+        `${sql}
+          GRANT EXECUTE ON FUNCTION PUBLIC.REDEEM_CAMPAIGN_CODE(
+            TEXT, TEXT
+          ) TO SERVICE_ROLE;`,
+      ),
+    ).toThrow(/legacy redemption overload/i);
   });
 
   it("adds admin separation, idempotency indexes, and updated-at triggers", () => {

@@ -19,6 +19,10 @@ export interface ValidateCodeResult {
 
 export interface RedeemCodeInput {
   code: string;
+  /**
+   * Authenticated account identity derived by the trusted server adapter.
+   * Never populate this field from a browser-controlled request body.
+   */
   userId: string;
   idempotencyKey: string;
 }

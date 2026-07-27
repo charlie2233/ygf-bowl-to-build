@@ -701,6 +701,7 @@ grant insert, update, delete on table public.provider_policies
   to authenticated;
 
 create or replace function public.redeem_campaign_code(
+  p_user_id uuid,
   p_code_hash text,
   p_idempotency_key text
 )
@@ -719,7 +720,7 @@ security definer
 set search_path = pg_catalog
 as $$
 declare
-  v_user_id uuid := auth.uid();
+  v_user_id uuid := p_user_id;
   v_code public.promo_codes%rowtype;
   v_wallet public.wallets%rowtype;
   v_prior public.ledger_entries%rowtype;
@@ -1441,8 +1442,8 @@ begin
 end;
 $$;
 
-revoke all on function public.redeem_campaign_code(text, text)
-  from public;
+revoke all on function public.redeem_campaign_code(uuid, text, text)
+  from public, anon, authenticated;
 revoke all on function public.is_safe_campaign_event_payload(
   text,
   text,
@@ -1455,8 +1456,8 @@ revoke all on function public.commit_campaign_spend(uuid, bigint, text)
 revoke all on function public.refund_campaign_spend(uuid, text)
   from public;
 
-grant execute on function public.redeem_campaign_code(text, text)
-  to authenticated, service_role;
+grant execute on function public.redeem_campaign_code(uuid, text, text)
+  to service_role;
 grant execute on function public.is_safe_campaign_event_payload(
   text,
   text,

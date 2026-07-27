@@ -140,7 +140,7 @@ Commit: `chore: bootstrap YGF beta and design system`
 - Create: `tests/integration/memory-repository.test.ts`
 - Create: `docs/architecture.md`
 
-- [ ] **Step 1: Write failing code and credit tests**
+- [x] **Step 1: Write failing code and credit tests**
 
 ```ts
 it("normalizes and hashes a code without retaining plaintext", async () => {
@@ -162,25 +162,25 @@ it("reserves 120 credits and refuses an overdraw", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `pnpm vitest run tests/unit/code.test.ts tests/unit/claim-url.test.ts tests/unit/credits.test.ts`
 
 Expected: FAIL because campaign modules do not exist.
 
-- [ ] **Step 3: Implement pure domain functions**
+- [x] **Step 3: Implement pure domain functions**
 
 Implement eight-character uppercase code normalization, SHA-256 hashing, HMAC abuse-signal hashing, constant-time comparisons where applicable, receipt claim URL construction/parsing, 120-credit reservations, refunds, expiry checks, and the $0.25 per-user provider-cost ceiling. Claim URLs put the normalized code only in `#code=`, reject unexpected origins/paths/keys, and never send it as a query parameter. Keep provider dollars separate from consumer Build Credits.
 
-- [ ] **Step 4: Define repository interfaces and the memory adapter**
+- [x] **Step 4: Define repository interfaces and the memory adapter**
 
 The interface must atomically expose `validateCode`, `redeemCode`, `getWallet`, `reserveSpend`, `commitSpend`, `refundSpend`, `recordSession`, `listHistory`, `recordEvent`, `getDashboard`, `createBatch`, and `revokeCode`. Seed only `BOWL7K2A` in demo mode.
 
-- [ ] **Step 5: Create the Postgres migration**
+- [x] **Step 5: Create the Postgres migration**
 
 Create `profiles`, `promo_batches`, `promo_codes`, `wallets`, `ledger_entries`, `task_sessions`, `events`, `redemption_attempts`, `partner_connections`, and `provider_policies`. Add foreign keys, checks, unique constraints, partial indexes, timestamps, RLS, admin-role helpers, and `security definer` RPCs for atomic redemption and spend/refund. RPCs must use row locks and idempotency keys.
 
-- [ ] **Step 6: Verify schema and repository behavior**
+- [x] **Step 6: Verify schema and repository behavior**
 
 Run: `pnpm vitest run tests/unit/code.test.ts tests/unit/claim-url.test.ts tests/unit/credits.test.ts tests/integration/memory-repository.test.ts`
 

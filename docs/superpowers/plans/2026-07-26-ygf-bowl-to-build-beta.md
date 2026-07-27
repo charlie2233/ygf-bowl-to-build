@@ -79,7 +79,7 @@
 - Create: `docs/design/media-ledger.md`
 - Copy: source reports, accepted concepts, poster concept, and `public/media/malatang-hero.png`
 
-- [ ] **Step 1: Add a failing content-contract test**
+- [x] **Step 1: Add a failing content-contract test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -97,25 +97,25 @@ describe("campaign content", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and verify RED**
+- [x] **Step 2: Run the test and verify RED**
 
 Run: `pnpm vitest run tests/unit/campaign-content.test.ts`
 
 Expected: FAIL because `@/lib/content/campaign` does not exist.
 
-- [ ] **Step 3: Add the application configuration and minimal content implementation**
+- [x] **Step 3: Add the application configuration and minimal content implementation**
 
 Use Next.js 16 App Router, React 19, direct imports, strict TypeScript, ESLint CLI, Vitest with jsdom, and Playwright with desktop plus iPhone projects. Define the immutable `campaign` object with the exact values asserted above. Add semantic button and icon primitives; do not add visual behavior beyond the accepted design.
 
-- [ ] **Step 4: Add global tokens and the quiet shared header**
+- [x] **Step 4: Add global tokens and the quiet shared header**
 
 Implement the design lock as CSS custom properties, typography, focus-visible states, reduced-motion handling, and responsive containers. Keep the header to brand, How it works, FAQ, and Redeem on public pages.
 
-- [ ] **Step 5: Copy and inspect project-bound design/source assets**
+- [x] **Step 5: Copy and inspect project-bound design/source assets**
 
 Copy both user-supplied reports to `docs/source/`, all accepted concepts to `docs/design/concepts/`, the poster concept to the same folder, and the generated food fallback to `public/media/malatang-hero.png`. Record the source, generated status, inspection result, and real-YGF-photo replacement gate in `docs/design/media-ledger.md`. Use `view_image` on the copied image and verify its aspect, crop, and lack of text/logos.
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 Run: `pnpm lint && pnpm typecheck && pnpm vitest run tests/unit/campaign-content.test.ts`
 

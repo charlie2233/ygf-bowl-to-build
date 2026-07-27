@@ -68,6 +68,13 @@ export function createCreditWallet(
   };
 }
 
+export function isWalletExpired(
+  expiresAt: string | Date,
+  now: string | Date = new Date(),
+) {
+  return toValidDate(expiresAt).getTime() <= toValidDate(now).getTime();
+}
+
 export function reserveCredits({
   remaining,
   amount,

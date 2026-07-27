@@ -263,7 +263,7 @@ Commit: `feat: build public Bowl-to-Build campaign`
 - Create: `tests/integration/redemption-api.test.ts`
 - Create: `tests/unit/redeem-form.test.tsx`
 
-- [ ] **Step 1: Write failing route and form tests**
+- [x] **Step 1: Write failing route and form tests**
 
 ```ts
 it("redeems once and initializes a 14-day wallet", async () => {
@@ -281,25 +281,25 @@ it("pre-fills a scanned receipt claim and removes it from browser history", asyn
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `pnpm vitest run tests/integration/redemption-api.test.ts tests/unit/redeem-form.test.tsx`
 
 Expected: FAIL because routes, auth helpers, and components do not exist.
 
-- [ ] **Step 3: Implement Supabase SSR and safe demo identity**
+- [x] **Step 3: Implement Supabase SSR and safe demo identity**
 
 Use `@supabase/ssr` browser/server clients and Next.js 16 `proxy.ts` cookie refresh. Production must reject missing Supabase config. Demo identity is available only in development when `YGF_DEMO_MODE=true`.
 
-- [ ] **Step 4: Implement validation and atomic redemption**
+- [x] **Step 4: Implement validation and atomic redemption**
 
 On first client render, parse an allowed `#code=` claim, pre-fill the form, and immediately remove the fragment with `history.replaceState`. Validate format and generic eligibility before auth, then redirect through auth with the code stored in a short-lived signed, httpOnly cookie. Derive user identity server-side, enforce rate limits, call the repository transaction, clear the cookie, and return typed errors without exposing code hashes or database details. A returning signed-in user with an accepted scanned claim proceeds with one confirmation tap and no profile form.
 
-- [ ] **Step 5: Implement UI fidelity**
+- [x] **Step 5: Implement UI fidelity**
 
 Match `redeem.png` and `wallet.png` at desktop and mobile sizes. Wallet leads with `Your AI balance`, remaining credits, dynamic expiry, mathematically correct usage, and four large task shortcuts. Add a collapsed `Advanced: choose a model` control with `Best for this task` selected by default. Do not show partner promotion before a successful task.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `pnpm vitest run tests/integration/redemption-api.test.ts tests/unit/redeem-form.test.tsx`
 

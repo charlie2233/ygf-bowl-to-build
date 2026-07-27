@@ -375,8 +375,38 @@ create table public.redemption_attempts (
       )
     ),
   created_at timestamptz not null default pg_catalog.now(),
+  finalized_at timestamptz,
   expires_at timestamptz not null,
-  check (expires_at > created_at)
+  check (expires_at > created_at),
+  check (finalized_at is null or finalized_at >= created_at),
+  check (
+    outcome = 'unavailable'
+    or (
+      outcome in ('accepted', 'invalid', 'throttled')
+      and finalized_at is not null
+    )
+  )
+);
+
+create table public.public_validation_attempts (
+  id uuid primary key default extensions.gen_random_uuid(),
+  signal_digest text not null
+    check (
+      char_length(signal_digest) = 64
+      and signal_digest ~ '^[0-9a-f]{64}$'
+    ),
+  signal_version text not null check (signal_version = 'v1'),
+  signal_purpose text not null check (signal_purpose = 'validate-code'),
+  signal_bucket bigint not null check (signal_bucket >= 0),
+  allowed boolean not null,
+  created_at timestamptz not null default pg_catalog.now(),
+  expires_at timestamptz not null,
+  check (expires_at > created_at),
+  check (
+    expires_at = pg_catalog.to_timestamp(
+      ((signal_bucket + 1) * 300)::double precision
+    )
+  )
 );
 
 create table public.partner_connections (
@@ -462,8 +492,21 @@ create index redemption_attempts_signal_bucket_idx
 create index redemption_attempts_user_id_idx
   on public.redemption_attempts (user_id)
   where user_id is not null;
+create index redemption_attempts_user_bucket_idx
+  on public.redemption_attempts (user_id, signal_bucket)
+  where user_id is not null;
 create index redemption_attempts_expires_at_idx
   on public.redemption_attempts (expires_at);
+create index public_validation_attempts_admitted_signal_bucket_idx
+  on public.public_validation_attempts (
+    signal_version,
+    signal_purpose,
+    signal_digest,
+    signal_bucket
+  )
+  where allowed;
+create index public_validation_attempts_expires_at_idx
+  on public.public_validation_attempts (expires_at, id);
 create index partner_connections_user_id_idx
   on public.partner_connections (user_id);
 create index provider_policies_created_by_idx
@@ -569,6 +612,8 @@ alter table public.events enable row level security;
 alter table public.events force row level security;
 alter table public.redemption_attempts enable row level security;
 alter table public.redemption_attempts force row level security;
+alter table public.public_validation_attempts enable row level security;
+alter table public.public_validation_attempts force row level security;
 alter table public.partner_connections enable row level security;
 alter table public.partner_connections force row level security;
 alter table public.provider_policies enable row level security;
@@ -646,6 +691,12 @@ for select
 to authenticated
 using ((select public.is_campaign_admin()));
 
+create policy public_validation_attempts_admin_select
+on public.public_validation_attempts
+for select
+to authenticated
+using ((select public.is_campaign_admin()));
+
 create policy partner_connections_user_select
 on public.partner_connections
 for select
@@ -679,6 +730,8 @@ revoke all on table public.ledger_entries from anon, authenticated;
 revoke all on table public.task_sessions from anon, authenticated;
 revoke all on table public.events from anon, authenticated;
 revoke all on table public.redemption_attempts from anon, authenticated;
+revoke all on table public.public_validation_attempts
+  from anon, authenticated;
 revoke all on table public.partner_connections from anon, authenticated;
 revoke all on table public.provider_policies from anon, authenticated;
 
@@ -700,17 +753,316 @@ grant insert, update on table public.promo_codes to authenticated;
 grant insert, update, delete on table public.provider_policies
   to authenticated;
 
+create or replace function public.admit_campaign_public_validation(
+  p_signal_digest text,
+  p_signal_version text,
+  p_signal_purpose text,
+  p_signal_bucket bigint,
+  p_signal_expires_at timestamptz
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  v_now timestamptz := pg_catalog.now();
+  v_current_signal_bucket bigint;
+  v_expected_expires_at timestamptz;
+  v_signal_lock_key bigint;
+  v_admitted_count bigint;
+  v_allowed boolean;
+begin
+  v_current_signal_bucket :=
+    pg_catalog.floor(pg_catalog.date_part('epoch', v_now) / 300)::bigint;
+
+  if p_signal_digest is null
+    or p_signal_digest !~ '^[0-9a-f]{64}$'
+    or p_signal_version is null
+    or p_signal_version <> 'v1'
+    or p_signal_purpose is null
+    or p_signal_purpose <> 'validate-code'
+    or p_signal_bucket is null
+    or p_signal_bucket <> v_current_signal_bucket
+    or p_signal_expires_at is null then
+    raise exception 'ABUSE_SIGNAL_INVALID' using errcode = 'P0001';
+  end if;
+
+  v_expected_expires_at := pg_catalog.to_timestamp(
+    ((p_signal_bucket + 1) * 300)::double precision
+  );
+  if p_signal_expires_at is distinct from v_expected_expires_at
+    or p_signal_expires_at <= v_now then
+    raise exception 'ABUSE_SIGNAL_INVALID' using errcode = 'P0001';
+  end if;
+
+  v_signal_lock_key := pg_catalog.hashtextextended(
+    'ygf:public-validation:signal:'
+      || p_signal_version
+      || ':'
+      || p_signal_purpose
+      || ':'
+      || p_signal_bucket::text
+      || ':'
+      || p_signal_digest,
+    0
+  );
+  perform pg_catalog.pg_advisory_xact_lock(v_signal_lock_key);
+
+  with expired_attempts as (
+    select a.id
+    from public.public_validation_attempts as a
+    where a.expires_at <= v_now
+    order by a.expires_at, a.id
+    limit 500
+    for update skip locked
+  )
+  delete from public.public_validation_attempts as a
+  using expired_attempts as expired
+  where a.id = expired.id;
+
+  select pg_catalog.count(*)
+  into v_admitted_count
+  from public.public_validation_attempts as a
+  where a.signal_version = p_signal_version
+    and a.signal_purpose = p_signal_purpose
+    and a.signal_digest = p_signal_digest
+    and a.signal_bucket = p_signal_bucket
+    and a.allowed;
+
+  v_allowed := v_admitted_count < 30;
+
+  insert into public.public_validation_attempts (
+    signal_digest,
+    signal_version,
+    signal_purpose,
+    signal_bucket,
+    allowed,
+    created_at,
+    expires_at
+  )
+  values (
+    p_signal_digest,
+    p_signal_version,
+    p_signal_purpose,
+    p_signal_bucket,
+    v_allowed,
+    v_now,
+    p_signal_expires_at
+  );
+
+  return v_allowed;
+end;
+$$;
+
+create or replace function public.admit_campaign_redemption_attempt(
+  p_user_id uuid,
+  p_signal_digest text,
+  p_signal_version text,
+  p_signal_purpose text,
+  p_signal_bucket bigint,
+  p_signal_expires_at timestamptz
+)
+returns table (
+  attempt_id uuid,
+  allowed boolean
+)
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  v_now timestamptz := pg_catalog.now();
+  v_current_signal_bucket bigint;
+  v_expected_expires_at timestamptz;
+  v_user_lock_key bigint;
+  v_signal_lock_key bigint;
+  v_first_lock_key bigint;
+  v_second_lock_key bigint;
+  v_user_admitted_count bigint;
+  v_signal_admitted_count bigint;
+  v_allowed boolean;
+  v_attempt_id uuid;
+begin
+  v_current_signal_bucket :=
+    pg_catalog.floor(pg_catalog.date_part('epoch', v_now) / 300)::bigint;
+
+  if p_user_id is null then
+    raise exception 'AUTHENTICATION_REQUIRED' using errcode = 'P0001';
+  end if;
+  if p_signal_digest is null
+    or p_signal_digest !~ '^[0-9a-f]{64}$'
+    or p_signal_version is null
+    or p_signal_version <> 'v1'
+    or p_signal_purpose is null
+    or p_signal_purpose !~ '^[a-z][a-z0-9-]{0,63}$'
+    or p_signal_bucket is null
+    or p_signal_bucket <> v_current_signal_bucket
+    or p_signal_expires_at is null then
+    raise exception 'ABUSE_SIGNAL_INVALID' using errcode = 'P0001';
+  end if;
+
+  v_expected_expires_at := pg_catalog.to_timestamp(
+    ((p_signal_bucket + 1) * 300)::double precision
+  );
+  if p_signal_expires_at is distinct from v_expected_expires_at
+    or p_signal_expires_at <= v_now then
+    raise exception 'ABUSE_SIGNAL_INVALID' using errcode = 'P0001';
+  end if;
+
+  if not exists (
+    select 1
+    from auth.users as u
+    where u.id = p_user_id
+  ) then
+    raise exception 'AUTHENTICATION_REQUIRED' using errcode = 'P0001';
+  end if;
+
+  v_user_lock_key := pg_catalog.hashtextextended(
+    'ygf:redemption:user:v1:'
+      || p_signal_bucket::text
+      || ':'
+      || p_user_id::text,
+    0
+  );
+  v_signal_lock_key := pg_catalog.hashtextextended(
+    'ygf:redemption:signal:'
+      || p_signal_version
+      || ':'
+      || p_signal_purpose
+      || ':'
+      || p_signal_bucket::text
+      || ':'
+      || p_signal_digest,
+    0
+  );
+
+  if v_user_lock_key <= v_signal_lock_key then
+    v_first_lock_key := v_user_lock_key;
+    v_second_lock_key := v_signal_lock_key;
+  else
+    v_first_lock_key := v_signal_lock_key;
+    v_second_lock_key := v_user_lock_key;
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(v_first_lock_key);
+  if v_second_lock_key <> v_first_lock_key then
+    perform pg_catalog.pg_advisory_xact_lock(v_second_lock_key);
+  end if;
+
+  select pg_catalog.count(*)
+  into v_user_admitted_count
+  from public.redemption_attempts as a
+  where a.user_id = p_user_id
+    and a.signal_bucket = p_signal_bucket
+    and a.outcome <> 'throttled';
+
+  select pg_catalog.count(*)
+  into v_signal_admitted_count
+  from public.redemption_attempts as a
+  where a.signal_version = p_signal_version
+    and a.signal_purpose = p_signal_purpose
+    and a.signal_digest = p_signal_digest
+    and a.signal_bucket = p_signal_bucket
+    and a.outcome <> 'throttled';
+
+  v_allowed :=
+    v_user_admitted_count < 5
+    and v_signal_admitted_count < 20;
+
+  insert into public.redemption_attempts (
+    user_id,
+    signal_digest,
+    signal_version,
+    signal_purpose,
+    signal_bucket,
+    outcome,
+    created_at,
+    finalized_at,
+    expires_at
+  )
+  values (
+    p_user_id,
+    p_signal_digest,
+    p_signal_version,
+    p_signal_purpose,
+    p_signal_bucket,
+    case when v_allowed then 'unavailable' else 'throttled' end,
+    v_now,
+    case when v_allowed then null else v_now end,
+    p_signal_expires_at
+  )
+  returning id into v_attempt_id;
+
+  return query
+  select v_attempt_id, v_allowed;
+end;
+$$;
+
+create or replace function public.finish_campaign_redemption_attempt(
+  p_attempt_id uuid,
+  p_outcome text
+)
+returns void
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  v_attempt public.redemption_attempts%rowtype;
+  v_now timestamptz := pg_catalog.now();
+begin
+  if p_attempt_id is null
+    or p_outcome is null
+    or p_outcome not in ('accepted', 'invalid', 'unavailable') then
+    raise exception 'REDEMPTION_ATTEMPT_INVALID' using errcode = 'P0001';
+  end if;
+
+  select a.*
+  into v_attempt
+  from public.redemption_attempts as a
+  where a.id = p_attempt_id
+  for update;
+
+  if not found then
+    raise exception 'REDEMPTION_ATTEMPT_NOT_FOUND' using errcode = 'P0001';
+  end if;
+  if v_attempt.outcome = 'throttled' then
+    raise exception 'REDEMPTION_ATTEMPT_FINALIZATION_BLOCKED'
+      using errcode = 'P0001';
+  end if;
+  if v_attempt.finalized_at is not null then
+    if v_attempt.outcome is distinct from p_outcome then
+      raise exception 'REDEMPTION_ATTEMPT_FINALIZATION_CONFLICT'
+        using errcode = 'P0001';
+    end if;
+    return;
+  end if;
+
+  update public.redemption_attempts
+  set
+    outcome = p_outcome,
+    finalized_at = v_now
+  where id = p_attempt_id;
+end;
+$$;
+
 create or replace function public.redeem_campaign_code(
   p_user_id uuid,
   p_code_hash text,
   p_idempotency_key text
 )
 returns table (
+  code_id uuid,
+  redeemed_at timestamptz,
   wallet_id uuid,
+  wallet_user_id uuid,
+  initial_balance integer,
   remaining_balance integer,
   reserved_balance integer,
   provider_committed_micro_usd bigint,
   provider_reserved_micro_usd bigint,
+  wallet_created_at timestamptz,
   expires_at timestamptz,
   ledger_entry_id uuid,
   ledger_state text
@@ -766,11 +1118,16 @@ begin
     end if;
     return query
     select
+      v_prior.promo_code_id,
+      v_prior.created_at,
       v_prior.wallet_id,
+      w.user_id,
+      w.initial_balance,
       v_prior.balance_after,
       v_prior.reserved_after,
       v_prior.provider_committed_after_micro_usd,
       v_prior.provider_reserved_after_micro_usd,
+      w.created_at,
       w.expires_at,
       v_prior.id,
       v_prior.state
@@ -868,11 +1225,16 @@ begin
 
   return query
   select
+    v_code.id,
+    v_grant.created_at,
     v_wallet.id,
+    v_wallet.user_id,
+    v_wallet.initial_balance,
     v_wallet.remaining_balance,
     v_wallet.reserved_balance,
     v_wallet.provider_committed_micro_usd,
     v_wallet.provider_reserved_micro_usd,
+    v_wallet.created_at,
     v_wallet.expires_at,
     v_grant.id,
     v_grant.state;
@@ -1442,6 +1804,23 @@ begin
 end;
 $$;
 
+revoke all on function public.admit_campaign_public_validation(
+  text,
+  text,
+  text,
+  bigint,
+  timestamptz
+) from public, anon, authenticated;
+revoke all on function public.admit_campaign_redemption_attempt(
+  uuid,
+  text,
+  text,
+  text,
+  bigint,
+  timestamptz
+) from public, anon, authenticated;
+revoke all on function public.finish_campaign_redemption_attempt(uuid, text)
+  from public, anon, authenticated;
 revoke all on function public.redeem_campaign_code(uuid, text, text)
   from public, anon, authenticated;
 revoke all on function public.is_safe_campaign_event_payload(
@@ -1456,6 +1835,23 @@ revoke all on function public.commit_campaign_spend(uuid, bigint, text)
 revoke all on function public.refund_campaign_spend(uuid, text)
   from public;
 
+grant execute on function public.admit_campaign_public_validation(
+  text,
+  text,
+  text,
+  bigint,
+  timestamptz
+) to service_role;
+grant execute on function public.admit_campaign_redemption_attempt(
+  uuid,
+  text,
+  text,
+  text,
+  bigint,
+  timestamptz
+) to service_role;
+grant execute on function public.finish_campaign_redemption_attempt(uuid, text)
+  to service_role;
 grant execute on function public.redeem_campaign_code(uuid, text, text)
   to service_role;
 grant execute on function public.is_safe_campaign_event_payload(

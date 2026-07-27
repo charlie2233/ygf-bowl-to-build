@@ -81,11 +81,64 @@ The spend RPCs derive identity from `auth.uid()`. Redemption is a stricter
 boundary: `redeem_campaign_code` accepts a `p_user_id` that the server adapter
 derives from the authenticated session and is executable only by
 `service_role`. Browser Supabase clients must never receive that credential or
-invoke the RPC. The route must authenticate, record the bounded abuse signal,
-and enforce its attempt budget before the privileged call. Every RPC uses
-schema-qualified objects and a fixed `search_path`, locks the authoritative row
-with `FOR UPDATE`, and writes the wallet plus ledger transition in one database
-transaction. External provider calls never occur inside an RPC.
+invoke the RPC. The route must authenticate, derive the short-lived HMAC abuse
+signal, and call `admit_campaign_redemption_attempt` before the privileged
+redemption call. Every RPC uses schema-qualified objects and a fixed
+`search_path`, locks the authoritative row with `FOR UPDATE`, and writes the
+wallet plus ledger transition in one database transaction. External provider
+calls never occur inside an RPC.
+
+The redemption RPC returns the code identifier, redemption timestamp, and the
+complete wallet snapshot needed for `RedemptionResult` before that transaction
+commits. Exact idempotent retries return the original grant-ledger balance
+snapshot, even if later tasks changed the live wallet. The Supabase repository
+maps that single RPC row directly and must not perform follow-up wallet or
+ledger reads: a read failure after commit cannot be allowed to report a
+successful grant as failed.
+
+## Public-validation admission
+
+The public validation route derives a `v1` HMAC envelope with the fixed
+`validate-code` purpose before it asks the repository whether a claim is
+eligible. Production admission is shared in Postgres rather than counted
+independently in each application process. The service-role-only
+`admit_campaign_public_validation` RPC accepts only the current five-minute
+bucket with its exact bucket-end expiry, then takes a transaction advisory lock
+for that signal and bucket. It admits the first thirty calls and records every
+valid call, including denials, without storing the raw claim or request
+fingerprint.
+
+`public_validation_attempts` has forced RLS and no `anon` or `authenticated`
+table grants. Rows expire at the end of their signed bucket. Each valid
+admission also removes at most 500 expired rows, ordered by expiry, using
+`FOR UPDATE SKIP LOCKED`; the bounded batch prevents cleanup work from growing
+with table size while concurrent signal buckets continue safely. The memory
+admission implementation mirrors the fixed limit and expiry behavior for local
+development and tests, but is not the production cross-instance authority.
+
+## Redemption-attempt admission
+
+Redemption admission and finalization are server-only database boundaries. The
+admission RPC accepts only the authenticated account UUID derived by the route
+plus the validated `v1` HMAC envelope. Its bucket and expiry must match the
+current five-minute server bucket; raw IP, device, and receipt values never
+cross this boundary.
+
+Admission takes transaction advisory locks for both the account/bucket and
+signal/bucket. It sorts the two lock keys before acquiring them, so requests
+that share either dimension serialize without reversing lock order. While
+holding both locks it counts only prior non-throttled admissions. The fixed
+limits are five admitted attempts per account/bucket and twenty per
+signal/bucket.
+
+Every valid admission call inserts exactly one `redemption_attempts` row. An
+admitted request starts as `unavailable`, which is fail-closed if the route
+dies before redemption; a denied request starts and remains `throttled`.
+`finish_campaign_redemption_attempt` locks the admitted row and may finalize it
+only as `accepted`, `invalid`, or `unavailable`. `finalized_at` makes exact
+retries idempotent and prevents a terminal result from being rewritten.
+`PUBLIC`, `anon`, and `authenticated` have no execution grant on either RPC;
+only `service_role` may invoke them.
 
 Idempotency keys are scoped by user and operation. The first result stores
 balance snapshots in the ledger. An exact retry returns that first snapshot;

@@ -503,6 +503,7 @@ describe("Supabase campaign migration contract", () => {
     "task_sessions",
     "events",
     "redemption_attempts",
+    "public_validation_attempts",
     "partner_connections",
     "provider_policies",
   ] as const;
@@ -513,14 +514,27 @@ describe("Supabase campaign migration contract", () => {
     "refund_campaign_spend",
   ] as const;
 
-  function functionBody(name: string) {
-    const start = sql.indexOf(
-      `create or replace function public.${name}`,
+  function functionBody(name: string, candidateSql = sql) {
+    const start = candidateSql.search(
+      new RegExp(
+        `create\\s+or\\s+replace\\s+function\\s+public\\.${name}\\b`,
+        "i",
+      ),
     );
-    const end = sql.indexOf("$$;", start);
+    const end = candidateSql.indexOf("$$;", start);
     return start === -1 || end === -1
       ? ""
-      : sql.slice(start, end + 3);
+      : candidateSql.slice(start, end + 3);
+  }
+
+  function tableDefinition(name: string, candidateSql = sql) {
+    const start = candidateSql.search(
+      new RegExp(`create\\s+table\\s+public\\.${name}\\b`, "i"),
+    );
+    const end = candidateSql.indexOf("\n);", start);
+    return start === -1 || end === -1
+      ? ""
+      : candidateSql.slice(start, end + 3);
   }
 
   function assertSecureRedeemBoundary(candidateSql: string) {
@@ -569,6 +583,236 @@ describe("Supabase campaign migration contract", () => {
     ) {
       throw new Error("unsafe redemption grant remains");
     }
+  }
+
+  function assertServiceRoleOnlyFunction(
+    candidateSql: string,
+    name: string,
+    signaturePattern: string,
+  ) {
+    const grants =
+      candidateSql.match(
+        new RegExp(
+          `grant\\s+(?:execute|all(?:\\s+privileges)?)\\s+on\\s+function\\s+public\\s*\\.\\s*${name}\\s*\\([^;]*?;`,
+          "gi",
+        ),
+      ) ?? [];
+
+    expect(grants).toHaveLength(1);
+    expect(grants[0]).toMatch(
+      new RegExp(
+        `public\\s*\\.\\s*${name}\\s*\\(\\s*${signaturePattern}\\s*\\)\\s+to\\s+service_role\\s*;`,
+        "i",
+      ),
+    );
+    for (const grant of grants) {
+      const roles = grant.match(/\)\s+to\s+([^;]+);/i)?.[1] ?? "";
+      expect(roles).not.toMatch(/\b(?:public|anon|authenticated)\b/i);
+    }
+
+    expect(candidateSql).toMatch(
+      new RegExp(
+        `revoke\\s+all\\s+on\\s+function\\s+public\\s*\\.\\s*${name}\\s*\\(\\s*${signaturePattern}\\s*\\)\\s+from\\s+public\\s*,\\s*anon\\s*,\\s*authenticated\\s*;`,
+        "i",
+      ),
+    );
+  }
+
+  function assertRedemptionAdmissionContract(candidateSql: string) {
+    const body = functionBody(
+      "admit_campaign_redemption_attempt",
+      candidateSql,
+    );
+    const normalized = body.replace(/\s+/g, " ");
+
+    expect(body).toMatch(
+      /admit_campaign_redemption_attempt\(\s*p_user_id uuid,\s*p_signal_digest text,\s*p_signal_version text,\s*p_signal_purpose text,\s*p_signal_bucket bigint,\s*p_signal_expires_at timestamptz\s*\)/i,
+    );
+    expect(normalized).toContain(
+      "if v_user_lock_key <= v_signal_lock_key then",
+    );
+    expect(normalized).toContain(
+      "if v_user_lock_key <= v_signal_lock_key then v_first_lock_key := v_user_lock_key; v_second_lock_key := v_signal_lock_key; else v_first_lock_key := v_signal_lock_key; v_second_lock_key := v_user_lock_key; end if;",
+    );
+    expect(normalized).toContain(
+      "perform pg_catalog.pg_advisory_xact_lock(v_first_lock_key);",
+    );
+    expect(normalized).toContain(
+      "perform pg_catalog.pg_advisory_xact_lock(v_second_lock_key);",
+    );
+    expect(normalized.indexOf("v_first_lock_key);")).toBeLessThan(
+      normalized.indexOf("v_second_lock_key);"),
+    );
+    expect(normalized).toContain("v_user_admitted_count < 5");
+    expect(normalized).toContain("v_signal_admitted_count < 20");
+    expect(body.match(/outcome\s*<>\s*'throttled'/gi)).toHaveLength(2);
+    expect(normalized).toContain(
+      "where a.user_id = p_user_id and a.signal_bucket = p_signal_bucket and a.outcome <> 'throttled'",
+    );
+    expect(normalized).toContain(
+      "where a.signal_version = p_signal_version and a.signal_purpose = p_signal_purpose and a.signal_digest = p_signal_digest and a.signal_bucket = p_signal_bucket and a.outcome <> 'throttled'",
+    );
+    expect(body.match(/insert into public\.redemption_attempts/gi)).toHaveLength(
+      1,
+    );
+    expect(normalized).toContain(
+      "case when v_allowed then 'unavailable' else 'throttled' end",
+    );
+    expect(normalized).toContain("p_signal_version <> 'v1'");
+    expect(normalized).toContain(
+      "p_signal_digest !~ '^[0-9a-f]{64}$'",
+    );
+    expect(normalized).toContain(
+      "p_signal_purpose !~ '^[a-z][a-z0-9-]{0,63}$'",
+    );
+    expect(normalized).toContain(
+      "p_signal_bucket <> v_current_signal_bucket",
+    );
+    expect(normalized).toContain(
+      "p_signal_expires_at is distinct from v_expected_expires_at",
+    );
+
+    assertServiceRoleOnlyFunction(
+      candidateSql,
+      "admit_campaign_redemption_attempt",
+      "uuid\\s*,\\s*text\\s*,\\s*text\\s*,\\s*text\\s*,\\s*bigint\\s*,\\s*timestamptz",
+    );
+  }
+
+  function assertRedemptionFinalizationContract(candidateSql: string) {
+    const body = functionBody(
+      "finish_campaign_redemption_attempt",
+      candidateSql,
+    );
+    const normalized = body.replace(/\s+/g, " ");
+
+    expect(body).toMatch(
+      /finish_campaign_redemption_attempt\(\s*p_attempt_id uuid,\s*p_outcome text\s*\)\s*returns void/i,
+    );
+    expect(normalized).toContain(
+      "p_outcome not in ('accepted', 'invalid', 'unavailable')",
+    );
+    expect(normalized).toContain("for update;");
+    expect(normalized).toContain("v_attempt.outcome = 'throttled'");
+    expect(normalized).toContain("v_attempt.finalized_at is not null");
+    expect(normalized).toContain("finalized_at = v_now");
+
+    assertServiceRoleOnlyFunction(
+      candidateSql,
+      "finish_campaign_redemption_attempt",
+      "uuid\\s*,\\s*text",
+    );
+  }
+
+  function assertAtomicRedemptionResult(candidateSql: string) {
+    const body = functionBody("redeem_campaign_code", candidateSql);
+    const normalized = body.replace(/\s+/g, " ");
+    const retryStart = normalized.indexOf("if found then");
+    const retryEnd = normalized.indexOf("return;", retryStart);
+    const retryBranch = normalized.slice(retryStart, retryEnd);
+    const firstResult = normalized.slice(
+      normalized.lastIndexOf("return query"),
+    );
+
+    expect(normalized).toContain(
+      "returns table ( code_id uuid, redeemed_at timestamptz, wallet_id uuid, wallet_user_id uuid, initial_balance integer, remaining_balance integer, reserved_balance integer, provider_committed_micro_usd bigint, provider_reserved_micro_usd bigint, wallet_created_at timestamptz, expires_at timestamptz, ledger_entry_id uuid, ledger_state text )",
+    );
+    expect(retryBranch).toContain(
+      "select v_prior.promo_code_id, v_prior.created_at, v_prior.wallet_id, w.user_id, w.initial_balance, v_prior.balance_after, v_prior.reserved_after, v_prior.provider_committed_after_micro_usd, v_prior.provider_reserved_after_micro_usd, w.created_at, w.expires_at, v_prior.id, v_prior.state",
+    );
+    expect(retryBranch).not.toMatch(
+      /\bw\.(?:remaining_balance|reserved_balance|provider_committed_micro_usd|provider_reserved_micro_usd)\b/i,
+    );
+    expect(firstResult).toContain(
+      "select v_code.id, v_grant.created_at, v_wallet.id, v_wallet.user_id, v_wallet.initial_balance, v_wallet.remaining_balance, v_wallet.reserved_balance, v_wallet.provider_committed_micro_usd, v_wallet.provider_reserved_micro_usd, v_wallet.created_at, v_wallet.expires_at, v_grant.id, v_grant.state;",
+    );
+  }
+
+  function assertPublicValidationAdmissionContract(candidateSql: string) {
+    const table = tableDefinition(
+      "public_validation_attempts",
+      candidateSql,
+    );
+    const tableNormalized = table.replace(/\s+/g, " ");
+    const body = functionBody(
+      "admit_campaign_public_validation",
+      candidateSql,
+    );
+    const normalized = body.replace(/\s+/g, " ");
+    const tableGrants =
+      candidateSql.match(
+        /grant\s+[^;]+\s+on\s+table\s+[^;]*public_validation_attempts[^;]*;/gi,
+      ) ?? [];
+
+    expect(tableNormalized).toContain("signal_digest text not null");
+    expect(tableNormalized).toContain(
+      "signal_version text not null check (signal_version = 'v1')",
+    );
+    expect(tableNormalized).toContain(
+      "signal_purpose text not null check (signal_purpose = 'validate-code')",
+    );
+    expect(tableNormalized).toContain("allowed boolean not null");
+    expect(tableNormalized).toContain(
+      "check ( expires_at = pg_catalog.to_timestamp( ((signal_bucket + 1) * 300)::double precision ) )",
+    );
+    expect(candidateSql).toMatch(
+      /create index public_validation_attempts_admitted_signal_bucket_idx\s+on public\.public_validation_attempts\s*\(\s*signal_version,\s*signal_purpose,\s*signal_digest,\s*signal_bucket\s*\)\s+where allowed;/i,
+    );
+    expect(candidateSql).toMatch(
+      /create index public_validation_attempts_expires_at_idx\s+on public\.public_validation_attempts\s*\(expires_at,\s*id\);/i,
+    );
+    expect(candidateSql).toMatch(
+      /alter table public\.public_validation_attempts\s+enable row level security;/i,
+    );
+    expect(candidateSql).toMatch(
+      /alter table public\.public_validation_attempts\s+force row level security;/i,
+    );
+    expect(candidateSql).toMatch(
+      /create policy public_validation_attempts_admin_select\s+on public\.public_validation_attempts\s+for select\s+to authenticated\s+using \(\(select public\.is_campaign_admin\(\)\)\);/i,
+    );
+    expect(candidateSql).toMatch(
+      /revoke all on table public\.public_validation_attempts\s+from anon,\s*authenticated;/i,
+    );
+    expect(tableGrants).toHaveLength(0);
+
+    expect(body).toMatch(
+      /admit_campaign_public_validation\(\s*p_signal_digest text,\s*p_signal_version text,\s*p_signal_purpose text,\s*p_signal_bucket bigint,\s*p_signal_expires_at timestamptz\s*\)\s*returns boolean/i,
+    );
+    expect(normalized).toContain("security definer");
+    expect(normalized).toContain("set search_path = pg_catalog");
+    expect(normalized).toContain("p_signal_version <> 'v1'");
+    expect(normalized).toContain(
+      "p_signal_digest !~ '^[0-9a-f]{64}$'",
+    );
+    expect(normalized).toContain(
+      "p_signal_purpose <> 'validate-code'",
+    );
+    expect(normalized).toContain(
+      "p_signal_bucket <> v_current_signal_bucket",
+    );
+    expect(normalized).toContain(
+      "p_signal_expires_at is distinct from v_expected_expires_at",
+    );
+    expect(normalized).toContain(
+      "perform pg_catalog.pg_advisory_xact_lock(v_signal_lock_key);",
+    );
+    expect(normalized).toContain("and a.allowed");
+    expect(normalized).toContain("v_admitted_count < 30");
+    expect(normalized).toContain(
+      "with expired_attempts as ( select a.id from public.public_validation_attempts as a where a.expires_at <= v_now order by a.expires_at, a.id limit 500 for update skip locked ) delete from public.public_validation_attempts as a using expired_attempts as expired where a.id = expired.id;",
+    );
+    expect(
+      body.match(/insert into public\.public_validation_attempts/gi),
+    ).toHaveLength(1);
+    expect(normalized).toContain(
+      "values ( p_signal_digest, p_signal_version, p_signal_purpose, p_signal_bucket, v_allowed, v_now, p_signal_expires_at )",
+    );
+
+    assertServiceRoleOnlyFunction(
+      candidateSql,
+      "admit_campaign_public_validation",
+      "text\\s*,\\s*text\\s*,\\s*text\\s*,\\s*bigint\\s*,\\s*timestamptz",
+    );
   }
 
   it("creates every campaign table with RLS and at least one policy", () => {
@@ -685,6 +929,154 @@ describe("Supabase campaign migration contract", () => {
           ) TO SERVICE_ROLE;`,
       ),
     ).toThrow(/legacy redemption overload/i);
+  });
+
+  it("returns complete exact redemption snapshots from the atomic RPC", () => {
+    assertAtomicRedemptionResult(sql);
+
+    const liveBalanceRetry = sql.replace(
+      "v_prior.balance_after,",
+      "w.remaining_balance,",
+    );
+    expect(liveBalanceRetry).not.toBe(sql);
+    expect(() => assertAtomicRedemptionResult(liveBalanceRetry)).toThrow();
+  });
+
+  it("atomically admits bounded redemption attempts through trusted server RPCs", () => {
+    assertRedemptionAdmissionContract(sql);
+    assertRedemptionFinalizationContract(sql);
+  });
+
+  it("detects unsafe admission grant, locking, count, and outcome mutations", () => {
+    const unsafeGrant = `${sql}
+grant execute on function public.admit_campaign_redemption_attempt(
+  uuid, text, text, text, bigint, timestamptz
+) to authenticated;
+`;
+    expect(() => assertRedemptionAdmissionContract(unsafeGrant)).toThrow();
+
+    const missingSignalLock = sql.replace(
+      "perform pg_catalog.pg_advisory_xact_lock(v_second_lock_key);",
+      "perform pg_catalog.pg_advisory_xact_lock(v_first_lock_key);",
+    );
+    expect(missingSignalLock).not.toBe(sql);
+    expect(() =>
+      assertRedemptionAdmissionContract(missingSignalLock),
+    ).toThrow();
+
+    const expandedUserLimit = sql.replace(
+      "v_user_admitted_count < 5",
+      "v_user_admitted_count < 6",
+    );
+    expect(expandedUserLimit).not.toBe(sql);
+    expect(() =>
+      assertRedemptionAdmissionContract(expandedUserLimit),
+    ).toThrow();
+
+    const expandedSignalLimit = sql.replace(
+      "v_signal_admitted_count < 20",
+      "v_signal_admitted_count < 21",
+    );
+    expect(expandedSignalLimit).not.toBe(sql);
+    expect(() =>
+      assertRedemptionAdmissionContract(expandedSignalLimit),
+    ).toThrow();
+
+    const admittedAsAccepted = sql.replace(
+      "case when v_allowed then 'unavailable' else 'throttled' end",
+      "case when v_allowed then 'accepted' else 'throttled' end",
+    );
+    expect(admittedAsAccepted).not.toBe(sql);
+    expect(() =>
+      assertRedemptionAdmissionContract(admittedAsAccepted),
+    ).toThrow();
+
+    const throttledFinalization = sql.replace(
+      "p_outcome not in ('accepted', 'invalid', 'unavailable')",
+      "p_outcome not in ('accepted', 'invalid', 'unavailable', 'throttled')",
+    );
+    expect(throttledFinalization).not.toBe(sql);
+    expect(() =>
+      assertRedemptionFinalizationContract(throttledFinalization),
+    ).toThrow();
+  });
+
+  it("shares public validation admission through one bounded database gate", () => {
+    assertPublicValidationAdmissionContract(sql);
+  });
+
+  it("detects unsafe public-validation grant, lock, limit, and retention mutations", () => {
+    const unsafeGrant = `${sql}
+grant execute on function public.admit_campaign_public_validation(
+  text, text, text, bigint, timestamptz
+) to anon;
+`;
+    expect(() =>
+      assertPublicValidationAdmissionContract(unsafeGrant),
+    ).toThrow();
+
+    const missingLock = sql.replace(
+      "perform pg_catalog.pg_advisory_xact_lock(v_signal_lock_key);",
+      "perform true;",
+    );
+    expect(missingLock).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(missingLock),
+    ).toThrow();
+
+    const expandedLimit = sql.replace(
+      "v_admitted_count < 30",
+      "v_admitted_count < 31",
+    );
+    expect(expandedLimit).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(expandedLimit),
+    ).toThrow();
+
+    const generalizedPurpose = sql.replace(
+      "p_signal_purpose <> 'validate-code'",
+      "p_signal_purpose !~ '^[a-z][a-z0-9-]{0,63}$'",
+    );
+    expect(generalizedPurpose).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(generalizedPurpose),
+    ).toThrow();
+
+    const deniedNotRecorded = sql.replace(
+      "p_signal_bucket,\n    v_allowed,",
+      "p_signal_bucket,\n    true,",
+    );
+    expect(deniedNotRecorded).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(deniedNotRecorded),
+    ).toThrow();
+
+    const missingRetention = sql.replace(
+      "where a.expires_at <= v_now\n    order by a.expires_at, a.id",
+      "where false\n    order by a.expires_at, a.id",
+    );
+    expect(missingRetention).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(missingRetention),
+    ).toThrow();
+
+    const unboundedRetention = sql.replace(
+      "limit 500\n    for update skip locked",
+      "for update skip locked",
+    );
+    expect(unboundedRetention).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(unboundedRetention),
+    ).toThrow();
+
+    const unboundedRetentionIndex = sql.replace(
+      "(expires_at, id);",
+      "(expires_at);",
+    );
+    expect(unboundedRetentionIndex).not.toBe(sql);
+    expect(() =>
+      assertPublicValidationAdmissionContract(unboundedRetentionIndex),
+    ).toThrow();
   });
 
   it("adds admin separation, idempotency indexes, and updated-at triggers", () => {

@@ -7,6 +7,7 @@ import {
   reserveCredits,
   reserveProviderCost,
 } from "@/lib/campaign/credits";
+import { validateCampaignEventInput } from "@/lib/campaign/events";
 import {
   type CampaignEvent,
   type CodeState,
@@ -569,42 +570,24 @@ export class MemoryCampaignRepository implements CampaignRepository {
     if (input.userId !== undefined) {
       validateUserId(input.userId);
     }
-    if (
-      typeof input.name !== "string" ||
-      !/^[a-z][a-z0-9_]{0,63}$/.test(input.name) ||
-      (input.source !== undefined &&
-        (typeof input.source !== "string" ||
-          input.source.length === 0 ||
-          input.source.length > 100))
-    ) {
-      return domainError("EVENT_METADATA_INVALID");
-    }
-
-    const metadata: Record<string, string | number | boolean | null> = {};
-    for (const [key, value] of Object.entries(input.metadata ?? {})) {
-      if (
-        !/^[a-z][A-Za-z0-9_]{0,63}$/.test(key) ||
-        /(code|prompt|input|ip|device|email|secret|token)/i.test(key) ||
-        !(
-          value === null ||
-          typeof value === "string" ||
-          typeof value === "number" ||
-          typeof value === "boolean"
-        ) ||
-        (typeof value === "string" && value.length > 200) ||
-        (typeof value === "number" && !Number.isFinite(value))
-      ) {
-        return domainError("EVENT_METADATA_INVALID");
-      }
-      metadata[key] = value;
-    }
+    const validated = validateCampaignEventInput(
+      input as unknown as {
+        name: unknown;
+        source?: unknown;
+        metadata?: unknown;
+      },
+    );
 
     const event: CampaignEvent = {
       id: this.nextId("event"),
       ...(input.userId === undefined ? {} : { userId: input.userId }),
-      name: input.name,
-      ...(input.source === undefined ? {} : { source: input.source }),
-      ...(Object.keys(metadata).length === 0 ? {} : { metadata }),
+      name: validated.name,
+      ...(validated.source === undefined
+        ? {}
+        : { source: validated.source }),
+      ...(validated.metadata === undefined
+        ? {}
+        : { metadata: validated.metadata }),
       createdAt: this.currentTime().toISOString(),
     };
     this.#events.push(event);

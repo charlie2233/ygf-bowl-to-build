@@ -1,5 +1,8 @@
 import type {
   CampaignEvent,
+  CampaignEventMetadata,
+  CampaignEventName,
+  CampaignEventSource,
   CreditWallet,
   SpendReservation,
   TaskSession,
@@ -73,9 +76,9 @@ export interface ListHistoryInput {
 
 export interface RecordEventInput {
   userId?: string;
-  name: string;
-  source?: string;
-  metadata?: Readonly<Record<string, string | number | boolean | null>>;
+  name: CampaignEventName;
+  source?: CampaignEventSource;
+  metadata?: Readonly<CampaignEventMetadata>;
 }
 
 export interface DashboardSnapshot {

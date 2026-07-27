@@ -68,6 +68,13 @@ describe("MemoryCampaignRepository redemption", () => {
     });
     await expect(
       repository.redeemCode({
+        code: "MISSING9",
+        userId: "user-1",
+        idempotencyKey: "redeem-user-1",
+      }),
+    ).rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+    await expect(
+      repository.redeemCode({
         code: "BOWL7K2A",
         userId: "user-2",
         idempotencyKey: "redeem-user-2",
@@ -189,6 +196,13 @@ describe("MemoryCampaignRepository spending", () => {
       providerCommittedMicroUsd: 24_000,
       providerReservedMicroUsd: 0,
     });
+    await expect(
+      repository.reserveSpend({
+        userId: "user-1",
+        idempotencyKey: "task-1",
+        providerCostMicroUsd: 30_000,
+      }),
+    ).resolves.toEqual(reservation);
 
     const refundable = await repository.reserveSpend({
       userId: "user-1",
@@ -220,6 +234,13 @@ describe("MemoryCampaignRepository spending", () => {
       providerCommittedMicroUsd: 24_000,
       providerReservedMicroUsd: 0,
     });
+    await expect(
+      repository.reserveSpend({
+        userId: "user-1",
+        idempotencyKey: "task-2",
+        providerCostMicroUsd: 10_000,
+      }),
+    ).resolves.toEqual(refundable);
   });
 
   it("refuses expired wallets and enforces the integer provider-cost cap", async () => {
@@ -368,6 +389,90 @@ describe("MemoryCampaignRepository privacy and operations", () => {
     });
   });
 
+  it("accepts only controlled event names, sources, and bounded primitive metadata", async () => {
+    const { repository } = demoRepository();
+    const safe = await repository.recordEvent({
+      name: "task_completed",
+      source: "wallet",
+      metadata: {
+        taskType: "career",
+        outcome: "success",
+        credits: 120,
+        latencyBucket: "under-30s",
+        isReturning: false,
+      },
+    });
+
+    expect(safe).toMatchObject({
+      name: "task_completed",
+      source: "wallet",
+      metadata: {
+        taskType: "career",
+        outcome: "success",
+        credits: 120,
+        latencyBucket: "under-30s",
+        isReturning: false,
+      },
+    });
+
+    const unsafe = [
+      {
+        name: "task_completed",
+        source: "203.0.113.42",
+        metadata: { taskType: "career" },
+      },
+      {
+        name: "task_completed",
+        source: "2001:db8::1",
+        metadata: { taskType: "career" },
+      },
+      {
+        name: "task_completed",
+        source: "wallet",
+        metadata: { detail: "BOWL7K2A" },
+      },
+      {
+        name: "task_completed",
+        source: "wallet",
+        metadata: { promoCode: "BOWL7K2A" },
+      },
+      {
+        name: "task_completed",
+        source: "wallet",
+        metadata: { outcome: { nested: "success" } },
+      },
+      {
+        name: "task_completed",
+        source: "wallet",
+        metadata: { arbitrary: "safe-looking" },
+      },
+      {
+        name: "task_completed",
+        source: "wallet",
+        metadata: { outcome: ["success"] },
+      },
+      {
+        name: "task_completed",
+        source: "wallet",
+        metadata: { outcome: "x".repeat(300) },
+      },
+    ] as const;
+
+    for (const event of unsafe) {
+      await expect(
+        repository.recordEvent(
+          event as unknown as RecordEventInput,
+        ),
+      ).rejects.toMatchObject({ code: "EVENT_INVALID" });
+    }
+
+    const serialized = JSON.stringify(repository);
+    expect(serialized).not.toContain("203.0.113.42");
+    expect(serialized).not.toContain("2001:db8::1");
+    expect(serialized).not.toContain("BOWL7K2A");
+    expect(serialized).not.toContain("safe-looking");
+  });
+
   it("maps malformed batch metadata to a typed domain error", async () => {
     const { repository } = demoRepository();
 
@@ -511,11 +616,39 @@ describe("Supabase campaign migration contract", () => {
     expect(sql).toMatch(
       /create policy promo_batches_admin_all[\s\S]*?public\.is_campaign_admin\(\)/i,
     );
-    expect(sql).toMatch(
-      /metadata\s+\?\|\s+array\[[\s\S]*?'prompt'[\s\S]*?'device'/i,
+    expect(functionBody("is_safe_campaign_event_payload")).toMatch(
+      /\(code\|claim\|promo\|prompt\|input\|ip\|device\|email\|secret\|token\|address\)/i,
     );
     expect(sql).not.toMatch(
       /grant\s+(?:all|insert|update|delete)[\s\S]*?\bto\s+anon\b/i,
+    );
+  });
+
+  it("preserves first snapshots, checks redemption keys before code lookup, and constrains events", () => {
+    const reserveBody = functionBody("reserve_campaign_spend");
+    const redeemBody = functionBody("redeem_campaign_code");
+    const eventValidator = functionBody(
+      "is_safe_campaign_event_payload",
+    );
+    const priorLookup = redeemBody.indexOf(
+      "and l.idempotency_key = p_idempotency_key",
+    );
+    const submittedCodeLookup = redeemBody.indexOf(
+      "where c.code_hash = p_code_hash",
+    );
+
+    expect(reserveBody.match(/'reserved'::text/g)?.length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(priorLookup).toBeGreaterThanOrEqual(0);
+    expect(submittedCodeLookup).toBeGreaterThan(priorLookup);
+    expect(redeemBody).toContain("v_prior_code_hash");
+    expect(eventValidator).toContain("set search_path = pg_catalog");
+    expect(eventValidator).toContain("jsonb_each");
+    expect(eventValidator).toContain("taskType");
+    expect(eventValidator).toContain("latencyBucket");
+    expect(sql).toMatch(
+      /check\s*\(\s*public\.is_safe_campaign_event_payload\(name,\s*source,\s*metadata\)\s*\)/i,
     );
   });
 });

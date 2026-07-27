@@ -10,7 +10,7 @@ export type CampaignErrorCode =
   | "CODE_REVOKED"
   | "CREDIT_BALANCE_INVALID"
   | "DUPLICATE_CODE"
-  | "EVENT_METADATA_INVALID"
+  | "EVENT_INVALID"
   | "IDEMPOTENCY_CONFLICT"
   | "IDEMPOTENCY_INVALID"
   | "INSUFFICIENT_CREDITS"
@@ -51,6 +51,68 @@ export type CodeState =
 export type SpendState = "reserved" | "committed" | "refunded";
 
 export type TaskType = "study" | "coding" | "career" | "pick-my-bowl";
+
+export const CAMPAIGN_EVENT_NAMES = [
+  "batch_distributed",
+  "code_validated",
+  "code_redeemed",
+  "task_started",
+  "task_completed",
+  "task_failed",
+  "partner_cta_viewed",
+  "partner_connected",
+] as const;
+
+export type CampaignEventName =
+  (typeof CAMPAIGN_EVENT_NAMES)[number];
+
+export const CAMPAIGN_EVENT_SOURCES = [
+  "direct",
+  "landing",
+  "offer",
+  "receipt-qr",
+  "counter-card",
+  "poster",
+  "creator",
+  "wallet",
+  "task",
+  "admin",
+  "staff",
+] as const;
+
+export type CampaignEventSource =
+  (typeof CAMPAIGN_EVENT_SOURCES)[number];
+
+export type CampaignEventOutcome =
+  | "success"
+  | "failure"
+  | "invalid"
+  | "expired"
+  | "revoked"
+  | "blocked"
+  | "throttled";
+
+export type CampaignLatencyBucket =
+  | "under-30s"
+  | "30-60s"
+  | "60-90s"
+  | "over-90s";
+
+export type CampaignConnectionState =
+  | "shown"
+  | "started"
+  | "connected"
+  | "failed";
+
+export interface CampaignEventMetadata {
+  taskType?: TaskType;
+  outcome?: CampaignEventOutcome;
+  count?: number;
+  credits?: number;
+  latencyBucket?: CampaignLatencyBucket;
+  connectionState?: CampaignConnectionState;
+  isReturning?: boolean;
+}
 
 export interface CreditWallet {
   id: string;
@@ -95,8 +157,8 @@ export interface TaskSession {
 export interface CampaignEvent {
   id: string;
   userId?: string;
-  name: string;
-  source?: string;
-  metadata?: Readonly<Record<string, string | number | boolean | null>>;
+  name: CampaignEventName;
+  source?: CampaignEventSource;
+  metadata?: Readonly<CampaignEventMetadata>;
   createdAt: string;
 }

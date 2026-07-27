@@ -156,29 +156,199 @@ create table public.task_sessions (
   )
 );
 
+create or replace function public.is_safe_campaign_event_payload(
+  p_name text,
+  p_source text,
+  p_metadata jsonb
+)
+returns boolean
+language plpgsql
+immutable
+set search_path = pg_catalog
+as $$
+declare
+  v_key text;
+  v_value jsonb;
+  v_text text;
+  v_count integer;
+begin
+  if p_name is null
+    or p_name <> all (
+      array[
+        'batch_distributed',
+        'code_validated',
+        'code_redeemed',
+        'task_started',
+        'task_completed',
+        'task_failed',
+        'partner_cta_viewed',
+        'partner_connected'
+      ]::text[]
+    ) then
+    return false;
+  end if;
+
+  if p_source is not null
+    and p_source <> all (
+      array[
+        'direct',
+        'landing',
+        'offer',
+        'receipt-qr',
+        'counter-card',
+        'poster',
+        'creator',
+        'wallet',
+        'task',
+        'admin',
+        'staff'
+      ]::text[]
+    ) then
+    return false;
+  end if;
+
+  if p_metadata is null
+    or pg_catalog.jsonb_typeof(p_metadata) <> 'object' then
+    return false;
+  end if;
+
+  select pg_catalog.count(*)
+  into v_count
+  from pg_catalog.jsonb_object_keys(p_metadata);
+  if v_count > 7 then
+    return false;
+  end if;
+
+  for v_key, v_value in
+    select entry.key, entry.value
+    from pg_catalog.jsonb_each(p_metadata) as entry
+  loop
+    if v_key ~* '(code|claim|promo|prompt|input|ip|device|email|secret|token|address)' then
+      return false;
+    end if;
+
+    if not (
+      (p_name = 'batch_distributed' and v_key = 'count')
+      or
+      (p_name = 'code_validated' and v_key = 'outcome')
+      or
+      (p_name = 'code_redeemed'
+        and v_key in ('outcome', 'credits', 'isReturning'))
+      or
+      (p_name = 'task_started'
+        and v_key in ('taskType', 'isReturning'))
+      or
+      (p_name = 'task_completed'
+        and v_key in (
+          'taskType',
+          'outcome',
+          'credits',
+          'latencyBucket',
+          'isReturning'
+        ))
+      or
+      (p_name = 'task_failed'
+        and v_key in ('taskType', 'outcome', 'latencyBucket'))
+      or
+      (p_name in ('partner_cta_viewed', 'partner_connected')
+        and v_key = 'connectionState')
+    ) then
+      return false;
+    end if;
+
+    if pg_catalog.jsonb_typeof(v_value) = 'string' then
+      v_text := v_value #>> '{}';
+      if pg_catalog.char_length(v_text) > 32
+        or v_text ~* '^[a-z0-9]{8}$'
+        or v_text ~ '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$'
+        or pg_catalog.strpos(v_text, ':') > 0 then
+        return false;
+      end if;
+    end if;
+
+    case v_key
+      when 'taskType' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'string'
+          or (v_value #>> '{}') <> all (
+            array[
+              'study',
+              'coding',
+              'career',
+              'pick-my-bowl'
+            ]::text[]
+          ) then
+          return false;
+        end if;
+      when 'outcome' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'string'
+          or (v_value #>> '{}') <> all (
+            array[
+              'success',
+              'failure',
+              'invalid',
+              'expired',
+              'revoked',
+              'blocked',
+              'throttled'
+            ]::text[]
+          ) then
+          return false;
+        end if;
+      when 'latencyBucket' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'string'
+          or (v_value #>> '{}') <> all (
+            array[
+              'under-30s',
+              '30-60s',
+              '60-90s',
+              'over-90s'
+            ]::text[]
+          ) then
+          return false;
+        end if;
+      when 'connectionState' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'string'
+          or (v_value #>> '{}') <> all (
+            array['shown', 'started', 'connected', 'failed']::text[]
+          ) then
+          return false;
+        end if;
+      when 'count' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'number'
+          or (v_value #>> '{}') !~ '^[0-9]+$'
+          or (v_value #>> '{}')::numeric > 10000 then
+          return false;
+        end if;
+      when 'credits' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'number'
+          or (v_value #>> '{}') !~ '^[0-9]+$'
+          or (v_value #>> '{}')::numeric > 3000 then
+          return false;
+        end if;
+      when 'isReturning' then
+        if pg_catalog.jsonb_typeof(v_value) <> 'boolean' then
+          return false;
+        end if;
+      else
+        return false;
+    end case;
+  end loop;
+
+  return true;
+end;
+$$;
+
 create table public.events (
   id uuid primary key default extensions.gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
-  name text not null
-    check (name ~ '^[a-z][a-z0-9_]{0,63}$'),
-  source text check (source is null or char_length(source) between 1 and 100),
+  name text not null,
+  source text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default pg_catalog.now(),
   retain_until timestamptz not null
     default (pg_catalog.now() + interval '90 days'),
-  check (pg_catalog.jsonb_typeof(metadata) = 'object'),
   check (
-    not (
-      metadata ?| array[
-        'code',
-        'input',
-        'prompt',
-        'secret',
-        'email',
-        'ip',
-        'device'
-      ]
-    )
+    public.is_safe_campaign_event_payload(name, source, metadata)
   ),
   check (retain_until > created_at)
 );
@@ -553,6 +723,7 @@ declare
   v_code public.promo_codes%rowtype;
   v_wallet public.wallets%rowtype;
   v_prior public.ledger_entries%rowtype;
+  v_prior_code_hash text;
   v_grant public.ledger_entries%rowtype;
   v_now timestamptz := pg_catalog.now();
 begin
@@ -575,25 +746,21 @@ begin
   where p.id = v_user_id
   for update;
 
-  select c.*
-  into v_code
-  from public.promo_codes as c
-  where c.code_hash = p_code_hash
-  for update;
-
-  if not found then
-    raise exception 'CODE_NOT_FOUND' using errcode = 'P0001';
-  end if;
-
   select l.*
   into v_prior
   from public.ledger_entries as l
   where l.user_id = v_user_id
     and l.entry_kind = 'grant'
-    and l.idempotency_key = p_idempotency_key;
+    and l.idempotency_key = p_idempotency_key
+  for update;
 
   if found then
-    if v_prior.promo_code_id <> v_code.id then
+    select c.code_hash
+    into v_prior_code_hash
+    from public.promo_codes as c
+    where c.id = v_prior.promo_code_id;
+
+    if v_prior_code_hash is distinct from p_code_hash then
       raise exception 'IDEMPOTENCY_CONFLICT' using errcode = 'P0001';
     end if;
     return query
@@ -609,6 +776,16 @@ begin
     from public.wallets as w
     where w.id = v_prior.wallet_id;
     return;
+  end if;
+
+  select c.*
+  into v_code
+  from public.promo_codes as c
+  where c.code_hash = p_code_hash
+  for update;
+
+  if not found then
+    raise exception 'CODE_NOT_FOUND' using errcode = 'P0001';
   end if;
 
   if v_code.state = 'redeemed' then
@@ -755,7 +932,7 @@ begin
       v_prior.provider_reserved_after_micro_usd,
       w.expires_at,
       v_prior.id,
-      v_prior.state
+      'reserved'::text
     from public.wallets as w
     where w.id = v_prior.wallet_id;
     return;
@@ -791,7 +968,7 @@ begin
       v_prior.provider_reserved_after_micro_usd,
       v_wallet.expires_at,
       v_prior.id,
-      v_prior.state;
+      'reserved'::text;
     return;
   end if;
 
@@ -853,7 +1030,7 @@ begin
     v_wallet.provider_reserved_micro_usd,
     v_wallet.expires_at,
     v_reservation.id,
-    v_reservation.state;
+    'reserved'::text;
 end;
 $$;
 
@@ -1266,6 +1443,11 @@ $$;
 
 revoke all on function public.redeem_campaign_code(text, text)
   from public;
+revoke all on function public.is_safe_campaign_event_payload(
+  text,
+  text,
+  jsonb
+) from public;
 revoke all on function public.reserve_campaign_spend(text, bigint)
   from public;
 revoke all on function public.commit_campaign_spend(uuid, bigint, text)
@@ -1275,6 +1457,11 @@ revoke all on function public.refund_campaign_spend(uuid, text)
 
 grant execute on function public.redeem_campaign_code(text, text)
   to authenticated, service_role;
+grant execute on function public.is_safe_campaign_event_payload(
+  text,
+  text,
+  jsonb
+) to authenticated, service_role;
 grant execute on function public.reserve_campaign_spend(text, bigint)
   to authenticated, service_role;
 grant execute on function public.commit_campaign_spend(uuid, bigint, text)

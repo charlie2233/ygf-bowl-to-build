@@ -84,9 +84,13 @@ provider calls never occur inside an RPC.
 
 Idempotency keys are scoped by user and operation. The first result stores
 balance snapshots in the ledger. An exact retry returns that first snapshot;
-reusing a key with different input returns a typed conflict. Commit and refund
-are terminal and mutually exclusive for a reservation. Partial unique indexes
-provide a second database-level defense against duplicate terminal entries.
+the reserve RPC returns the immutable `reserved` snapshot even after the
+reservation row reaches `committed` or `refunded`. Reusing a key with different
+input returns a typed conflict before new resource lookup, so a changed or
+unknown replacement code cannot change the idempotency result. Commit and
+refund are terminal and mutually exclusive for a reservation. Partial unique
+indexes provide a second database-level defense against duplicate terminal
+entries.
 
 ## Two separate ledgers
 
@@ -138,9 +142,13 @@ retention job without retaining the originating value.
 History stores task type, title, model, usage, status, provider-cost integer,
 and timestamps. Submitted task text is not part of the repository interface.
 Generated output appears only when the caller explicitly supplies
-`savedOutput`; otherwise it is absent. Event metadata rejects sensitive key
-classes and is bounded to small scalar values. Events default to a 90-day
-retention deadline, and short-lived redemption signals carry their own expiry.
+`savedOutput`; otherwise it is absent. Events use allowlisted names and sources
+plus per-event metadata keys. Metadata accepts only bounded enums, booleans, or
+safe integers; arbitrary text, nested JSON, arrays, unknown keys, claim-like
+strings, and network-address-shaped values are rejected before persistence.
+The memory validator and the database check function enforce the same
+controlled schema. Events default to a 90-day retention deadline, and
+short-lived redemption signals carry their own expiry.
 
 ## Demo and production refusal
 

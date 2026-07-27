@@ -206,7 +206,7 @@ Commit: `feat: add secure campaign ledger domain`
 - Create: `lib/content/legal.ts`
 - Create: `tests/unit/public-pages.test.tsx`
 
-- [ ] **Step 1: Write a failing public-page test**
+- [x] **Step 1: Write a failing public-page test**
 
 ```tsx
 render(<HomePage />);
@@ -216,21 +216,21 @@ expect(screen.getByText(/not affiliated with or endorsed by USC/i)).toBeVisible(
 expect(screen.getByRole("img", { name: /malatang bowl/i })).toBeVisible();
 ```
 
-- [ ] **Step 2: Run the test and verify RED**
+- [x] **Step 2: Run the test and verify RED**
 
 Run: `pnpm vitest run tests/unit/public-pages.test.tsx`
 
 Expected: FAIL because public pages and components do not exist.
 
-- [ ] **Step 3: Implement the accepted first viewport**
+- [x] **Step 3: Implement the accepted first viewport**
 
 Match `landing-first-viewport.png`: exact header, hero copy, CTAs, image crop, phone/wallet treatment, next-section preview, colors, spacing, type scale, icon metaphors, and responsive behavior. Use `next/image` for the generated food photo and code-native UI for the phone.
 
-- [ ] **Step 4: Implement downstream content and legal pages**
+- [x] **Step 4: Implement downstream content and legal pages**
 
 Match `landing-downstream.png` for the three-step rail, red busy-week band, FAQ list, and footer. Use only source-approved copy. Implement complete FAQ, promotional terms, privacy notice, creator disclosure guidance, and staff help content with the supplied disclaimers and sensitive-data warnings.
 
-- [ ] **Step 5: Verify public rendering**
+- [x] **Step 5: Verify public rendering**
 
 Run: `pnpm vitest run tests/unit/public-pages.test.tsx && pnpm lint && pnpm typecheck`
 

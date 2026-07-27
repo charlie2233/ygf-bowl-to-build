@@ -1096,7 +1096,7 @@ grant execute on function public.admit_campaign_public_validation(
       /create trigger [\s\S]*?execute function public\.set_updated_at\(\)/i,
     );
     expect(sql).toMatch(
-      /create policy promo_batches_admin_all[\s\S]*?public\.is_campaign_admin\(\)/i,
+      /create policy promo_batches_admin_select[\s\S]*?for select[\s\S]*?public\.is_campaign_admin\(\)/i,
     );
     expect(functionBody("is_safe_campaign_event_payload")).toMatch(
       /\(code\|claim\|promo\|prompt\|input\|ip\|device\|email\|secret\|token\|address\)/i,

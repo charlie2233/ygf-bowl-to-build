@@ -4,6 +4,7 @@ import {
   PENDING_CLAIM_COOKIE,
   readPendingClaim,
 } from "@/lib/auth/pending-claim";
+import { isSameOriginMutation } from "@/lib/auth/admin";
 import { getRedemptionAbuseSignal } from "@/lib/auth/request-signal";
 import { serverSecret } from "@/lib/auth/runtime";
 import { getAuthenticatedUser } from "@/lib/auth/user";
@@ -14,6 +15,15 @@ import { getRedemptionAdmission } from "@/lib/repositories/redemption-admission"
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  if (!isSameOriginMutation(request)) {
+    return Response.json(
+      { error: "ORIGIN_FORBIDDEN" },
+      {
+        headers: { "cache-control": "private, no-store" },
+        status: 403,
+      },
+    );
+  }
   const cookieStore = await cookies();
   const handler = createRedemptionHandler({
     admission: getRedemptionAdmission(),

@@ -5,6 +5,7 @@ import {
   PENDING_CLAIM_COOKIE,
   PENDING_CLAIM_TTL_SECONDS,
 } from "@/lib/auth/pending-claim";
+import { isSameOriginMutation } from "@/lib/auth/admin";
 import {
   getPublicValidationAbuseSignal,
 } from "@/lib/auth/request-signal";
@@ -13,6 +14,10 @@ import { getAuthenticatedUser } from "@/lib/auth/user";
 import { normalizeCode } from "@/lib/campaign/code";
 import { getCampaignRepository } from "@/lib/repositories";
 import { getPublicValidationAdmission } from "@/lib/repositories/public-validation-admission";
+import {
+  BoundedBodyError,
+  readBoundedRequestText,
+} from "@/lib/admin/http";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +25,8 @@ interface ValidationBody {
   code?: unknown;
   termsAccepted?: unknown;
 }
+
+const MAX_VALIDATION_BODY_BYTES = 512;
 
 function validationResponse(
   eligible: boolean,
@@ -35,11 +42,46 @@ function validationResponse(
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginMutation(request)) {
+    return validationResponse(false, 403);
+  }
+
   let body: ValidationBody;
   try {
-    body = (await request.json()) as ValidationBody;
-  } catch {
-    return validationResponse(false, 400);
+    const mediaType =
+      request.headers
+        .get("content-type")
+        ?.split(";", 1)[0]
+        ?.trim()
+        .toLowerCase() ?? "";
+    if (mediaType !== "application/json") {
+      return validationResponse(false, 400);
+    }
+    const parsed = JSON.parse(
+      await readBoundedRequestText(
+        request,
+        MAX_VALIDATION_BODY_BYTES,
+      ),
+    ) as unknown;
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed) ||
+      Object.keys(parsed).some(
+        (key) => key !== "code" && key !== "termsAccepted",
+      )
+    ) {
+      return validationResponse(false, 400);
+    }
+    body = parsed as ValidationBody;
+  } catch (error) {
+    return validationResponse(
+      false,
+      error instanceof BoundedBodyError &&
+        error.code === "BODY_TOO_LARGE"
+        ? 413
+        : 400,
+    );
   }
 
   if (body.termsAccepted !== true || typeof body.code !== "string") {

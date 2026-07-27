@@ -87,6 +87,7 @@ function createHarness({
   return {
     clearPendingClaim,
     finish,
+    handle: handler,
     redeem,
     repository,
     setNow(value: Date) {
@@ -141,6 +142,26 @@ describe("redemption API boundary", () => {
     ).resolves.toMatchObject({ userId: "verified-user" });
     await expect(
       repository.getWallet({ userId: "attacker-selected-user" }),
+    ).rejects.toMatchObject({ code: "WALLET_NOT_FOUND" });
+  });
+
+  it("rejects non-JSON and oversized bodies before any redemption mutation", async () => {
+    const harness = createHarness();
+    const nonJson = await harness.handle(
+      new Request("https://build.ygf.example/api/redeem", {
+        body: "{}",
+        headers: { "content-type": "text/plain" },
+        method: "POST",
+      }),
+    );
+    const oversized = await harness.redeem({
+      filler: "x".repeat(256),
+    });
+
+    expect(nonJson.status).toBe(400);
+    expect(oversized.status).toBe(413);
+    await expect(
+      harness.repository.getWallet({ userId: "demo-user" }),
     ).rejects.toMatchObject({ code: "WALLET_NOT_FOUND" });
   });
 

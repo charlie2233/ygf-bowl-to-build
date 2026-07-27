@@ -54,7 +54,10 @@ export function resolveAuthRuntime(
 }
 
 export function serverSecret(
-  name: "YGF_ABUSE_SIGNAL_SECRET" | "YGF_CLAIM_COOKIE_SECRET",
+  name:
+    | "YGF_ABUSE_SIGNAL_SECRET"
+    | "YGF_CLAIM_COOKIE_SECRET"
+    | "YGF_TASK_FINGERPRINT_SECRET",
   environment: RuntimeEnvironment = process.env,
   nodeEnvironment = process.env.NODE_ENV,
 ) {

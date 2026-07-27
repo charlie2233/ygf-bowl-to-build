@@ -25,13 +25,13 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html data-scroll-behavior="smooth" lang="en">
       <body>
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
         <SiteHeader />
-        <main className="app-main" id="main-content">
+        <main className="app-main" id="main-content" tabIndex={-1}>
           {children}
         </main>
       </body>

@@ -166,6 +166,77 @@ dollars ($0.25) for one wallet. Integer columns and functions are ledger
 authority; floating-point dollar values are not accepted for limits or state
 transitions.
 
+## Distributed task execution
+
+Production task idempotency and request admission are shared database state,
+not an application-process cache. `task_executions` stores only an
+HMAC-SHA-256 request fingerprint, selected task/model metadata, a short owner
+lease, bounded replay output, terminal session/balance metadata, and expiry.
+It never stores submitted prompt text.
+
+`begin_campaign_task_execution` takes a per-user advisory lock and returns one
+of five states:
+
+- `owner`: this caller owns a 90-second execution lease;
+- `running`: an exact request is already executing elsewhere;
+- `completed` or `failed`: return the bounded terminal result without another
+  provider call; or
+- `throttled`: the account has already started eight tasks in the rolling
+  minute.
+
+Reusing an idempotency key with different task, model, cost ceiling, or request
+fingerprint is a conflict. A stale running lease may be reclaimed, while an
+unexpired lease may not. After the external provider returns,
+`terminalize_campaign_task_execution` accepts only the matching execution
+owner and matching reservation. In one database transaction it commits the
+actual bounded provider cost or refunds the reservation, inserts the immutable
+task session, and stores the terminal execution result plus balance snapshot
+for 15-minute replay. The legacy standalone commit/refund RPCs reject
+reservations owned by a task execution, so a caller cannot split this terminal
+transition back into partial writes.
+
+The application reserves Build Credits before inference. The provider receives
+the database execution identifier as an upstream idempotency key when
+supported. Cross-instance retries are therefore safe at the database execution,
+wallet, ledger, session, and replay boundaries. No database transaction can
+include an external provider: a process failure after a provider accepts a
+request but before terminalization may cause another provider attempt after
+the lease expires unless that provider honors the idempotency key. Live
+concurrency, provider-idempotency, and failure-injection smoke against the
+chosen Supabase project and provider remain deployment gates.
+
+Demo mode intentionally uses a bounded in-memory limiter/result cache behind
+the same `runTask` contract. Production always selects the Supabase execution
+RPCs; it does not treat the process-local cache as distributed authority.
+
+## Admin batch boundary
+
+Only an authorized campaign administrator may create, activate, or revoke
+inventory.
+Admin identity comes from exact `app_metadata.role=admin` claims or a
+server-only exact email allowlist. Every mutation enforces same-origin
+requests, bounded JSON, no-store responses, and a server-derived operator.
+
+Batch generation uses cryptographic randomness, returns plaintext exactly once
+as a private download, and inserts only SHA-256 claim digests plus non-secret
+row references. A service-role-only `SECURITY DEFINER` RPC verifies the
+operator against `profiles.campaign_role`, then atomically creates the pending
+batch, pending code rows, and idempotency record. Pending claims are
+indistinguishable from unknown claims at redemption.
+
+After the manager confirms the private file is safely stored, a second
+idempotent RPC atomically marks every pending code eligible, activates the
+batch, and records the single distribution event. Revocation accepts only a
+row reference and atomically updates the claim plus its mutation audit. Direct
+authenticated writes to batch and code tables are not granted. Live migration
+execution, concurrent request replay, and interruption testing against the
+chosen Supabase project remain deployment gates.
+
+Private offline files must resolve under ignored `private/`, reject symlinks
+and overwrite, and use restricted permissions. Public campaign QRs contain no
+claim. Private claim artwork pairs the same normalized human-readable value
+with `/redeem#code=<same-value>`.
+
 ## Database authorization
 
 Every campaign table has RLS enabled and forced. Authenticated users receive

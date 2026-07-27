@@ -13,7 +13,13 @@ import type {
   RedemptionResult,
 } from "@/lib/repositories/campaign-repository";
 import type { PendingClaim } from "@/lib/auth/pending-claim";
+import {
+  BoundedBodyError,
+  readBoundedRequestText,
+} from "@/lib/admin/http";
 import { toBrowserWallet } from "@/lib/http/campaign-dto";
+
+const MAX_REDEMPTION_BODY_BYTES = 128;
 
 interface AuthenticatedUser {
   id: string;
@@ -57,6 +63,24 @@ function parseBody(value: unknown): Record<string, never> | null {
   }
 
   return {};
+}
+
+async function readRequestBody(request: Request): Promise<unknown> {
+  const mediaType =
+    request.headers
+      .get("content-type")
+      ?.split(";", 1)[0]
+      ?.trim()
+      .toLowerCase() ?? "";
+  if (mediaType !== "application/json") {
+    throw new BoundedBodyError("BODY_INVALID");
+  }
+  return JSON.parse(
+    await readBoundedRequestText(
+      request,
+      MAX_REDEMPTION_BODY_BYTES,
+    ),
+  ) as unknown;
 }
 
 function mapCampaignError(code: CampaignErrorCode): MappedCampaignError {
@@ -150,9 +174,15 @@ export function createRedemptionHandler({
 
     let parsedBody: Record<string, never> | null = null;
     try {
-      parsedBody = parseBody(await request.json());
-    } catch {
-      return errorResponse("INVALID_REDEMPTION_REQUEST", 400);
+      parsedBody = parseBody(await readRequestBody(request));
+    } catch (error) {
+      return errorResponse(
+        "INVALID_REDEMPTION_REQUEST",
+        error instanceof BoundedBodyError &&
+          error.code === "BODY_TOO_LARGE"
+          ? 413
+          : 400,
+      );
     }
     if (!parsedBody) {
       return errorResponse("INVALID_REDEMPTION_REQUEST", 400);

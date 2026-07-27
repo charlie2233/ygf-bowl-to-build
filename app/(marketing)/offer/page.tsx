@@ -33,7 +33,7 @@ export default function OfferPage() {
           <p className="campaign-page__microcopy">{uscShortDisclaimer}</p>
         </div>
       </section>
-      <HowItWorks />
+      <HowItWorks eagerImage />
       <section className="offer-fine-print">
         <div className="container">
           <h2>Offer details</h2>

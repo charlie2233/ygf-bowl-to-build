@@ -40,7 +40,11 @@ function BusyWeekIllustration() {
   );
 }
 
-export function HowItWorks() {
+export function HowItWorks({
+  eagerImage = true,
+}: {
+  eagerImage?: boolean;
+} = {}) {
   return (
     <>
       <section
@@ -60,6 +64,7 @@ export function HowItWorks() {
             <Image
               alt=""
               fill
+              loading={eagerImage ? "eager" : "lazy"}
               sizes="(max-width: 760px) 100vw, 48vw"
               src="/media/malatang-hero.png"
             />

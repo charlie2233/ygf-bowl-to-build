@@ -332,7 +332,7 @@ Commit: `feat: add atomic redemption and wallet`
 - Create: `tests/integration/run-task.test.ts`
 - Create: `tests/unit/task-shell.test.tsx`
 
-- [ ] **Step 1: Write failing workflow tests**
+- [x] **Step 1: Write failing workflow tests**
 
 ```ts
 it.each(["study", "coding", "career", "pick-my-bowl"] as const)(
@@ -357,29 +357,29 @@ it("defaults to the task-recommended model and rejects models outside the allowl
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `pnpm vitest run tests/unit/task-presets.test.ts tests/unit/model-catalog.test.ts tests/integration/run-task.test.ts tests/unit/task-shell.test.tsx`
 
 Expected: FAIL because task modules do not exist.
 
-- [ ] **Step 3: Implement task content and safety**
+- [x] **Step 3: Implement task content and safety**
 
 Provide four exact preset sets from the report. Enforce 1–12,000 character text-only input. Include accuracy review language on every task, the food/allergen confirmation warning for Pick My Bowl, and no current-price promise.
 
-- [ ] **Step 4: Implement providers and spend orchestration**
+- [x] **Step 4: Implement providers and spend orchestration**
 
 The provider interface returns output, input/output token use, request ID, model, and optional USD estimate. Define a small server-owned model catalog with friendly capability labels, per-task defaults, and exact provider IDs; do not fetch or expose an unbounded provider catalog. The demo provider returns deterministic useful structured output. The OpenRouter-compatible adapter uses server-only credentials, timeout/abort, no debug echo, attribution headers, safe error mapping, and model allowlisting.
 
-- [ ] **Step 5: Implement reserve-call-commit/refund**
+- [x] **Step 5: Implement reserve-call-commit/refund**
 
 Derive the user server-side, apply per-user request and USD limits, reserve 120 credits with an idempotency key, call the provider once, then commit or refund. Never store raw input unless the user explicitly saves the result. Duplicate idempotency keys return the first result.
 
-- [ ] **Step 6: Implement task and history UI**
+- [x] **Step 6: Implement task and history UI**
 
 Match `task-study-success.png` with a two-column desktop workspace and one-column mobile flow. Keep the default generation path model-free; the optional advanced selector uses friendly labels and explains that all choices spend the same 120 beta credits. Partner CTA renders only when at least one session completed. History lists metadata and only explicitly saved outputs.
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 Run: `pnpm vitest run tests/unit/task-presets.test.ts tests/unit/model-catalog.test.ts tests/integration/run-task.test.ts tests/unit/task-shell.test.tsx`
 
@@ -399,12 +399,12 @@ Commit: `feat: add four credit-backed AI workflows`
 - Create: `app/api/events/route.ts`
 - Create: `components/admin/metric-summary.tsx`
 - Create: `components/admin/code-batch-form.tsx`
-- Create: `scripts/generate-codes.mts`
+- Create: `scripts/render-private-claims.mts`
 - Create: `tests/unit/metrics.test.ts`
 - Create: `tests/integration/admin-api.test.ts`
 - Create: `tests/integration/generate-codes.test.ts`
 
-- [ ] **Step 1: Write failing authorization and metrics tests**
+- [x] **Step 1: Write failing authorization and metrics tests**
 
 ```ts
 it("rejects a non-admin code-batch request", async () => {
@@ -422,25 +422,25 @@ it("computes the beta funnel from distinct users", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `pnpm vitest run tests/unit/metrics.test.ts tests/integration/admin-api.test.ts tests/integration/generate-codes.test.ts`
 
 Expected: FAIL because admin and analytics modules do not exist.
 
-- [ ] **Step 3: Implement admin authorization and APIs**
+- [x] **Step 3: Implement admin authorization and APIs**
 
 Require `app_metadata.role=admin` or an exact server-side allowlist. Batch creation accepts 1–3,000 codes, returns plaintext exactly once to a private CSV download, stores only hashes, records operator and batch source, and supports revocation with an audit event.
 
-- [ ] **Step 4: Implement the generator**
+- [x] **Step 4: Implement the generator**
 
 Generate cryptographically random unambiguous eight-character codes, reject duplicates, write CSV only under an explicit `--out private/...` path, and print only the destination/count—not codes—to stdout.
 
-- [ ] **Step 5: Implement dashboard metrics**
+- [x] **Step 5: Implement dashboard metrics**
 
 Report distributed, redeemed, first-task activated, returned, partner-connected, remaining credits, provider cost, error rate, and source attribution. Use accessible tables and summary values; do not invent a chart where a number/table is clearer.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `pnpm vitest run tests/unit/metrics.test.ts tests/integration/admin-api.test.ts tests/integration/generate-codes.test.ts`
 
@@ -468,7 +468,7 @@ Commit: `feat: add campaign admin and analytics`
 - Create: `docs/design/fidelity-ledger.md`
 - Create: `tests/integration/campaign-assets.test.ts`
 
-- [ ] **Step 1: Write a failing asset-contract test**
+- [x] **Step 1: Write a failing asset-contract test**
 
 ```ts
 it.each([
@@ -483,25 +483,25 @@ it.each([
 });
 ```
 
-- [ ] **Step 2: Run the test and verify RED**
+- [x] **Step 2: Run the test and verify RED**
 
 Run: `pnpm vitest run tests/integration/campaign-assets.test.ts`
 
 Expected: FAIL because campaign outputs do not exist.
 
-- [ ] **Step 3: Implement deterministic vector assets**
+- [x] **Step 3: Implement deterministic vector assets**
 
 Rebuild Poster Concept A with the generated beta bowl image, code-native/vector text, line icons, and a real public campaign QR that resolves to `/offer?utm_source=<asset>`. Separately, make the private code-batch generator emit print-ready claim rows containing both the human-readable code and a QR resolving to `/redeem#code=<same-code>`; plaintext claim outputs remain ignored under `private/` and are never committed. Preserve required quiet zones and add the complete fine print. Derive the specified poster, counter, feed, story, and horizontal sizes from one tokenized renderer.
 
-- [ ] **Step 4: Render and visually inspect PDFs**
+- [x] **Step 4: Render and visually inspect PDFs**
 
 Render the 24x36 poster and 5x7 card to PDF, then use `pdftoppm` and `view_image` to verify scannability, crop, hierarchy, fine-print legibility, and absence of clipping or black squares. Use an actual QR decoder in the test to confirm the URL.
 
-- [ ] **Step 5: Write complete operations docs**
+- [x] **Step 5: Write complete operations docs**
 
 Document checkout qualification, paired text-code/claim-QR handoff, the difference between public campaign and private receipt QRs, invalid/used/expired handling, manager-only revocation and reissue, privacy-safe escalation, 10–20-person soft-test cases, launch gates, rollback, and who must verify menu/prices, the replacement YGF photo, and external account configuration.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `pnpm vitest run tests/integration/campaign-assets.test.ts`
 
@@ -521,7 +521,7 @@ Commit: `feat: ship campaign assets and operations pack`
 - Create: `docs/release-readiness.md`
 - Update: `docs/design/fidelity-ledger.md`
 
-- [ ] **Step 1: Write failing browser tests**
+- [x] **Step 1: Write failing browser tests**
 
 ```ts
 test("offer to first useful result", async ({ page }) => {
@@ -545,17 +545,17 @@ test("receipt QR pre-fills the same claim without retaining it in the URL", asyn
 });
 ```
 
-- [ ] **Step 2: Run Playwright and verify RED**
+- [x] **Step 2: Run Playwright and verify RED**
 
 Run: `pnpm test:e2e`
 
 Expected: FAIL until demo server wiring and browser fixtures are complete.
 
-- [ ] **Step 3: Complete release documentation**
+- [x] **Step 3: Complete release documentation**
 
 `README.md` must distinguish demo, local Supabase, and production modes; include setup, migrations, auth-provider configuration, provider configuration, code generation, test commands, deployment, and secret handling. `.env.example` contains names and safe descriptions only, never sample secrets.
 
-- [ ] **Step 4: Verify the complete matrix**
+- [x] **Step 4: Verify the complete matrix**
 
 Run:
 
@@ -569,17 +569,25 @@ pnpm test:e2e
 
 Expected: all pass with no warnings that indicate broken behavior.
 
-- [ ] **Step 5: Browser/IAB fidelity QA**
+- [x] **Step 5: Browser/IAB fidelity QA**
 
 Use the built-in browser first. Verify `/`, `/offer`, typed-code and receipt-QR `/redeem` entry, `/wallet`, the default task-first path, the optional model chooser, all four task routes, `/history`, error states, legal pages, staff page, admin pages, and post-success partner gating. Capture desktop at 1536×1024 and mobile at 390×844. Use `view_image` on accepted concepts and latest screenshots in the same pass.
 
-- [ ] **Step 6: Close the fidelity ledger**
+- [x] **Step 6: Close the fidelity ledger**
 
 Record at least five concrete comparisons for copy, first-viewport composition, typography, palette, media treatment, container model, controls/icons, mobile behavior, and task state. Fix every material mismatch. Run an above-the-fold copy diff and record any external-only launch gates.
 
-- [ ] **Step 7: Final security review**
+- [x] **Step 7: Final security review**
 
 Confirm no secrets, plaintext promo batches, raw IPs, sensitive prompts, debug provider payloads, or service-role code reach client bundles/logs. Confirm authorization on every mutation and admin route, RLS on every user table, idempotency on redemption/spend, rate limits, input limits, and safe provider error mapping.
+
+Completed July 27, 2026. The deterministic 47-file working-tree review found
+three low-severity release issues and one local defense-in-depth item. The
+provider now rejects redirects, public SVG/PDF verification compares exact
+deterministic bytes, and private print output rejects nested/permissive paths.
+Focused remediation tests pass 38/38; the complete suite passes 250/250 and
+Playwright passes 41/41. See
+`docs/security/release-qa-2026-07-27.md`.
 
 - [ ] **Step 8: Commit**
 

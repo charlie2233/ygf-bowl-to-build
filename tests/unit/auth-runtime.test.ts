@@ -52,6 +52,13 @@ describe("authentication runtime", () => {
         "development",
       ),
     ).toContain("development-only");
+    expect(
+      serverSecret(
+        "YGF_TASK_FINGERPRINT_SECRET",
+        { YGF_DEMO_MODE: "true" },
+        "development",
+      ),
+    ).toContain("development-only");
   });
 });
 

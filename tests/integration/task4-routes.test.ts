@@ -22,7 +22,10 @@ function validationRequest(code: string) {
         code,
         termsAccepted: true,
       }),
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        origin: "http://localhost:3000",
+      },
       method: "POST",
     },
   );
@@ -70,6 +73,41 @@ describe("Task 4 route composition in demo mode", () => {
     );
     expect(await invalid.json()).toEqual({ eligible: false });
     expect(invalid.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("rejects cross-origin, unexpected, and oversized validation requests", async () => {
+    const crossOrigin = validationRequest("BOWL7K2A");
+    crossOrigin.headers.set("origin", "https://attacker.example");
+    expect((await validateCode(crossOrigin)).status).toBe(403);
+
+    const unexpected = validationRequest("BOWL7K2A");
+    const unexpectedBody = new Request(unexpected.url, {
+      body: JSON.stringify({
+        code: "BOWL7K2A",
+        userId: "attacker",
+        termsAccepted: true,
+      }),
+      headers: unexpected.headers,
+      method: "POST",
+    });
+    expect((await validateCode(unexpectedBody)).status).toBe(400);
+
+    const oversized = new Request(
+      "http://localhost:3000/api/code/validate",
+      {
+        body: JSON.stringify({
+          code: "BOWL7K2A",
+          filler: "x".repeat(600),
+          termsAccepted: true,
+        }),
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:3000",
+        },
+        method: "POST",
+      },
+    );
+    expect((await validateCode(oversized)).status).toBe(413);
   });
 
   it("returns a browser-safe balance from the composed route", async () => {

@@ -15,10 +15,15 @@ export interface TaskProviderInput {
   input: string;
   model: ModelCatalogEntry;
   /**
-   * A server-generated execution id used only as an upstream idempotency
-   * header. It is never derived from or exposed with prompt text.
+   * A server-generated execution id used only for upstream request
+   * correlation. OpenAI does not guarantee idempotency for this header.
    */
-  requestIdempotencyKey?: string;
+  requestTraceId?: string;
+  /**
+   * Server-derived HMAC used for provider safety controls. It is never copied
+   * from a browser-supplied user field.
+   */
+  safetyIdentifier: string;
   task: TaskDefinition;
 }
 

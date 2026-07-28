@@ -670,7 +670,7 @@ export function AgentSetup({
                       </dd>
                     </div>
                     <div>
-                      <dt>Provider spend</dt>
+                      <dt>Estimated provider spend</dt>
                       <dd>
                         {formatProviderSpend(
                           key.providerCommittedMicroUsd,

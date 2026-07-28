@@ -30,7 +30,7 @@ const FINGERPRINT_SECRET =
   "agent-gateway-test-fingerprint-secret-at-least-32-bytes";
 const ENVIRONMENT = {
   YGF_AGENT_API_KEY_DIGEST_SECRET: DIGEST_SECRET,
-  YGF_AGENT_MICRO_USD_PER_CREDIT: "84",
+  YGF_AGENT_MICRO_USD_PER_CREDIT: "1000",
   YGF_AGENT_REQUEST_FINGERPRINT_SECRET: FINGERPRINT_SECRET,
   YGF_DEMO_MODE: "true",
 };
@@ -217,9 +217,9 @@ describe("OpenAI-compatible Agent gateway", () => {
       model: "fast",
       object: "chat.completion",
       ygf: {
-        credits_used: 10,
+        credits_used: 1,
         provider_cost_micro_usd: 840,
-        remaining_credits: 2990,
+        remaining_credits: 2999,
       },
     });
     expect(provider.run).toHaveBeenCalledTimes(1);
@@ -228,16 +228,16 @@ describe("OpenAI-compatible Agent gateway", () => {
     ).resolves.toMatchObject({
       providerCommittedMicroUsd: 840,
       providerReservedMicroUsd: 0,
-      remainingBalance: 2990,
+      remainingBalance: 2999,
       reservedBalance: 0,
     });
     const accounting = context.repository.inspectAccountingForTests();
     expect(accounting.requests).toEqual([
       expect.objectContaining({
-        creditsCharged: 10,
+        creditsCharged: 1,
         inputUnits: 12,
         outputUnits: 5,
-        providerCostCeilingMicroUsd: 8_000,
+        providerCostCeilingMicroUsd: 25_000,
         providerCostMicroUsd: 840,
         state: "completed",
       }),
@@ -245,16 +245,16 @@ describe("OpenAI-compatible Agent gateway", () => {
     expect(accounting.usageEntries).toHaveLength(2);
     expect(accounting.usageEntries).toEqual([
       expect.objectContaining({
-        balanceAfter: 2_904,
-        creditsDelta: -96,
+        balanceAfter: 2_975,
+        creditsDelta: -25,
         entryKind: "reserve",
-        providerCostMicroUsd: 8_000,
-        providerReservedAfterMicroUsd: 8_000,
-        reservedAfter: 96,
+        providerCostMicroUsd: 25_000,
+        providerReservedAfterMicroUsd: 25_000,
+        reservedAfter: 25,
       }),
       expect.objectContaining({
-        balanceAfter: 2_990,
-        creditsDelta: 86,
+        balanceAfter: 2_999,
+        creditsDelta: 24,
         entryKind: "commit",
         providerCommittedAfterMicroUsd: 840,
         providerCostMicroUsd: 840,
@@ -303,7 +303,7 @@ describe("OpenAI-compatible Agent gateway", () => {
           message: { content: "Connection successful." },
         },
       ],
-      ygf: { remaining_credits: 2_990 },
+      ygf: { remaining_credits: 2_999 },
     });
     expect(recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({ name: "agent_call_completed" }),
@@ -364,7 +364,7 @@ describe("OpenAI-compatible Agent gateway", () => {
 
     expect(original).toEqual(replay);
     expect(original).toMatchObject({
-      ygf: { remaining_credits: 2_989 },
+      ygf: { remaining_credits: 2_998 },
     });
     expect(provider.run).toHaveBeenCalledTimes(1);
     await expect(
@@ -372,14 +372,14 @@ describe("OpenAI-compatible Agent gateway", () => {
     ).resolves.toMatchObject({
       providerCommittedMicroUsd: 840,
       providerReservedMicroUsd: 84,
-      remainingBalance: 2_989,
+      remainingBalance: 2_998,
       reservedBalance: 1,
     });
     const commit = context.repository
       .inspectAccountingForTests()
       .usageEntries.find((entry) => entry.entryKind === "commit");
     expect(commit).toMatchObject({
-      balanceAfter: 2_989,
+      balanceAfter: 2_998,
       providerCommittedAfterMicroUsd: 840,
       providerReservedAfterMicroUsd: 84,
       reservedAfter: 1,
@@ -492,7 +492,7 @@ describe("OpenAI-compatible Agent gateway", () => {
     await expect(
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
-      providerCommittedMicroUsd: 8_000,
+      providerCommittedMicroUsd: 25_000,
       providerReservedMicroUsd: 0,
       remainingBalance: 3000,
       reservedBalance: 0,
@@ -503,18 +503,18 @@ describe("OpenAI-compatible Agent gateway", () => {
         creditsCharged: 0,
         inputUnits: 0,
         outputUnits: 0,
-        providerCostCeilingMicroUsd: 8_000,
-        providerCostMicroUsd: 8_000,
+        providerCostCeilingMicroUsd: 25_000,
+        providerCostMicroUsd: 25_000,
         state: "failed",
       }),
     ]);
     expect(accounting.usageEntries).toHaveLength(2);
     expect(accounting.usageEntries[1]).toMatchObject({
       balanceAfter: 3_000,
-      creditsDelta: 96,
+      creditsDelta: 25,
       entryKind: "refund",
-      providerCommittedAfterMicroUsd: 8_000,
-      providerCostMicroUsd: 8_000,
+      providerCommittedAfterMicroUsd: 25_000,
+      providerCostMicroUsd: 25_000,
       providerReservedAfterMicroUsd: 0,
       reservedAfter: 0,
     });
@@ -543,7 +543,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         repository: context.repository,
       }),
     ).resolves.toMatchObject({
-      ygf: { remaining_credits: 2990 },
+      ygf: { remaining_credits: 2999 },
     });
     context.setNow("2026-07-27T20:16:00.000Z");
     await expect(
@@ -560,7 +560,7 @@ describe("OpenAI-compatible Agent gateway", () => {
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
       providerCommittedMicroUsd: 840,
-      remainingBalance: 2990,
+      remainingBalance: 2999,
     });
   });
 
@@ -569,7 +569,7 @@ describe("OpenAI-compatible Agent gateway", () => {
     const { generated } = await context.createKey();
     const startedAt = context.now();
     const request = {
-      creditCeiling: 96,
+      creditCeiling: 25,
       idempotencyKey: idem("agent-stale-provider-attempt"),
       keyDigest: generated.persistence.digest,
       leaseExpiresAt: new Date(
@@ -577,7 +577,7 @@ describe("OpenAI-compatible Agent gateway", () => {
       ).toISOString(),
       modelId: chatRequest().model.providerId,
       ownerToken: randomUUID(),
-      providerCostCeilingMicroUsd: 8_000,
+      providerCostCeilingMicroUsd: 25_000,
       requestFingerprint: "a".repeat(64),
     };
     await expect(context.repository.beginRequest(request)).resolves.toMatchObject({
@@ -594,14 +594,14 @@ describe("OpenAI-compatible Agent gateway", () => {
     await expect(
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
-      providerCommittedMicroUsd: 8_000,
+      providerCommittedMicroUsd: 25_000,
       providerReservedMicroUsd: 0,
       remainingBalance: 3_000,
       reservedBalance: 0,
     });
     await expect(context.repository.listKeys("demo-user")).resolves.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ providerCommittedMicroUsd: 8_000 }),
+        expect.objectContaining({ providerCommittedMicroUsd: 25_000 }),
       ]),
     );
     const accounting = context.repository.inspectAccountingForTests();
@@ -610,8 +610,8 @@ describe("OpenAI-compatible Agent gateway", () => {
         creditsCharged: 0,
         inputUnits: 0,
         outputUnits: 0,
-        providerCostCeilingMicroUsd: 8_000,
-        providerCostMicroUsd: 8_000,
+        providerCostCeilingMicroUsd: 25_000,
+        providerCostMicroUsd: 25_000,
         state: "failed",
       }),
     ]);
@@ -621,8 +621,8 @@ describe("OpenAI-compatible Agent gateway", () => {
       "refund",
     ]);
     expect(accounting.usageEntries[1]).toMatchObject({
-      creditsDelta: 96,
-      providerCostMicroUsd: 8_000,
+      creditsDelta: 25,
+      providerCostMicroUsd: 25_000,
     });
   });
 
@@ -631,7 +631,7 @@ describe("OpenAI-compatible Agent gateway", () => {
     const { generated } = await context.createKey();
     const ownerToken = randomUUID();
     const begun = await context.repository.beginRequest({
-      creditCeiling: 96,
+      creditCeiling: 25,
       idempotencyKey: idem("agent-exact-failed-cost"),
       keyDigest: generated.persistence.digest,
       leaseExpiresAt: new Date(
@@ -639,7 +639,7 @@ describe("OpenAI-compatible Agent gateway", () => {
       ).toISOString(),
       modelId: chatRequest().model.providerId,
       ownerToken,
-      providerCostCeilingMicroUsd: 8_000,
+      providerCostCeilingMicroUsd: 25_000,
       requestFingerprint: "c".repeat(64),
     });
     const failed = (providerCostMicroUsd: number) =>
@@ -656,26 +656,26 @@ describe("OpenAI-compatible Agent gateway", () => {
       });
 
     await expect(failed(0)).rejects.toMatchObject({ code: "UNAVAILABLE" });
-    await expect(failed(7_999)).rejects.toMatchObject({
+    await expect(failed(24_999)).rejects.toMatchObject({
       code: "UNAVAILABLE",
     });
     expect(context.repository.inspectAccountingForTests()).toMatchObject({
       requests: [{ state: "running" }],
       usageEntries: [{ entryKind: "reserve" }],
     });
-    const terminal = await failed(8_000);
-    await expect(failed(8_000)).resolves.toEqual(terminal);
+    const terminal = await failed(25_000);
+    await expect(failed(25_000)).resolves.toEqual(terminal);
     const accounting = context.repository.inspectAccountingForTests();
     expect(accounting.requests).toEqual([
       expect.objectContaining({
-        providerCostMicroUsd: 8_000,
+        providerCostMicroUsd: 25_000,
         state: "failed",
       }),
     ]);
     expect(accounting.usageEntries).toHaveLength(2);
     expect(accounting.usageEntries[1]).toMatchObject({
       entryKind: "refund",
-      providerCostMicroUsd: 8_000,
+      providerCostMicroUsd: 25_000,
     });
   });
 
@@ -684,7 +684,7 @@ describe("OpenAI-compatible Agent gateway", () => {
     const { generated } = await context.createKey();
     const ownerToken = randomUUID();
     const begun = await context.repository.beginRequest({
-      creditCeiling: 96,
+      creditCeiling: 25,
       idempotencyKey: idem("agent-malformed-completed-payload"),
       keyDigest: generated.persistence.digest,
       leaseExpiresAt: new Date(
@@ -692,13 +692,13 @@ describe("OpenAI-compatible Agent gateway", () => {
       ).toISOString(),
       modelId: chatRequest().model.providerId,
       ownerToken,
-      providerCostCeilingMicroUsd: 8_000,
+      providerCostCeilingMicroUsd: 25_000,
       requestFingerprint: "f".repeat(64),
     });
 
     await expect(
       context.repository.terminalizeRequest({
-        creditsCharged: 10,
+        creditsCharged: 1,
         inputUnits: 12,
         outputUnits: 5,
         ownerToken,
@@ -714,9 +714,9 @@ describe("OpenAI-compatible Agent gateway", () => {
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
       providerCommittedMicroUsd: 0,
-      providerReservedMicroUsd: 8_000,
-      remainingBalance: 2_904,
-      reservedBalance: 96,
+      providerReservedMicroUsd: 25_000,
+      remainingBalance: 2_975,
+      reservedBalance: 25,
     });
     expect(context.repository.inspectAccountingForTests()).toMatchObject({
       requests: [{ state: "running" }],
@@ -770,7 +770,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         leaseExpiresAt: "2026-07-27T20:03:01.000Z",
         modelId: "server-model",
         ownerToken: randomUUID(),
-        providerCostCeilingMicroUsd: 250_000,
+        providerCostCeilingMicroUsd: 3_000_000,
         requestFingerprint: "d".repeat(64),
       }),
     ).rejects.toMatchObject({ code: "PROVIDER_LIMIT_REACHED" });
@@ -787,7 +787,7 @@ describe("OpenAI-compatible Agent gateway", () => {
     const accounting = context.repository.inspectAccountingForTests();
     expect(accounting.requests).toEqual([
       expect.objectContaining({
-        providerCostMicroUsd: 8_000,
+        providerCostMicroUsd: 25_000,
         state: "failed",
       }),
     ]);
@@ -807,7 +807,7 @@ describe("OpenAI-compatible Agent gateway", () => {
     await expect(
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
-      providerCommittedMicroUsd: 8_000,
+      providerCommittedMicroUsd: 25_000,
       providerReservedMicroUsd: 0,
       remainingBalance: 3_000,
       reservedBalance: 0,
@@ -826,7 +826,13 @@ describe("OpenAI-compatible Agent gateway", () => {
         throw new Error("upstream admission may have billed");
       }),
     };
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      context.setNow(
+        new Date(
+          Date.parse("2026-07-27T20:00:00.000Z") +
+            Math.floor(attempt / 12) * 61_000,
+        ).toISOString(),
+      );
       await expect(
         runAgentChat(
           {
@@ -844,7 +850,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         ),
       ).rejects.toMatchObject({ code: "UNAVAILABLE" });
     }
-    context.setNow("2026-07-27T20:01:01.000Z");
+    context.setNow("2026-07-27T20:11:00.000Z");
     await expect(
       runAgentChat(
         {
@@ -861,11 +867,11 @@ describe("OpenAI-compatible Agent gateway", () => {
         },
       ),
     ).rejects.toMatchObject({ code: "PROVIDER_LIMIT_REACHED" });
-    expect(provider.run).toHaveBeenCalledTimes(12);
+    expect(provider.run).toHaveBeenCalledTimes(120);
     await expect(
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
-      providerCommittedMicroUsd: 240_000,
+      providerCommittedMicroUsd: 3_000_000,
       providerReservedMicroUsd: 0,
       remainingBalance: 3_000,
       reservedBalance: 0,
@@ -926,7 +932,7 @@ describe("OpenAI-compatible Agent gateway", () => {
       requestId: "provider-concurrent",
     });
     await expect(owner).resolves.toMatchObject({
-      ygf: { remaining_credits: 2990 },
+      ygf: { remaining_credits: 2999 },
     });
     expect(provider.run).toHaveBeenCalledTimes(1);
   });
@@ -996,7 +1002,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         leaseExpiresAt: lease,
         modelId: "server-model",
         ownerToken: randomUUID(),
-        providerCostCeilingMicroUsd: 250_000,
+        providerCostCeilingMicroUsd: 3_000_000,
         requestFingerprint: "a".repeat(64),
       }),
     ).resolves.toMatchObject({ state: "owner" });

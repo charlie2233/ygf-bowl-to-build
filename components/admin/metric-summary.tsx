@@ -62,7 +62,6 @@ export function MetricSummary({
       "Check-in creators · rate",
       funnel(metrics.shareCardCreators, metrics.shareCardRate),
     ],
-    ["External handoff connected", wholeNumber(metrics.connected)],
     ["Active wallets", wholeNumber(activeWalletCount)],
     [
       "Build Credits remaining",

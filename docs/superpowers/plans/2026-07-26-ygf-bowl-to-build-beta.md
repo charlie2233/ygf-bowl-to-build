@@ -626,10 +626,9 @@ now** as the primary action, **Connect my Agent** as a secondary action, and
 
 Phase A delivers the complete data model, key lifecycle, demo gateway, user
 experience, tests, documentation, and print tooling. Production provider
-traffic remains fail-closed until server credentials, an approved production
-origin, migrations, provider retention/billing controls, and live smoke tests
-are installed. OpenRouter compatibility is a technical interface choice, not
-a partnership claim.
+traffic remains fail-closed until `OPENAI_API_KEY`, an approved production
+origin, migrations, OpenAI retention/billing controls, and live smoke tests
+are installed.
 
 ### Security and accounting invariants
 
@@ -641,13 +640,13 @@ a partnership claim.
 - Key expiry is the earlier of 14 days from creation and wallet expiry.
 - Every request rechecks key state, wallet ownership/expiry, scope, model,
   per-key rate/concurrency, wallet-wide concurrency, credits, and the
-  aggregate 250,000 micro-USD beta ceiling.
+  aggregate 3,000,000 micro-USD ($3.00) wallet ceiling.
 - API keys cannot invoke claim, admin, batch, event, or other-user endpoints.
 - A server-controlled micro-USD-to-credit policy reserves before provider
   work and commits actual cost; failure refunds. Idempotent retries and
   concurrent duplicates never spend twice.
-- The provider endpoint and model allowlist are server-owned. Provider
-  redirects are rejected and responses remain bounded.
+- The fixed OpenAI endpoint and model allowlist are server-owned. Redirects
+  are rejected and responses remain bounded.
 - Raw prompts, generated content, full claims, full keys, raw IP addresses,
   and complete provider payloads are not logged or used as analytics.
 - Public campaign QR, private redemption QR, API keys, and safe share links
@@ -814,3 +813,46 @@ remain green and the following are proven:
     build, asset decoder, and release checks pass.
 13. The final review finds no key leakage, quota bypass, horizontal access,
     unsafe log, RLS/service-role, or provider-proxy blocker.
+
+## July 27, 2026 addendum — OpenAI-only inference and $3 wallet budget
+
+This addendum changes the active provider and accounting target without
+rewriting the historical task record above.
+
+### Phase A — implemented and locally testable
+
+- [x] Production inference uses only the fixed OpenAI Chat Completions
+  endpoint and the server-only `OPENAI_API_KEY`; alternate provider runtime
+  selection and base-URL overrides are removed.
+- [x] Four friendly choices map to fixed OpenAI snapshots with server-owned
+  prompt, cached-prompt, and output token prices reviewed on 2026-07-27.
+- [x] Requests use bounded `max_completion_tokens`, `store:false`, `n:1`,
+  non-streaming responses, strict response validation, and a trusted-user
+  HMAC `safety_identifier`. The OpenAI `X-Client-Request-Id` is correlation,
+  not upstream idempotency.
+- [x] Usage is attributed to the authoritative user/wallet. Web tasks and all
+  personal keys share a `3,000,000` micro-USD ($3.00)
+  committed-plus-reserved provider ceiling, so extra keys cannot increase it.
+- [x] Migration `202607270006_provider_budget_3usd.sql` upgrades only the old
+  default key limit, preserves deliberately lower per-key limits, rewrites the
+  six exact active accounting functions fail-closed, and installs explicitly
+  named `$3` constraints without modifying migrations 001–005.
+- [x] The completed-task CTA now points to `/connect/agent`; the legacy
+  `/connect/openrouter` page redirects internally and the legacy event POST is
+  retired without recording a handoff or redirecting externally.
+
+### Phase B — external production gates
+
+- [ ] Apply all migrations to a disposable and then production Supabase
+  project; repeat concurrent multi-session web/Agent boundary, stale-owner,
+  and failure-settlement tests.
+- [ ] Confirm the four pinned OpenAI snapshots remain available and recheck
+  pricing before enablement.
+- [ ] Configure OpenAI project billing, the project-level hard budget/alerts,
+  and one minimal live smoke without logging a prompt, response, or key.
+- [ ] Review OpenAI data controls. `store:false` does not imply zero
+  retention; default abuse-monitoring logs may retain content for up to 30
+  days. Zero Data Retention remains a separate eligibility/configuration gate.
+- [ ] Keep `YGF_AGENT_GATEWAY_ENABLED=false` until the live success,
+  conservative-failure settlement, replay, rate/concurrency, and exact `$3`
+  wallet-boundary smokes pass.

@@ -197,8 +197,10 @@ Build Credits are a promotional consumer balance, not money:
 - credits are non-cash and never converted from provider prices.
 
 Provider cost is separate operational accounting in integer micro-US dollars.
-Committed plus reserved provider cost may never exceed `250000` micro-US
-dollars ($0.25) for one wallet. Integer columns and functions are ledger
+Committed plus reserved provider cost may never exceed `3000000` micro-US
+dollars ($3.00) for one wallet. The same wallet row aggregates web tasks and
+every personal key, so creating multiple keys cannot increase the limit.
+Integer columns and functions are ledger
 authority; floating-point dollar values are not accepted for limits or state
 transitions.
 
@@ -238,17 +240,22 @@ snapshot for 15-minute replay. The legacy standalone commit/refund RPCs reject
 reservations owned by a task execution, so a caller cannot split this terminal
 transition back into partial writes.
 
-The application reserves Build Credits before inference. The provider receives
-the database execution identifier as an upstream idempotency key when
-supported. Cross-instance retries are therefore safe at the database execution,
-wallet, ledger, session, and replay boundaries. No database transaction can
-include an external provider: a process failure after a provider accepts a
-request but before terminalization is therefore charged conservatively rather
-than redispatched. The request-time sweep only runs when that wallet sends
-later traffic, so a scheduled bounded global cleanup for wallets with no later
-traffic remains a production gate. Live concurrency, provider-idempotency,
-global-cleanup, and failure-injection smoke against the chosen Supabase project
-and provider remain deployment gates.
+The application reserves Build Credits before inference. OpenAI receives the
+database execution identifier only as `X-Client-Request-Id` trace correlation;
+that header does not provide upstream idempotency. Cross-instance retries are
+safe at the database execution, wallet, ledger, session, and replay boundaries:
+only the current owner dispatches, exact duplicates observe running/replay
+state, and an unknown post-reservation outcome is conservatively charged
+instead of redispatched. No database transaction can include an external
+provider. Agent admission tombstones at most 20 expired replay bodies from its
+own wallet, using a wallet-leading partial index and a static wallet-only
+query branch; it never walks the global expiry index on a user request. A
+separate invocation of `tombstone_expired_agent_responses(500, null)` uses a
+global expiry-leading partial index and `FOR UPDATE SKIP LOCKED` for a bounded
+idle-time pass. Installing and exercising that scheduler, proving both query
+plans with live Supabase `EXPLAIN`, plus concurrency, correlation/log tracing,
+and failure-injection smoke against Supabase and OpenAI remain deployment
+gates.
 
 Demo mode intentionally uses a bounded in-memory limiter/result cache behind
 the same `runTask` contract. Production always selects the Supabase execution
@@ -290,7 +297,8 @@ Production admission is wallet-first and atomic:
 3. atomically admit every valid-key HTTP request (models, malformed chat, and
    valid chat) to a bounded per-key minute counter, then enforce concurrency,
    wallet-wide concurrency,
-   remaining credits, per-key cost, and the wallet-wide 250,000 micro-USD cap;
+   remaining credits, per-key cost, and the wallet-wide 3,000,000 micro-USD
+   ($3.00) cap;
 4. reserve the model ceiling in credits and provider micro-US dollars;
 5. call the provider without holding a database transaction;
 6. terminalize only with the request owner token, committing actual bounded
@@ -307,9 +315,14 @@ is returned from the persisted terminal row, after canonical JSON validation,
 so the first response and exact replay share the same authoritative balance.
 The successful response payload is stored in Postgres and logically replayable
 for 15 minutes. It can contain provider text that repeats submitted input.
-After expiry it is lazily replaced with a generic tombstone; a reviewed
-indexed, bounded scheduled cleanup remains required so idle traffic cannot
-delay physical replacement. The idempotency and accounting proof remains.
+After expiry it is replaced with a generic tombstone. Admission processes no
+more than 20 expired rows from its own wallet through the
+`(wallet_id, result_expires_at, id)` partial index; the service-role-only global
+cleanup RPC processes no more than 500 rows through the
+`(result_expires_at, id)` partial index per scheduled pass with
+`FOR UPDATE SKIP LOCKED`. The scheduler remains an external production gate so
+idle traffic cannot delay physical replacement. The idempotency and accounting
+proof remains.
 
 Keys are limited to three active rows and ten creates/replacements per wallet
 per rolling 24 hours. The RPM counter is a single row per key, so over-limit
@@ -323,12 +336,32 @@ uses fixed event names with friendly model, bounded credit count, outcome,
 user ID, and timestamp only. Full keys, claims, request bodies, provider
 payloads, email, and raw network identifiers are excluded.
 
-The provider endpoint, redirect policy, API credential, model/provider mapping,
-cost ceiling, timeout, and response bounds are server-owned. Demo mode returns
-a deterministic connection response. In production the Agent provider path
-fails closed until `YGF_AGENT_GATEWAY_ENABLED=true` and a server provider key
-are both present. OpenAI compatibility and possible use of OpenRouter are
-technical choices; no provider partnership is asserted.
+The provider endpoint, redirect policy, API credential, model mapping, pricing,
+cost ceiling, timeout, and response bounds are server-owned. Production uses
+only `https://api.openai.com/v1/chat/completions` and `OPENAI_API_KEY`; base-URL
+overrides and alternate runtime providers are not accepted. Each request sends
+`store:false`, `n:1`, a bounded `max_completion_tokens`, and a 64-character
+HMAC-derived `safety_identifier` based on the trusted user ID. It never forwards
+the client `user` value. The OpenAI `X-Client-Request-Id` is trace correlation,
+not upstream idempotency; the database owner/lease and wallet-scoped request
+digest prevent duplicate dispatch locally. Demo mode returns a deterministic
+connection response. In production the Agent provider path fails closed until
+`YGF_AGENT_GATEWAY_ENABLED=true` and `OPENAI_API_KEY` are both present.
+
+OpenAI prompt, cached-prompt, and completion token counts are validated and
+converted with server-owned integer micro-USD-per-million prices using exact
+ceiling arithmetic. The ledger stores aggregate input/output units and
+provider cost by user/wallet; cached units affect the calculation without a new
+database column. Successful cost is a static-price estimate and uncertain
+post-admission failures conservatively book the request ceiling; neither value
+is invoice truth. The pinned snapshots and prices were reviewed on 2026-07-27
+and remain a pre-launch availability/pricing verification gate.
+
+`store:false` disables Chat Completions application-state storage; it is not a
+zero-retention promise. Default abuse-monitoring logs may retain content for up
+to 30 days. OpenAI API data is not used for training by default unless the
+account opts in. Zero Data Retention eligibility/configuration remains an
+external gate.
 
 ## Admin batch boundary
 
@@ -397,9 +430,9 @@ retention job without retaining the originating value.
 
 Agent request rows retain a successful response payload for a logical
 15-minute idempotent replay window; the payload may echo submitted input.
-Physical tombstoning is lazy, and the repository does not claim a scheduled
-bounded cleanup is already installed. That job and an approved broader
-retention/deletion schedule are production gates.
+The shipped RPC physically tombstones a bounded indexed batch, but this
+repository does not claim a live scheduler is installed. That job and an
+approved broader retention/deletion schedule are production gates.
 
 History stores task type, title, model, usage, status, provider-cost integer,
 and timestamps. Submitted task text is not part of the repository interface.

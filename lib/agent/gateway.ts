@@ -5,12 +5,14 @@ import type {
 } from "@/lib/agent/openai-contract";
 import {
   costMicroUsdToCredits,
+  DEFAULT_MICRO_USD_PER_CREDIT,
 } from "@/lib/agent/policy";
 import { recordProductSignal } from "@/lib/analytics/product-signals";
 import {
   getAgentChatProvider,
   type AgentChatProvider,
 } from "@/lib/agent/provider";
+import { deriveSafetyIdentifier } from "@/lib/providers/openai-chat-client";
 import { serverSecret, type RuntimeEnvironment } from "@/lib/auth/runtime";
 import { fingerprintClientIdempotencyKey } from "@/lib/agent/idempotency";
 import type { RecordEventInput } from "@/lib/repositories/campaign-repository";
@@ -222,11 +224,17 @@ export async function runAgentChat(
   const creditCeiling = costMicroUsdToCredits(
     providerCostCeilingMicroUsd,
     Number(
-      environment.YGF_AGENT_MICRO_USD_PER_CREDIT ?? 84,
+      environment.YGF_AGENT_MICRO_USD_PER_CREDIT ??
+        DEFAULT_MICRO_USD_PER_CREDIT,
     ),
   );
   const startedAt = now();
   const ownerToken = randomUUID();
+  const requestFingerprintSecret = serverSecret(
+    "YGF_AGENT_REQUEST_FINGERPRINT_SECRET",
+    environment,
+    process.env.NODE_ENV,
+  );
   let execution;
   try {
     execution = await repository.beginRequest({
@@ -241,11 +249,7 @@ export async function runAgentChat(
       providerCostCeilingMicroUsd,
       requestFingerprint: fingerprint(
         input.request,
-        serverSecret(
-          "YGF_AGENT_REQUEST_FINGERPRINT_SECRET",
-          environment,
-          process.env.NODE_ENV,
-        ),
+        requestFingerprintSecret,
       ),
     });
   } catch (error) {
@@ -292,7 +296,11 @@ export async function runAgentChat(
       maxTokens: input.request.maxTokens,
       messages: input.request.messages,
       model: input.request.model,
-      requestIdempotencyKey: execution.requestId,
+      requestTraceId: execution.requestId,
+      safetyIdentifier: deriveSafetyIdentifier(
+        requestFingerprintSecret,
+        input.principal.userId,
+      ),
       temperature: input.request.temperature,
     });
     const providerCostMicroUsd =
@@ -316,7 +324,8 @@ export async function runAgentChat(
     const creditsUsed = costMicroUsdToCredits(
       providerCostMicroUsd,
       Number(
-        environment.YGF_AGENT_MICRO_USD_PER_CREDIT ?? 84,
+        environment.YGF_AGENT_MICRO_USD_PER_CREDIT ??
+          DEFAULT_MICRO_USD_PER_CREDIT,
       ),
     );
     const projectedRemaining =

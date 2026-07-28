@@ -1,4 +1,5 @@
-import { Share2 } from "lucide-react";
+import Link from "next/link";
+import { Bot } from "lucide-react";
 
 export function PartnerCta({
   eligible,
@@ -10,15 +11,15 @@ export function PartnerCta({
   }
   return (
     <aside className="partner-cta">
-      <Share2 aria-hidden="true" />
+      <Bot aria-hidden="true" />
       <div>
-        <strong>Keep building with OpenRouter</strong>
+        <strong>Connect my Agent</strong>
         <span>
-          Explore a separate external account for more models and
-          higher limits. No YGF–OpenRouter partnership is claimed.
+          Create a personal, revocable YGF API key backed by your
+          wallet’s remaining Credits.
         </span>
       </div>
-      <a href="/connect/openrouter">Connect account</a>
+      <Link href="/connect/agent">Set up Agent</Link>
     </aside>
   );
 }

@@ -109,8 +109,12 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Approve and schedule anonymous-user cleanup. Deleting unlinked anonymous
   users is not automatic, and clearing browser data makes their wallets
   unrecoverable.
-- [ ] Install an indexed, bounded scheduled Agent replay-tombstone cleanup and
-  prove it runs while the gateway is idle.
+- [ ] Schedule the service-role-only
+  `tombstone_expired_agent_responses(500, null)` Agent replay-tombstone RPC
+  and prove its indexed, bounded execution while the gateway is idle. Run live
+  `EXPLAIN` for both wallet and global branches and verify their respective
+  partial indexes. The RPC is in the migration; the live pg_cron/Supabase
+  schedule is not.
 
 - [ ] Each external account has a named YGF owner, least-privilege access,
   recovery method, and billing/usage alert. Do not put secrets in this

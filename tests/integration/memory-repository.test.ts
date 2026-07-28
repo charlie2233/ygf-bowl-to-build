@@ -250,12 +250,12 @@ describe("MemoryCampaignRepository spending", () => {
     const costly = await repository.reserveSpend({
       userId: "user-1",
       idempotencyKey: "costly-task",
-      providerCostMicroUsd: 240_000,
+      providerCostMicroUsd: 2_990_000,
     });
     await repository.commitSpend({
       userId: "user-1",
       reservationId: costly.reservation.id,
-      providerCostMicroUsd: 240_000,
+      providerCostMicroUsd: 2_990_000,
       idempotencyKey: "commit-costly-task",
     });
     await expect(

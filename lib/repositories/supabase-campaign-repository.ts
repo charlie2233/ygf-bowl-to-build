@@ -1,4 +1,5 @@
 import { hashCode } from "@/lib/campaign/code";
+import { PROVIDER_COST_CAP_MICRO_USD } from "@/lib/campaign/credits";
 import {
   type CreditWallet,
   domainError,
@@ -117,7 +118,8 @@ function hasValidWalletAccounting(
     remainingBalance + reservedBalance <= initialBalance &&
     validLedgerInteger(providerCommittedMicroUsd) &&
     validLedgerInteger(providerReservedMicroUsd) &&
-    providerCommittedMicroUsd + providerReservedMicroUsd <= 250_000
+    providerCommittedMicroUsd + providerReservedMicroUsd <=
+      PROVIDER_COST_CAP_MICRO_USD
   );
 }
 

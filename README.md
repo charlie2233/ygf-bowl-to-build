@@ -22,7 +22,7 @@ is never an API key. Provider credentials stay on the server.
 - Next.js 16 App Router application and responsive campaign UI
 - Supabase Auth/Postgres production adapter, RLS, and atomic ledger RPCs
 - deterministic local demo mode with the receipt code `BOWL7K2A`
-- OpenRouter-compatible provider adapter plus deterministic demo provider
+- fixed-endpoint OpenAI Chat Completions adapter plus deterministic demo provider
 - personal one-time-display API keys and an OpenAI-compatible `/v1` demo
   gateway with wallet-wide limits, revocation, rotation, and idempotency
 - manager-only batch, revocation, funnel, inventory, and cost operations
@@ -41,6 +41,7 @@ be committed or logged.
 - pnpm 11
 - Chromium/WebKit browsers installed by Playwright for browser verification
 - a Supabase project and CLI only when using the Supabase modes
+- an OpenAI API project with billing and project limits for live inference
 
 Install dependencies and browser engines:
 
@@ -89,8 +90,7 @@ Create a development Supabase project, then provide:
   `YGF_AGENT_API_KEY_DIGEST_SECRET` and
   `YGF_AGENT_REQUEST_FINGERPRINT_SECRET`
 - `NEXT_PUBLIC_APP_URL` and `YGF_PUBLIC_ORIGIN`
-- a server-only `YGF_PROVIDER_API_KEY` or `OPENROUTER_API_KEY`
-- optionally `YGF_PROVIDER_BASE_URL` for a reviewed HTTPS-compatible gateway
+- a server-only `OPENAI_API_KEY`
 - optionally `YGF_ADMIN_EMAIL_ALLOWLIST`
 
 Leave `YGF_DEMO_MODE` unset. Apply the migration through the Supabase CLI:
@@ -165,7 +165,7 @@ the safe prefix/last four, owner/wallet binding, scopes, limits, and lifecycle
 timestamps. Keys expire at the earlier of 14 days or wallet expiry. Every call
 rechecks key state, ownership, wallet expiry, the server model allowlist,
 per-key RPM/concurrency, wallet concurrency, remaining credits, and the
-wallet-wide $0.25 beta provider-cost ceiling. Provider failures refund user
+wallet-wide $3.00 provider-cost ceiling. Provider failures refund user
 Credits but conservatively commit the reserved provider ceiling, so a possibly
 billed upstream attempt cannot evade the wallet cap; wallet-scoped idempotency
 prevents multiple keys from charging the same request twice.
@@ -203,10 +203,22 @@ a real SDK/header/retry smoke remains a production gate.
 
 Never put a personal key in a URL, QR code, public chat, GitHub repository,
 analytics event, browser bundle, or frontend source. A redemption claim and an
-API key are separate bearer credentials. This repository uses an
-OpenAI-compatible interface and may use OpenRouter as a server-side provider;
-it does not claim an OpenRouter partnership. OAuth/PKCE is only a possible
-future account-owned integration.
+API key are separate bearer credentials. Production inference goes directly
+from the server to OpenAI’s fixed Chat Completions endpoint; neither a browser
+nor a diner can choose or override that destination.
+
+The server currently pins these OpenAI snapshots: `gpt-5.4-mini-2026-03-17`,
+`gpt-5.4-nano-2026-03-17`, `gpt-4.1-mini-2025-04-14`, and
+`gpt-5-mini-2025-08-07`. Pricing constants were checked against OpenAI’s
+standard token prices on 2026-07-27 and must be rechecked before launch.
+Displayed provider spend is an estimate from validated token usage and static
+prices; uncertain failed attempts conservatively book their ceiling, so this
+ledger is not the OpenAI invoice.
+Requests set `store:false`; this prevents Chat Completions application-state
+storage, but does not claim zero retention. OpenAI’s default abuse-monitoring
+logs may retain content for up to 30 days. API data is not used for training
+by default unless the account opts in. Zero Data Retention eligibility and
+configuration remain an external production gate.
 
 ## Private claim inventory
 
@@ -321,7 +333,7 @@ test, or approve launch. Those gates are tracked in
 - Build Credits are promotional, non-cash units; provider dollars remain in a
   separate server ledger.
 - Web presets spend exactly 120 credits. Agent requests instead convert
-  server-verified provider micro-US dollars to credits (default 84 micro-USD
+  server-verified provider micro-US dollars to credits (default 1,000 micro-USD
   per credit), reserve the model ceiling, and settle actual cost.
 - Claim values travel in a URL fragment, are removed from visible history
   before submission, and are persisted only as hashes.
@@ -337,9 +349,8 @@ test, or approve launch. Those gates are tracked in
   generation signal per wallet.
 - Pick My Bowl is general guidance only. Staff must confirm live price,
   availability, ingredients, nutrition, and allergens.
-- Partner connection is promoted only after a completed task and is not live
-  OAuth until approved credentials and terms exist; no provider partnership is
-  asserted.
+- The advanced path creates a YGF personal Agent key; no external partner
+  account is promoted in the default product flow.
 - The campaign is not sponsored, endorsed by, or administered by the
   University of Southern California.
 

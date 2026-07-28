@@ -85,7 +85,10 @@ describe("admin campaign UI", () => {
         'dl[aria-label="Campaign metric summary"]',
       ),
     ).toBeTruthy();
-    expect(document.body.querySelectorAll("dt")).toHaveLength(16);
+    expect(document.body.querySelectorAll("dt")).toHaveLength(15);
+    expect(document.body.textContent).not.toContain(
+      "External handoff connected",
+    );
     expect(document.body.textContent).toContain("Codes distributed");
     expect(document.body.textContent).toContain(
       "Build Credits remaining",

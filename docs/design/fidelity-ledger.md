@@ -108,7 +108,7 @@ fragment was removed before submission, and the rendered balance changed from
 | Controls and icons | Clear rectangular actions and simple line metaphors | Semantic buttons/links, Lucide or code-native line icons, visible focus, and no model/provider jargon on the default path | Matched |
 | Redeem state | One obvious code field, receipt cue, short path to credits | QR fragment prefills and disappears; typed code remains available; one terms check plus one confirmation completes the demo claim | Matched with stronger privacy behavior |
 | Wallet state | One dominant balance and four task shortcuts | One 3,000-credit balance, exact expiry, correct progress math, four large launch cards, advanced selector collapsed | Matched |
-| Task success | Two-column desktop composer/result and stacked mobile result with Q/A rows | Desktop and mobile preserve the same hierarchy, actions, review note, 2,880 balance, structured Q/A flashcards, and post-success partner CTA | Matched |
+| Task success | Two-column desktop composer/result and stacked mobile result with Q/A rows | Desktop and mobile preserve the same hierarchy, actions, review note, 2,880 balance, structured Q/A flashcards, and post-success YGF Agent CTA | Matched |
 | Mobile behavior | One-column flow with readable controls and result cards | 390px view has no horizontal overflow; public header compacts, task composer precedes output, cards/actions wrap without clipping | Matched |
 
 ### Intentional product clarifications
@@ -118,9 +118,9 @@ fragment was removed before submission, and the rendered balance changed from
    task, so 3,000 minus one successful task must be 2,880.
 2. The final task and wallet pages retain the shared workspace navigation so
    Wallet, History, Help, and sign-out remain consistently reachable.
-3. External-destination language explicitly states that YGF credits and
-   prompts do not transfer and that no YGF–OpenRouter partnership is claimed.
-   It does not imply that OAuth or an account connection is already live.
+3. Superseded on 2026-07-27: the external OpenRouter handoff was removed.
+   Completed tasks now link only to the first-party YGF Agent setup; the legacy
+   page redirects internally and the legacy event POST is retired.
 4. Mobile retains the complete result instead of hiding content behind an
    arbitrary “show more” control; reading order and touch targets remain
    accessible.

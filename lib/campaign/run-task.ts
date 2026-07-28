@@ -14,6 +14,7 @@ import {
   friendlyModelName,
   resolveModel,
 } from "@/lib/providers/model-catalog";
+import { deriveSafetyIdentifier } from "@/lib/providers/openai-chat-client";
 import type {
   TaskOutput,
   TaskProvider,
@@ -561,8 +562,12 @@ export async function runTask(
         input,
         model,
         ...(execution?.executionId
-          ? { requestIdempotencyKey: execution.executionId }
+          ? { requestTraceId: execution.executionId }
           : {}),
+        safetyIdentifier: deriveSafetyIdentifier(
+          dependencies.fingerprintSecret,
+          untrusted.userId,
+        ),
         task,
       });
       providerCostMicroUsd = safeProviderResult(

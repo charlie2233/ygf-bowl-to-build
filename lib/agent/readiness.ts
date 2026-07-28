@@ -8,5 +8,8 @@ export function isAgentGatewayReady(
   if (nodeEnvironment !== "production") {
     return true;
   }
-  return environment.YGF_AGENT_GATEWAY_ENABLED === "true";
+  return (
+    environment.YGF_AGENT_GATEWAY_ENABLED === "true" &&
+    Boolean(environment.OPENAI_API_KEY?.trim())
+  );
 }

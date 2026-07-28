@@ -4,7 +4,7 @@ import {
   createAdminCodeBatchHandler,
   type AdminCodeGateway,
 } from "@/app/api/admin/codes/route";
-import { createAdminBatchActivationHandler } from "@/app/api/admin/codes/[id]/activate/route";
+import { createAdminBatchActivationHandler } from "@/lib/admin/batch-activation-handler";
 import { createAdminCodeRevokeHandler } from "@/app/api/admin/codes/[id]/revoke/route";
 import { createPartnerHandoffSignalHandler } from "@/app/api/events/route";
 import type { CampaignAdminAuthorization } from "@/lib/auth/admin";
@@ -394,16 +394,8 @@ describe("admin code APIs", () => {
 });
 
 describe("partner handoff event API", () => {
-  it("records one fixed signal for the server-derived user and redirects to the fixed partner", async () => {
-    const recordSignal = vi.fn(async () => true);
-    const handler = createPartnerHandoffSignalHandler({
-      getUser: async () => ({
-        email: "student@example.com",
-        id: "student-1",
-        isAnonymous: false,
-      }),
-      recordSignal,
-    });
+  it("is retired without recording or redirecting to an external provider", async () => {
+    const handler = createPartnerHandoffSignalHandler();
     const response = await handler(
       new Request(`${ORIGIN}/api/events`, {
         headers: { origin: ORIGIN },
@@ -411,89 +403,14 @@ describe("partner handoff event API", () => {
       }),
     );
 
-    expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe(
-      "https://openrouter.ai/",
-    );
+    expect(response.status).toBe(410);
+    expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("cache-control")).toContain(
       "no-store",
     );
-    expect(recordSignal).toHaveBeenCalledOnce();
-    expect(recordSignal).toHaveBeenCalledWith("student-1");
-  });
-
-  it("rejects every caller-selected event payload before signal recording", async () => {
-    const recordSignal = vi.fn(async () => true);
-    const handler = createPartnerHandoffSignalHandler({
-      getUser: async () => ({
-        id: "student-1",
-        isAnonymous: false,
-      }),
-      recordSignal,
-    });
-
-    for (const body of [
-      {
-        metadata: { outcome: "revoked" },
-        name: "code_validated",
-        source: "admin",
-      },
-      {
-        metadata: { outcome: "failure" },
-        name: "task_failed",
-        source: "task",
-      },
-      { name: "partner_connected" },
-    ]) {
-      const response = await handler(request("/api/events", body));
-      expect(response.status).toBe(400);
-      expect(await response.json()).toEqual({
-        error: "EVENT_PAYLOAD_FORBIDDEN",
-      });
-    }
-    expect(recordSignal).not.toHaveBeenCalled();
-  });
-
-  it("requires same origin, authentication, and a completed task", async () => {
-    const recordSignal = vi.fn(async () => false);
-    const unauthenticated = createPartnerHandoffSignalHandler({
-      getUser: async () => null,
-      recordSignal,
-    });
-    const eligibleUser = createPartnerHandoffSignalHandler({
-      getUser: async () => ({
-        id: "student-1",
-        isAnonymous: false,
-      }),
-      recordSignal,
-    });
-
-    const crossOrigin = await eligibleUser(
-      new Request(`${ORIGIN}/api/events`, {
-        headers: { origin: "https://attacker.example" },
-        method: "POST",
-      }),
-    );
-    expect(crossOrigin.status).toBe(403);
-    expect(recordSignal).not.toHaveBeenCalled();
-
-    const anonymous = await unauthenticated(
-      new Request(`${ORIGIN}/api/events`, {
-        headers: { origin: ORIGIN },
-        method: "POST",
-      }),
-    );
-    expect(anonymous.status).toBe(401);
-
-    const ineligible = await eligibleUser(
-      new Request(`${ORIGIN}/api/events`, {
-        headers: { origin: ORIGIN },
-        method: "POST",
-      }),
-    );
-    expect(ineligible.status).toBe(403);
-    expect(await ineligible.json()).toEqual({
-      error: "TASK_COMPLETION_REQUIRED",
+    expect(await response.json()).toEqual({
+      error: "ENDPOINT_RETIRED",
+      next: "/connect/agent",
     });
   });
 });

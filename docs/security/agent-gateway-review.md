@@ -28,13 +28,13 @@ physical-print proof.
 | Plaintext key disclosure | 32 random bytes; full secret returned only on create/rotate; database contract stores HMAC digest, prefix, last four, binding, limits, and lifecycle only; no-store responses. |
 | Key in URL, QR, log, analytics, or client bundle | Credential-shaped query parameters are rejected; configs use Authorization; analytics schema rejects secret-like keys; public/share renderers accept no key field; provider and digest secrets are server-only. |
 | Horizontal key management | Browser identity comes from the authenticated session; RPCs receive that trusted user; revoke/rotate select by both user and key ID; list/create bind to the user's authoritative wallet. |
-| Multiple-key quota bypass | Wallet-first row locking, wallet-scoped idempotency, shared remaining credits, wallet concurrency, and the existing 250,000 micro-USD committed-plus-reserved cap apply across every key. |
+| Multiple-key quota bypass | Wallet-first row locking, wallet-scoped idempotency, shared remaining credits, wallet concurrency, and the 3,000,000 micro-USD ($3.00) committed-plus-reserved cap apply across every key and web task. |
 | Retry or concurrent double charge | Unique `(wallet_id, idempotency_key)`, request fingerprint/model/ceiling comparison, owner token, short lease, immutable usage entries, and idempotent terminalization. |
 | Concurrent keys make the response balance stale | Terminalization replaces `response.ygf.remaining_credits` with the locked post-settlement wallet value. The gateway canonicalizes JSON object keys, validates the persisted response semantically, and returns that persisted value for first response/replay parity. |
 | Provider failure evades provider cap | Ceiling is reserved before provider work; provider/validation failures and stale reserved leases refund user Credits while conservatively committing the reserved provider ceiling. Later same-user task admission drains a bounded `SKIP LOCKED` batch first and throttles while any older reserved stale row remains. |
-| Arbitrary model or provider request | Friendly server allowlist only; bounded non-streaming message contract; provider endpoint and provider IDs stay server-owned; redirects are rejected and response bytes/content/usage/cost are validated. |
-| SSRF or credential forwarding | Reviewed HTTPS provider endpoint resolution, no browser-selected endpoint, `redirect: "error"`, server-only provider Authorization, and fixed request fields. |
-| Prompt or response over-retention | The raw request prompt is not a separate column. A successful response payload is stored in Postgres for a logical 15-minute replay window and can echo input. Tombstoning is lazy; an indexed, bounded scheduled cleanup remains a production gate. |
+| Arbitrary model or provider request | Friendly server allowlist maps to four fixed OpenAI snapshots; bounded non-streaming message contract; redirects are rejected and response bytes/content/usage/cost are validated. |
+| SSRF or credential forwarding | The only live destination is the fixed OpenAI Chat Completions HTTPS endpoint; no base-URL override exists; `redirect: "error"`, server-only Authorization, and fixed request fields prevent key forwarding. |
+| Prompt or response over-retention | The raw request prompt is not a separate column. A successful response payload is stored in Postgres for a logical 15-minute replay window and can echo input. Admission tombstones at most 20 expired responses through a wallet-leading partial index; the service-role-only global branch uses a separate expiry-leading partial index plus `FOR UPDATE SKIP LOCKED` and is capped at 500 rows per scheduled pass. |
 | RLS or direct-client bypass | Agent tables have enabled and forced RLS, no public/anon/authenticated table grants, and explicit service-role-only function grants. |
 | Production accidentally serves demo/provider traffic | Demo mode is refused in production; provider-backed Agent traffic also requires explicit `YGF_AGENT_GATEWAY_ENABLED=true` plus server credentials. |
 | Secret-bearing physical output escapes | Private renderer accepts only direct ignored `private/` files, verifies the ignore rule and restrictive directory/source permissions, refuses overwrite, emits mode 0600, and keeps claims out of stdout. |
@@ -72,12 +72,16 @@ handoff:
    allowing re-execution or another charge;
 5. product analytics required a dedicated server-only writer; the writer
    reuses the strict event validator and records only fixed signals;
-6. the provider adapter rejects redirects and bounds response size/content,
-   preventing prompt-bearing requests from following an unexpected redirect.
+6. the OpenAI adapter fixes the official endpoint, rejects redirects, and
+   bounds response size/content, preventing prompt-bearing requests or the
+   credential from following an unexpected destination;
 7. a concurrent key could change the wallet after an Agent worker projected
    its balance; terminalization now patches the persisted response with the
    locked wallet value, and the gateway validates canonical JSON before
    returning it.
+8. provider cost accounting now uses validated prompt/cached/completion token
+   counts with exact integer ceiling arithmetic; cached input changes cost
+   without introducing a new prompt-retention column.
 
 ## Local evidence
 
@@ -114,17 +118,24 @@ the final commands complete.
 - Enable and test Supabase anonymous sign-in, CAPTCHA/Turnstile, manual
   Google/Apple identity linking, and anonymous cleanup. Until linking, clearing
   browser data permanently loses access to the guest wallet.
-- Install and exercise an indexed, bounded scheduled replay-tombstone cleanup;
-  the logical 15-minute window and traffic-triggered cleanup are not an
-  idle-system deletion guarantee.
+- Schedule and exercise `public.tombstone_expired_agent_responses(500, null)`
+  through a service-role job (for example, approved Supabase scheduling) while
+  the gateway is idle. The bounded RPC and both partial indexes are shipped,
+  but no live pg_cron/Supabase schedule or idle-system deletion proof is
+  claimed. Use live `EXPLAIN` to prove the wallet branch selects
+  `agent_requests_wallet_result_expiry_idx` and the null/global branch selects
+  `agent_requests_result_expiry_idx`.
 - Add and exercise a scheduled bounded global stale-reservation cleanup. The
   request-time same-user sweep prevents new spend on later traffic, but cannot
   settle a wallet that never sends another request.
 - Install independent production HMAC secrets and exercise the documented
   global key-invalidation/rotation incident process.
-- Keep the Agent gateway disabled until a reviewed provider account,
-  retention policy, billing cap/alerts, model pricing, approved HTTPS origin,
-  and one real success/refund/idempotency smoke are proven.
+- Keep the Agent gateway disabled until the OpenAI project billing/limits,
+  retention/data controls, current snapshot availability/prices, approved
+  HTTPS origin, and one real success/refund/idempotency smoke are proven.
+  `store:false` is not Zero Data Retention: default abuse-monitoring logs may
+  retain content for up to 30 days, while API data is not used for training by
+  default unless the account opts in. ZDR remains an external account gate.
 - Inspect production logs, analytics, error reporting, CDN/proxy behavior, and
   built client assets for credentials and prompt material.
 - Confirm rights for the supplied food photo or replace it, then physically

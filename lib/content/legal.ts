@@ -134,8 +134,7 @@ export const privacySections: readonly LegalSection[] = [
     title: "Sharing",
     body: [
       "Supabase processes authentication, account identifiers, and campaign database records on YGF’s behalf.",
-      "To generate a website or Agent result, YGF sends the prompt you submit and the minimum request context needed to an AI service provider. The provider processes that request to return an output. Provider credentials remain on YGF’s server.",
-      "If you choose a separate external service, that service’s terms and privacy notice apply. YGF does not claim a partnership with OpenRouter.",
+      "To generate a website or Agent result, YGF sends the prompt you submit, a non-PII HMAC safety identifier, and the minimum request context needed directly to OpenAI. OpenAI processes that request to return an output. The OpenAI credential remains on YGF’s server.",
       "The privacy and staff issue-report forms send the email and request text you enter to Formspree. Formspree may also process technical request data under its own privacy terms while delivering the message to YGF.",
     ],
   },
@@ -146,6 +145,7 @@ export const privacySections: readonly LegalSection[] = [
       "Event metadata has a 90-day retain_until default.",
       "Wallet credits expire after 14 days, but that is not the same as record deletion.",
       "Raw request prompts are not stored in a separate prompt column. Saved web outputs persist when explicitly saved.",
+      "YGF sends store:false with OpenAI Chat Completions, which disables application-state storage but is not a zero-retention promise. OpenAI's default abuse-monitoring logs may retain request content for up to 30 days. OpenAI API data is not used for training by default unless the account opts in. Zero Data Retention is not claimed as configured.",
       "A successful Agent response payload is stored in Postgres for a logical 15-minute idempotent replay window. A provider response can repeat or echo submitted input, so the replay payload can contain text derived from the request even though the raw request prompt is not stored as its own field.",
       "After the logical replay window expires, response payload tombstoning is lazy and may be delayed while the gateway is idle. A reviewed, indexed, bounded scheduled cleanup job is still a production launch gate and is not claimed as configured.",
       "Personal API key plaintext is returned only when a key is created or rotated. Only its keyed digest and non-secret display metadata persist.",

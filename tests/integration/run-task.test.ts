@@ -45,6 +45,7 @@ class SharedExecutionRepository
         idempotencyKey: string;
         modelId: string;
         ownerToken: string;
+        providerCostCeilingMicroUsd: number;
         result?: TaskExecutionResult;
         state: "running" | "completed" | "failed";
         taskType: BeginTaskExecutionInput["taskType"];
@@ -90,6 +91,8 @@ class SharedExecutionRepository
         idempotencyKey: input.idempotencyKey,
         modelId: input.modelId,
         ownerToken: input.ownerToken,
+        providerCostCeilingMicroUsd:
+          input.providerCostCeilingMicroUsd,
         state: "running",
         taskType: input.taskType,
         userId: input.userId,
@@ -202,7 +205,8 @@ class SharedExecutionRepository
     this.taskReserveCalls += 1;
     return this.base.reserveSpend({
       idempotencyKey: this.#execution.idempotencyKey,
-      providerCostMicroUsd: 12_000,
+      providerCostMicroUsd:
+        this.#execution.providerCostCeilingMicroUsd,
       userId: this.#execution.userId,
     });
   }
@@ -388,7 +392,7 @@ describe("runTask", () => {
       {
         remainingBalance: 3_000,
         reservedBalance: 0,
-        providerCommittedMicroUsd: 12_000,
+        providerCommittedMicroUsd: 70_000,
       },
     );
     const history = await repository.listHistory({
@@ -397,7 +401,7 @@ describe("runTask", () => {
     expect(history[0]).toMatchObject({
       inputUnits: 0,
       outputUnits: 0,
-      providerCostMicroUsd: 12_000,
+      providerCostMicroUsd: 70_000,
       status: "failed",
     });
     expect(JSON.stringify(history)).not.toContain("upstream payload");
@@ -452,7 +456,11 @@ describe("runTask", () => {
         throw new Error("provider failed after admission");
       },
     });
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    dependencies.rateLimiter = createTaskRateLimiter({
+      limit: 121,
+      windowMs: 60_000,
+    });
+    for (let attempt = 0; attempt < 120; attempt += 1) {
       await expect(
         runTask(
           {
@@ -478,9 +486,9 @@ describe("runTask", () => {
         dependencies,
       ),
     ).rejects.toThrow("PROVIDER_COST_LIMIT_EXCEEDED");
-    expect(run).toHaveBeenCalledTimes(12);
+    expect(run).toHaveBeenCalledTimes(120);
     await expect(repository.getWallet({ userId: "demo-user" })).resolves.toMatchObject({
-      providerCommittedMicroUsd: 240_000,
+      providerCommittedMicroUsd: 3_000_000,
       providerReservedMicroUsd: 0,
       remainingBalance: 3_000,
       reservedBalance: 0,
@@ -564,12 +572,12 @@ describe("runTask", () => {
     const { dependencies, repository, run } = await setup();
     const expensive = await repository.reserveSpend({
       idempotencyKey: "existing-expense",
-      providerCostMicroUsd: 240_000,
+      providerCostMicroUsd: 2_975_001,
       userId: "demo-user",
     });
     await repository.commitSpend({
       idempotencyKey: "existing-expense:commit",
-      providerCostMicroUsd: 240_000,
+      providerCostMicroUsd: 2_975_001,
       reservationId: expensive.reservation.id,
       userId: "demo-user",
     });

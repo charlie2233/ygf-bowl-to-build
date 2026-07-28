@@ -125,7 +125,9 @@ describe("AgentSetup", () => {
     });
     await settle();
 
-    expect(container.textContent).toContain("Provider spend");
+    expect(container.textContent).toContain(
+      "Estimated provider spend",
+    );
     expect(container.textContent).toContain("$0.0123");
     expect(container.textContent).not.toContain(API_KEY);
   });

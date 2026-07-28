@@ -6,7 +6,7 @@ import { PROVIDER_COST_CAP_MICRO_USD } from "@/lib/campaign/credits";
 
 export const AGENT_MODEL_ALLOWLIST = MODEL_CATALOG;
 
-export const DEFAULT_MICRO_USD_PER_CREDIT = 84;
+export const DEFAULT_MICRO_USD_PER_CREDIT = 1_000;
 export const AGENT_WALLET_COST_CAP_MICRO_USD =
   PROVIDER_COST_CAP_MICRO_USD;
 

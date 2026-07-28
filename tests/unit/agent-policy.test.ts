@@ -24,7 +24,7 @@ describe("Agent server policy", () => {
     expect(AGENT_MODEL_ALLOWLIST).toBe(MODEL_CATALOG);
     expect(resolveAgentModel("balanced")).toBe(MODEL_CATALOG[0]);
     expect(() =>
-      resolveAgentModel("openai/gpt-4.1-mini"),
+      resolveAgentModel("gpt-4.1-mini-2025-04-14"),
     ).toThrow("AGENT_MODEL_NOT_ALLOWED");
     expect(() => resolveAgentModel("unknown")).toThrow(
       "AGENT_MODEL_NOT_ALLOWED",
@@ -32,11 +32,11 @@ describe("Agent server policy", () => {
   });
 
   it("converts integer micro-USD cost to credits by rounding up", () => {
-    expect(DEFAULT_MICRO_USD_PER_CREDIT).toBe(84);
+    expect(DEFAULT_MICRO_USD_PER_CREDIT).toBe(1_000);
     expect(costMicroUsdToCredits(0)).toBe(0);
     expect(costMicroUsdToCredits(1)).toBe(1);
-    expect(costMicroUsdToCredits(84)).toBe(1);
-    expect(costMicroUsdToCredits(85)).toBe(2);
+    expect(costMicroUsdToCredits(1_000)).toBe(1);
+    expect(costMicroUsdToCredits(1_001)).toBe(2);
     expect(costMicroUsdToCredits(199, 100)).toBe(2);
     expect(() => costMicroUsdToCredits(-1)).toThrow(
       "AGENT_COST_POLICY_INVALID",
@@ -73,8 +73,8 @@ describe("Agent server policy", () => {
     ).toThrow("AGENT_WALLET_EXPIRED");
   });
 
-  it("shares the existing hard $0.25 wallet-wide provider cap", () => {
-    expect(AGENT_WALLET_COST_CAP_MICRO_USD).toBe(250_000);
+  it("shares the hard $3 wallet-wide provider cap", () => {
+    expect(AGENT_WALLET_COST_CAP_MICRO_USD).toBe(3_000_000);
     expect(AGENT_WALLET_COST_CAP_MICRO_USD).toBe(
       PROVIDER_COST_CAP_MICRO_USD,
     );

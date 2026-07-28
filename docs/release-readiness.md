@@ -70,7 +70,7 @@ Required behavioral evidence:
 The browser setup project is the only test that redeems a single-use demo
 code and produces the first useful result. The dependent viewport projects
 contain only reusable reads plus a cross-origin admin request that is rejected
-before mutation. Core wallet, all four task routes, history, partner,
+before mutation. Core wallet, all four task routes, history, Agent setup,
 terminal-error, and admin states receive axe and horizontal-overflow checks.
 The desktop and configured iPhone 13/WebKit evidence are complete for this
 local source state. Physical-device camera scanning, platform assistive
@@ -110,24 +110,31 @@ checkout:
 - [ ] Enable manual identity linking and prove Google/Apple upgrades preserve
   the same wallet. Configure CAPTCHA/Turnstile, edge limits, and an approved
   anonymous-user cleanup policy; none is claimed as applied by this checkout.
-- [ ] Run the indexed, bounded scheduled Agent replay cleanup while traffic is
-  idle; logical 15-minute expiry alone is not physical deletion proof.
+- [ ] Schedule the service-role-only
+  `tombstone_expired_agent_responses(500, null)` RPC and prove its indexed,
+  bounded idle-time execution. Logical 15-minute expiry alone is not physical
+  deletion proof; this checkout does not claim pg_cron/Supabase scheduling is
+  installed. Use live `EXPLAIN` to verify the wallet branch uses the
+  wallet-leading partial index and the global branch uses the expiry-leading
+  partial index.
 - [ ] Install independent production claim-cookie, abuse-signal, and task
   fingerprint secrets.
 - [ ] Install independent Agent key-digest and request-fingerprint secrets;
   test rotation with the documented incident process.
-- [ ] Install the server-only provider key and verify the allowlisted models,
+- [ ] Install the server-only `OPENAI_API_KEY`; verify project billing/limits,
+  all four pinned snapshots, current token prices, the fixed OpenAI endpoint,
   request timeout, safe error mapping, usage accounting, and billing alerts.
 - [ ] Keep `YGF_AGENT_GATEWAY_ENABLED=false` until a staging key lifecycle,
   `/v1/models`, one completion, idempotent replay, provider failure refund,
-  rate/concurrency limit, and wallet-wide $0.25 cap smoke all pass.
+  rate/concurrency limit, and wallet-wide $3.00 cap smoke all pass.
 - [ ] Confirm production logs contain no plaintext claim, raw IP, submitted
   prompt, provider credential, service-role value, or full provider payload.
 - [ ] Verify alerting and a server-side stop path for redemption and provider
   execution.
-- [ ] Keep partner OAuth disabled until credentials, scopes, terms, callback,
-  and disconnect behavior are approved. Do not represent OpenRouter or another
-  provider as a partner without a signed relationship.
+- [ ] Confirm the OpenAI API data controls for the production project.
+  `store:false` is not zero retention: default abuse-monitoring logs may retain
+  content for up to 30 days. Treat Zero Data Retention as a separate external
+  eligibility/configuration gate.
 
 ## Store and campaign launch gates
 

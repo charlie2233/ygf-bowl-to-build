@@ -48,10 +48,6 @@ test("establishes the single demo claim and first useful result", async ({
     page.getByText("3,000", { exact: true }),
   ).toBeVisible();
 
-  // Partner promotion is gated until one task has completed.
-  await page.goto("/connect/openrouter");
-  await expect(page).toHaveURL(/\/wallet$/);
-
   await page.goto("/task/study");
   await page
     .getByLabel("What are you working on?")
@@ -87,7 +83,7 @@ test("establishes the single demo claim and first useful result", async ({
     page.getByRole("button", { name: "Saved to history" }),
   ).toBeVisible();
   await expect(
-    page.getByText("Keep building with OpenRouter"),
+    page.getByText("Connect my Agent"),
   ).toBeVisible();
 
   await page.goto("/connect/agent");
@@ -130,7 +126,7 @@ test("establishes the single demo claim and first useful result", async ({
   expect((await connectionResponse).status()).toBe(200);
   await expect(
     page.getByText(
-      "Connection successful. 2,870 credits remain.",
+      "Connection successful. 2,879 credits remain.",
     ),
   ).toBeVisible();
 

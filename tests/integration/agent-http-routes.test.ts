@@ -16,7 +16,7 @@ const ENVIRONMENT = {
   NEXT_PUBLIC_APP_URL: "https://build.ygf.test",
   YGF_AGENT_API_KEY_DIGEST_SECRET:
     "agent-http-test-digest-secret-at-least-32-bytes",
-  YGF_AGENT_MICRO_USD_PER_CREDIT: "84",
+  YGF_AGENT_MICRO_USD_PER_CREDIT: "1000",
   YGF_AGENT_REQUEST_FINGERPRINT_SECRET:
     "agent-http-test-fingerprint-secret-at-least-32-bytes",
   YGF_DEMO_MODE: "true",
@@ -145,7 +145,7 @@ describe("OpenAI-compatible HTTP routes", () => {
     );
     expect(first.status).toBe(200);
     expect(first.headers.get("cache-control")).toContain("no-store");
-    expect(first.headers.get("x-ygf-remaining-credits")).toBe("2990");
+    expect(first.headers.get("x-ygf-remaining-credits")).toBe("2999");
     expect(first.headers.get("x-ygf-idempotency-key")).toBeNull();
     expect(await first.json()).toMatchObject({
       choices: [
@@ -161,12 +161,12 @@ describe("OpenAI-compatible HTTP routes", () => {
       model: "fast",
       object: "chat.completion",
       ygf: {
-        credits_used: 10,
-        remaining_credits: 2990,
+        credits_used: 1,
+        remaining_credits: 2999,
       },
     });
     expect(await replay.json()).toMatchObject({
-      ygf: { remaining_credits: 2990 },
+      ygf: { remaining_credits: 2999 },
     });
   });
 

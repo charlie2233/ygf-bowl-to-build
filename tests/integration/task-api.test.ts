@@ -306,7 +306,7 @@ describe("task API boundary", () => {
           createdAt: "2026-09-01T12:00:00.000Z",
           id: "session-1",
           inputUnits: 10,
-          model: "openai/gpt-4.1-mini",
+          model: "gpt-5.4-mini-2026-03-17",
           outputUnits: 20,
           providerCostMicroUsd: 2_400,
           reservationId: "reservation-secret",

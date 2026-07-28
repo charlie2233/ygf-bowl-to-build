@@ -22,7 +22,7 @@ test("redeemed wallet is reusable, accessible, and responsive", async ({
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("2,870", { exact: true }),
+    page.getByText("2,879", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText("4% of 3,000 credits used"),
@@ -45,7 +45,7 @@ for (const taskRoute of TASK_ROUTES) {
     await expect(
       page.getByRole("button", { name: "Generate" }),
     ).toBeVisible();
-    await expect(page.getByText("2,870 credits")).toBeVisible();
+    await expect(page.getByText("2,879 credits")).toBeVisible();
     await expectNoHorizontalOverflow(page, taskRoute.path);
     await expectNoAccessibilityViolations(page, taskRoute.path);
   });
@@ -75,20 +75,18 @@ test("saved history is reusable, accessible, and responsive", async ({
   await expectNoAccessibilityViolations(page, "/history");
 });
 
-test("completed-task partner page is reusable, accessible, and responsive", async ({
+test("legacy OpenRouter route redirects to the YGF Agent setup", async ({
   page,
 }) => {
   await page.goto("/connect/openrouter");
+  await expect(page).toHaveURL(/\/connect\/agent$/);
   await expect(
     page.getByRole("heading", {
-      name: "Keep building with OpenRouter",
+      name: "Connect your own Agent",
     }),
   ).toBeVisible();
-  await expect(
-    page.getByText("Your YGF Build Credits do not transfer"),
-  ).toBeVisible();
-  await expectNoHorizontalOverflow(page, "/connect/openrouter");
-  await expectNoAccessibilityViolations(page, "/connect/openrouter");
+  await expectNoHorizontalOverflow(page, "/connect/agent");
+  await expectNoAccessibilityViolations(page, "/connect/agent");
 });
 
 test("Agent setup is reusable, accessible, and responsive", async ({
@@ -108,7 +106,7 @@ test("Agent setup is reusable, accessible, and responsive", async ({
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("2,870", { exact: true }),
+    page.getByText("2,879", { exact: true }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, "/connect/agent");
   await expectNoAccessibilityViolations(page, "/connect/agent");

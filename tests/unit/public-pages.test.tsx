@@ -96,7 +96,7 @@ describe("public campaign pages", () => {
     const text = normalizedText(body);
 
     expect(text).toMatch(/Supabase/i);
-    expect(text).toMatch(/AI service provider/i);
+    expect(text).toMatch(/directly to OpenAI/i);
     expect(text).toMatch(/Formspree/i);
     expect(text).toMatch(/technical request data/i);
     expect(text).toMatch(/five minutes/i);
@@ -104,6 +104,8 @@ describe("public campaign pages", () => {
     expect(text).toMatch(/explicit per-record expiry/i);
     expect(text).toMatch(/14 days.*not the same as record deletion/i);
     expect(text).toMatch(/saved web outputs persist when explicitly saved/i);
+    expect(text).toMatch(/store:false.*not a zero-retention promise/i);
+    expect(text).toMatch(/abuse-monitoring logs.*up to 30 days/i);
     expect(text).toMatch(/stored in Postgres.*15-minute/i);
     expect(text).toMatch(/can repeat or echo submitted input/i);
     expect(text).toMatch(/bounded scheduled cleanup.*launch gate/i);

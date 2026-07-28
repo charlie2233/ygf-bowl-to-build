@@ -5,6 +5,11 @@ export interface ModelCatalogEntry {
   friendlyLabel: string;
   id: string;
   maxCostMicroUsd: number;
+  pricingMicroUsdPerMillion: {
+    cachedInput: number;
+    input: number;
+    output: number;
+  };
   providerId: string;
 }
 
@@ -23,29 +28,49 @@ export const MODEL_CATALOG: readonly ModelCatalogEntry[] = [
     capability: "Balanced writing and everyday reasoning",
     friendlyLabel: "Balanced guide",
     id: "balanced",
-    maxCostMicroUsd: 12_000,
-    providerId: "openai/gpt-4.1-mini",
+    maxCostMicroUsd: 70_000,
+    pricingMicroUsdPerMillion: {
+      cachedInput: 75_000,
+      input: 750_000,
+      output: 4_500_000,
+    },
+    providerId: "gpt-5.4-mini-2026-03-17",
   },
   {
     capability: "Fast drafts and lightweight tasks",
     friendlyLabel: "Fast and focused",
     id: "fast",
-    maxCostMicroUsd: 8_000,
-    providerId: "google/gemini-2.5-flash-lite",
+    maxCostMicroUsd: 25_000,
+    pricingMicroUsdPerMillion: {
+      cachedInput: 20_000,
+      input: 200_000,
+      output: 1_250_000,
+    },
+    providerId: "gpt-5.4-nano-2026-03-17",
   },
   {
     capability: "Code explanation and refactoring",
     friendlyLabel: "Coding specialist",
     id: "coding",
-    maxCostMicroUsd: 18_000,
-    providerId: "qwen/qwen3-coder",
+    maxCostMicroUsd: 35_000,
+    pricingMicroUsdPerMillion: {
+      cachedInput: 100_000,
+      input: 400_000,
+      output: 1_600_000,
+    },
+    providerId: "gpt-4.1-mini-2025-04-14",
   },
   {
     capability: "Harder multi-step reasoning",
     friendlyLabel: "Deeper reasoning",
     id: "reasoning",
-    maxCostMicroUsd: 20_000,
-    providerId: "deepseek/deepseek-r1-0528",
+    maxCostMicroUsd: 25_000,
+    pricingMicroUsdPerMillion: {
+      cachedInput: 25_000,
+      input: 250_000,
+      output: 2_000_000,
+    },
+    providerId: "gpt-5-mini-2025-08-07",
   },
 ] as const;
 

@@ -121,7 +121,7 @@ describe("TaskShell", () => {
       );
     });
     expect(container.textContent).not.toContain(
-      "Keep building with OpenRouter",
+      "Connect my Agent",
     );
 
     const textarea = container.querySelector<HTMLTextAreaElement>(
@@ -160,7 +160,7 @@ describe("TaskShell", () => {
     );
     expect(container.textContent).toContain("2,880 credits");
     expect(container.textContent).toContain(
-      "Keep building with OpenRouter",
+      "Connect my Agent",
     );
     expect(container.textContent).toMatch(
       /AI can make mistakes.*review/i,

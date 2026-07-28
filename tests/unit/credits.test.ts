@@ -84,24 +84,24 @@ describe("Build Credits", () => {
 });
 
 describe("provider USD accounting", () => {
-  it("uses integer micro-US dollars and enforces a $0.25 user ceiling", () => {
-    expect(PROVIDER_COST_CAP_MICRO_USD).toBe(250_000);
+  it("uses integer micro-US dollars and enforces a $3 user ceiling", () => {
+    expect(PROVIDER_COST_CAP_MICRO_USD).toBe(3_000_000);
     expect(
       reserveProviderCost({
-        committedMicroUsd: 200_000,
-        reservedMicroUsd: 20_000,
-        amountMicroUsd: 30_000,
+        committedMicroUsd: 2_000_000,
+        reservedMicroUsd: 200_000,
+        amountMicroUsd: 800_000,
       }),
     ).toEqual({
-      committedMicroUsd: 200_000,
-      reservedMicroUsd: 50_000,
+      committedMicroUsd: 2_000_000,
+      reservedMicroUsd: 1_000_000,
       remainingCapMicroUsd: 0,
     });
     expect(() =>
       reserveProviderCost({
-        committedMicroUsd: 200_000,
-        reservedMicroUsd: 20_000,
-        amountMicroUsd: 30_001,
+        committedMicroUsd: 2_000_000,
+        reservedMicroUsd: 200_000,
+        amountMicroUsd: 800_001,
       }),
     ).toThrow("PROVIDER_COST_LIMIT_EXCEEDED");
     expect(() =>

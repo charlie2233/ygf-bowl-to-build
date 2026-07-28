@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowLeft, Clock3, Laptop } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock3, Laptop } from "lucide-react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import {
   useEffect,
   useId,
@@ -193,6 +194,30 @@ export function RedeemForm({
     getHydratedSnapshot,
     getServerHydratedSnapshot,
   );
+  const errorMessage = errorKey ? (
+    <div
+      aria-atomic="true"
+      className={[
+        "redeem-form__message",
+        "redeem-form__message--error",
+        errorField === "terms"
+          ? "redeem-form__message--terms-popout"
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-testid={
+        errorField === "terms" ? "terms-consent-error" : undefined
+      }
+      id={errorId}
+      role="alert"
+    >
+      {errorField === "terms" ? (
+        <AlertTriangle aria-hidden="true" />
+      ) : null}
+      <span>{copy.errors[errorKey]}</span>
+    </div>
+  ) : null;
 
   useEffect(() => {
     let active = true;
@@ -447,15 +472,9 @@ export function RedeemForm({
             : copy.submit}
       </button>
 
-      {errorKey ? (
-        <p
-          className="redeem-form__message redeem-form__message--error"
-          id={errorId}
-          role="alert"
-        >
-          {copy.errors[errorKey]}
-        </p>
-      ) : null}
+      {errorMessage && errorField === "terms" && mounted
+        ? createPortal(errorMessage, document.body)
+        : errorMessage}
       {showManualAuthFallback ? (
         <p className="redeem-form__fallback">
           <Link href="/auth?next=/redeem&error=anonymous">

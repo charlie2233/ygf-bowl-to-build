@@ -102,7 +102,7 @@ export const campaignHomeCopy: Record<
       connectAgent: "Connect Agent (optional)",
       disclaimer:
         "For the USC community. Not affiliated with or endorsed by USC.",
-      imageAlt: "Overhead view of a YGF malatang bowl",
+      imageAlt: "Real YGF ingredient counter with fresh malatang choices",
       phoneAriaLabel:
         "Illustration of an AI card with a private QR and printed code; example only, not live",
       receipt: {
@@ -213,7 +213,7 @@ export const campaignHomeCopy: Record<
       claimCredits: "扫码或输入兑换码",
       connectAgent: "连接 Agent（可选）",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
-      imageAlt: "俯拍的 YGF 麻辣烫碗",
+      imageAlt: "真实的 YGF 麻辣烫新鲜食材柜台",
       phoneAriaLabel:
         "带私人二维码和纸质兑换码的 AI 算力卡示意图；仅作示例，并非真实兑换码",
       receipt: {
@@ -325,7 +325,7 @@ export const campaignHomeCopy: Record<
       connectAgent: "Agent (opcional)",
       disclaimer:
         "Para la comunidad de USC. No está afiliado ni respaldado por USC.",
-      imageAlt: "Vista cenital de un bowl de malatang de YGF",
+      imageAlt: "Mostrador real de YGF con ingredientes frescos de malatang",
       phoneAriaLabel:
         "Ilustración de una tarjeta de IA con QR privado y código impreso; es solo un ejemplo",
       receipt: {
@@ -438,7 +438,7 @@ export const campaignHomeCopy: Record<
       connectAgent: "Agent (facultatif)",
       disclaimer:
         "Pour la communauté USC. Sans affiliation ni approbation de l’USC.",
-      imageAlt: "Vue de dessus d’un bowl malatang YGF",
+      imageAlt: "Vrai comptoir YGF avec des ingrédients frais pour malatang",
       phoneAriaLabel:
         "Illustration d’une carte IA avec QR privé et code imprimé ; exemple uniquement",
       receipt: {
@@ -551,7 +551,7 @@ export const campaignHomeCopy: Record<
       connectAgent: "Agent (необязательно)",
       disclaimer:
         "Для сообщества USC. Не связано с USC и не одобрено университетом.",
-      imageAlt: "Вид сверху на боул малатан YGF",
+      imageAlt: "Настоящая витрина YGF со свежими ингредиентами для малатана",
       phoneAriaLabel:
         "Иллюстрация AI-карты с личным QR и печатным кодом; только пример",
       receipt: {

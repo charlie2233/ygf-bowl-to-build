@@ -111,10 +111,18 @@ test("claim form explains missing consent, missing code, and an unavailable code
       { exact: true },
     ),
   ).toBeVisible();
+  const consentError = page.getByTestId("terms-consent-error");
+  await expect(consentError).toBeVisible();
+  await expect(consentError).toHaveCSS("position", "fixed");
+  await expect(page).toHaveURL(/\/redeem$/);
+  await expect(
+    page.getByRole("checkbox", { name: /promotional terms/i }),
+  ).toBeFocused();
 
   await page
     .getByRole("checkbox", { name: /promotional terms/i })
     .check();
+  await expect(consentError).toHaveCount(0);
   const validationResponsePromise = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/code/validate" &&

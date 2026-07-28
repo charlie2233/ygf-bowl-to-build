@@ -111,7 +111,7 @@ against the candidate release SHA before deployment.
 | Poster PDF | 24x36 inch page, raster inspection, decoder contract | final printer stock/crop/scan |
 | Counter PDF | 5x7 inch page, raster inspection, decoder contract | counter lighting and physical scan |
 | SVG variants | deterministic copy, dimensions, quiet zones, URLs | social-platform preview |
-| Food image | generated beta fallback recorded in media ledger | rights-cleared real YGF photography |
+| Food image | sanitized user-supplied real YGF home-page photo plus generated bowl media recorded in the ledger | brand-rights approval for the real photo and approval/replacement of remaining generated collateral |
 | Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG plus full-page 300-DPI raster-only PDF review | physical registration, scratch layer, or store scan |
 | Private Agent Pass fixture | matching text/QR decoded from final PDF raster, ignored 0700/0600 no-overwrite renderer, reflected long-edge duplex sheets | real batch custody or physical fulfillment |
 | Safe check-in card | explicit SVG download with fixed public fields only | automatic social-platform upload or account identity |

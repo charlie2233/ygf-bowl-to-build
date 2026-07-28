@@ -21,9 +21,12 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   operationally correct.
 - [ ] Legal/communications owner approves the full promotional fine print,
   university disclaimer, terms, privacy notice, and creator disclosure.
-- [ ] Replace `public/media/malatang-hero.png`, currently a generated beta
-  fallback, with a **rights-cleared real YGF food photo**. Record source,
-  permission, approver, and date in the media ledger.
+- [ ] Obtain brand-owner approval for the user-supplied real YGF home-page
+  photo represented by `public/media/ygf-hero-background.jpg` and its source
+  `public/media/ygf-user-photo.png`. Approve or replace
+  `public/media/malatang-hero.png` anywhere it remains in wallet/share or
+  generated collateral. Record source, permission, approver, and date in the
+  media ledger.
 - [ ] Regenerate all assets after the photo or copy changes:
   `node scripts/render-campaign-assets.mts`.
 - [ ] For the final production origin, run the renderer and then the read-only

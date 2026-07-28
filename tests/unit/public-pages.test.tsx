@@ -42,8 +42,8 @@ describe("public campaign pages", () => {
     const agentLink = body.querySelector<HTMLAnchorElement>(
       'a[data-step="02"]',
     );
-    const bowlImage = Array.from(body.querySelectorAll("img")).find((image) =>
-      /malatang bowl/i.test(image.getAttribute("alt") ?? ""),
+    const heroImage = Array.from(body.querySelectorAll("img")).find((image) =>
+      /real ygf ingredient counter/i.test(image.getAttribute("alt") ?? ""),
     );
     const realYgfImage = Array.from(body.querySelectorAll("img")).find(
       (image) =>
@@ -62,8 +62,11 @@ describe("public campaign pages", () => {
     expect(normalizedText(body)).toMatch(/3,000 AI Credits/i);
     expect(normalizedText(body)).toMatch(/start with 01/i);
     expect(normalizedText(body)).toMatch(/agent setup is optional/i);
-    expect(bowlImage).toBeTruthy();
-    expect(bowlImage?.getAttribute("loading")).toBe("eager");
+    expect(heroImage).toBeTruthy();
+    expect(heroImage?.getAttribute("loading")).toBe("eager");
+    expect(
+      decodeURIComponent(heroImage?.getAttribute("src") ?? ""),
+    ).toContain("/media/ygf-hero-background.jpg");
     expect(
       decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
     ).toContain(

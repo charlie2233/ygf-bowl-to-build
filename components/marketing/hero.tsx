@@ -38,7 +38,7 @@ export function Hero({
         loading="eager"
         priority
         sizes="100vw"
-        src="/media/malatang-hero.png"
+        src="/media/ygf-hero-background.jpg"
       />
 
       <div className="marketing-hero__inner container">

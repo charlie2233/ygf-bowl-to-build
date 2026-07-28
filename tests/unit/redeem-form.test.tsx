@@ -216,14 +216,22 @@ describe("RedeemForm", () => {
       );
     });
     expect(submitClaim).not.toHaveBeenCalled();
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+    expect(document.querySelector('[role="alert"]')?.textContent).toBe(
       "Agree to the promotional terms and privacy notice to continue.",
     );
+    expect(
+      document
+        .querySelector('[data-testid="terms-consent-error"]')
+        ?.classList.contains("redeem-form__message--terms-popout"),
+    ).toBe(true);
     expect(document.activeElement).toBe(consent);
 
     await act(async () => {
       consent?.click();
     });
+    expect(
+      document.querySelector('[data-testid="terms-consent-error"]'),
+    ).toBeNull();
     await act(async () => {
       form?.dispatchEvent(
         new SubmitEvent("submit", { bubbles: true, cancelable: true }),

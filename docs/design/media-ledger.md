@@ -18,16 +18,30 @@ licenses or permissions that have not been supplied.
 - Visual inspection: the food display is legible at card scale and contains
   no embedded copy, QR code, API credential, university logo, or other
   visible brand mark.
-- Runtime use: the same sanitized file is the supporting photo in the
-  below-fold “From checkout to build mode” section. The home page loads it
-  lazily; the standalone offer page may load it eagerly because that section
-  appears immediately after the offer introduction.
+- Runtime use: this sanitized PNG is the supporting photo in the below-fold
+  “From checkout to build mode” section. The home page loads it lazily; the
+  standalone offer page may load it eagerly because that section appears
+  immediately after the offer introduction. A separately optimized derivative
+  is used for the home-page hero.
 - Rights status: **user-provided; pending brand-rights confirmation**. Receipt
   of the archive is not treated as a license or a representation that the
   photo is rights-cleared.
 - Launch gate: the brand owner must confirm permission for public campaign
   and physical-print use before release. If confirmation is not obtained,
   replace the photo and regenerate and re-proof every Agent Pass output.
+
+### `public/media/ygf-hero-background.jpg`
+
+- Source: metadata-free derivative of `public/media/ygf-user-photo.png`, and
+  therefore the same user-provided `IMG_2140.JPG` frame documented above.
+- Processing: center-cropped from 1600 × 1200 to 1600 × 1066, encoded as a
+  4:2:0 JPEG at 677 KiB, and exported without format metadata. The dedicated
+  filename lets the hero load eagerly without changing the below-fold image's
+  lazy-loading contract.
+- Runtime use: real-photo home-page background with controlled cover crops
+  and a cream readability overlay on desktop and mobile.
+- Rights status and launch gate: identical to the source photo above; a
+  derived file does not create or imply usage permission.
 
 ## Agent Pass production inspection
 
@@ -63,7 +77,7 @@ licenses or permissions that have not been supplied.
   proof under store lighting, verify front/back registration, and obtain
   rights confirmation before distribution.
 
-## Runtime hero
+## Generated bowl media
 
 ### `public/media/malatang-hero.png`
 
@@ -80,14 +94,16 @@ licenses or permissions that have not been supplied.
 - Supplied-media audit: the provided `南加大杨国福` materials contained a cost
   workbook, but no standalone food photograph and no photograph embedded in
   that workbook was found. A later user-provided `南加大图片.zip` archive did
-  supply real ingredient-counter media; one sanitized photo now supports the
-  below-fold web experience and Agent Pass artwork, while this generated bowl
-  remains the beta hero.
+  supply real ingredient-counter media. A sanitized derivative is now the
+  home-page background, while the PNG supports the below-fold experience and
+  Agent Pass artwork. This generated bowl remains in wallet/share and rendered
+  campaign collateral.
 - Rights status: no license or usage-rights claim is invented or inferred for
   this generated fallback.
-- Launch gate: before public launch, a manager must supply and approve a
-  rights-cleared real YGF food photograph. Replace this fallback and update
-  this ledger with the actual source and permission record.
+- Launch gate: before public launch, a manager must approve the user-supplied
+  hero photo and either approve or replace this generated bowl wherever it
+  remains in wallet/share and rendered campaign collateral. Record the actual
+  permission decision and regenerate affected outputs.
 
 ## Accepted design references
 

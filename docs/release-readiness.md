@@ -16,7 +16,7 @@ A checked local row never implies the later rows are complete.
 | --- | --- |
 | Repository | `charlie2233/ygf-bowl-to-build` |
 | Release branch | `codex/ygf-bowl-to-build-beta` |
-| Release commit | Record the verified remote SHA after the final push |
+| Release commit | Reported in the final handoff rather than embedded in its own commit |
 | Runtime | Next.js 16 / React 19 / Node.js 22+ / pnpm 11 |
 | Acceptance plan | `docs/superpowers/plans/2026-07-26-ygf-bowl-to-build-beta.md` |
 | Source research | `docs/source/` |
@@ -39,7 +39,7 @@ for each row. Until that final run is recorded, the status remains pending.
 | iPhone WebKit and axe | `pnpm exec playwright test --project=iphone-webkit` | Pass in the July 28 full matrix: 30 WebKit checks after the shared setup |
 | Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 27, 2026; no server secret variable names found in client output |
 | Complete working-tree release review | deterministic 47-file worklist and focused validation | Pass on July 27, 2026; three low findings and one defense-in-depth item remediated before checkpoint |
-| Remote identity | local SHA equals GitHub branch SHA after push | Pending final push |
+| Remote identity | local SHA equals GitHub branch SHA after push | Verified at the July 28 handoff; exact SHA is reported outside this self-referential file |
 
 Required behavioral evidence:
 

@@ -133,8 +133,11 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] For collectible cards, run
   `node scripts/render-private-agent-pass-batch.mts --input
   private/<admin-download>.csv --out private/<agent-pass-batch>.html` under the
-  same custody. Confirm direct ignored paths, 0600 files, refusal to overwrite,
-  secret-free stdout, QR/text parity, and reconciliation before activation.
+  same custody. Confirm the exact HTML, per-page Letter/A4 front/back SVG, and
+  Letter/A4 duplex-PDF bundle; direct ignored paths; a 0700 private root; 0600
+  files; refusal to overwrite; secret-free stdout/stderr; QR/text parity; and
+  reconciliation before activation. Print the portrait 2×4 PDFs at 100% with
+  long-edge duplexing and confirm the reflected backs register to their fronts.
 - [ ] Train all counter staff using the staff SOP. Managers rehearse the
   privacy-safe escalation and manager-only recovery workflow.
 - [ ] Run the documented **10-20 person** soft test and close every launch

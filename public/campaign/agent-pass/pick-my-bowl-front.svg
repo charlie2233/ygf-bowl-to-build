@@ -6,7 +6,7 @@
 <defs><image id="agent-pass-photo-source" href="../../media/ygf-user-photo.png" width="1600" height="1200"/></defs>
 <defs><clipPath id="agent-pass-photo-clip-pick-my-bowl"><rect x="382" y="0" width="474" height="540"/></clipPath></defs>
 <rect width="856" height="540" fill="#F6F0E4"/>
-<g clip-path="url(#agent-pass-photo-clip-pick-my-bowl)"><use href="#agent-pass-photo-source" transform="translate(259 0) scale(0.45)"/></g>
+<g clip-path="url(#agent-pass-photo-clip-pick-my-bowl)"><use href="#agent-pass-photo-source" transform="translate(136 0) scale(0.45)"/></g>
 <rect x="0" y="0" width="472" height="540" fill="#D84A32"/>
 <path d="M472 0 L534 0 L472 84 Z" fill="#E8B94A"/>
 <rect x="18" y="18" width="820" height="504" rx="20" fill="none" stroke="#E8B94A" stroke-width="3"/>

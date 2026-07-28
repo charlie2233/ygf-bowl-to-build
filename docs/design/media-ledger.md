@@ -40,17 +40,19 @@ licenses or permissions that have not been supplied.
   marks outside neighboring artwork.
 - PDF review: all nine PDFs were parsed successfully. Individual cards report
   242.646 × 153.071 points (85.6 × 54 mm), Letter sheets report 612 × 792
-  points, and A4 sheets report 595.276 × 841.890 points. Each PDF keeps the
-  photo and shape layer at 300 dpi while emitting campaign copy as native
-  Type 1/Type 0 PDF text; `pdffonts` and `pdftotext` confirmed both Latin and
-  Chinese text. Independent `pdftoppm` rasterization of Letter front/back
-  sheets matched the renderer previews without black boxes or missing glyphs.
+  points, and A4 sheets report 595.276 × 841.890 points. Every page is one
+  full-page, 300-DPI DeviceRGB raster: 1011×638 pixels for a card, 2550×3300
+  for Letter, and 2480×3508 for A4. `pdffonts` reports no embedded fonts and
+  structural checks reject PDF font resources and text-showing operators.
+  Independent `pdftoppm` rasterization of Letter front/back sheets matched the
+  renderer previews without black boxes or missing glyphs.
 - Protected-back review: the fixture-only private back was visually inspected
-  outside the repository. Its code and QR were also decoder-tested against
-  the same `/redeem` fragment. Shared and private backs retain the visible
-  scratch/open, scan, and start-using sequence plus
-  `刮开后请勿拍照分享`. The private Letter grid mirrors the public 10 mm
-  registration geometry and trim marks. No real claim batch or plaintext
+  outside the repository. Its code and QR were decoder-tested from the final
+  300-DPI PDF page raster against the same `/redeem` fragment. Shared and
+  private backs retain the visible scratch/open, scan, and start-using sequence
+  plus `刮开后请勿拍照分享`. The private portrait Letter/A4 2×4 sheets use
+  100%-scale long-edge duplexing; each back is reflected into its paired front
+  position, including blank tail slots. No real claim batch or plaintext
   credential was created in the repository.
 - Remaining gate: these checks are local screen/raster evidence, not a
   physical print proof or brand approval. Print at 100 percent, scan every

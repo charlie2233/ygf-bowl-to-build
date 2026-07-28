@@ -251,9 +251,11 @@ node scripts/render-agent-pass-assets.mts --verify-only
 
 Outputs include 85.6×54 mm Study, Coding, Career, and Pick My Bowl fronts, a
 shared no-secret back, Letter/A4 imposition sheets, SVGs, PDFs, and raster
-previews under `output/agent-pass/`. The selected food image came from the
-user-provided `南加大图片.zip`; its brand/public-print rights are not inferred
-and remain a launch gate recorded in `docs/design/media-ledger.md`.
+previews under `output/agent-pass/`. Every PDF page is a full-page, 300-DPI
+DeviceRGB raster with no PDF font or text object; the SVGs remain the editable
+source. The selected food image came from the user-provided `南加大图片.zip`;
+its brand/public-print rights are not inferred and remain a launch gate
+recorded in `docs/design/media-ledger.md`.
 
 After an administrator has downloaded the one-time CSV into ignored
 `private/`, generate protected per-row fronts/backs with:
@@ -265,10 +267,15 @@ node scripts/render-private-agent-pass-batch.mts \
   --out private/<agent-pass-batch>.html
 ```
 
-The renderer accepts only direct ignored `private/` paths, requires restrictive
-permissions, refuses overwrite, and prints no claim to stdout. Each protected
-row pairs one human-readable claim with a QR for
-`/redeem#code=<same-claim>`. The public back and public campaign QR never carry
+For `N` rows, the renderer creates a custody HTML preview, one front and one
+back SVG per Letter/A4 page, and one duplex PDF for each paper size. Each
+portrait PDF is a 2×4, 100%-scale, long-edge bundle ordered
+front-page-1/back-page-1, with the back positions reflected for physical
+registration. The renderer accepts only direct ignored `private/` paths,
+requires a 0700 private root and 0600 regular files, refuses overwrite, and
+prints no claim to stdout or stderr. Each protected row pairs one
+human-readable claim with a QR for `/redeem#code=<same-claim>`; blank slots
+remain blank on both sides. The public back and public campaign QR never carry
 a claim.
 
 ## Campaign artwork

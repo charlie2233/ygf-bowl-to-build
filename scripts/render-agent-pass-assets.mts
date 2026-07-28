@@ -1,21 +1,26 @@
 import { deflateSync, inflateSync } from "node:zlib";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  readdir,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ImageResponse } from "next/og.js";
 import { createElement } from "react";
 
-type AgentPassVariant = Readonly<{
-  crop: "xMaxYMid" | "xMidYMid" | "xMinYMid";
+export type AgentPassVariant = Readonly<{
   english: string;
   number: string;
+  photoTranslateX: 136 | 218 | 300 | 382;
   slug: "career" | "coding" | "pick-my-bowl" | "study";
   title: string;
 }>;
 
-type Paper = Readonly<{
+export type AgentPassPaper = Readonly<{
   heightMm: number;
   name: "a4" | "letter";
   widthMm: number;
@@ -26,18 +31,6 @@ type PngDetails = Readonly<{
   height: number;
   metadataChunks: readonly string[];
   width: number;
-}>;
-
-type PdfTextCommand = Readonly<{
-  color: string;
-  fontSize: number;
-  fontWeight: 400 | 600 | 700 | 800 | 900;
-  letterSpacing?: number;
-  lineHeight?: number;
-  lines: readonly string[];
-  textAnchor?: "middle" | "start";
-  x: number;
-  y: number;
 }>;
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -52,8 +45,8 @@ const PDF_INTEGRITY_PREFIX = "YGF_AGENT_PASS_SHA256_";
 const PDF_SOURCE_PREFIX = "YGF_AGENT_PASS_SOURCE_";
 const PNG_INTEGRITY_KEYWORD = "ygf-agent-pass";
 const IMPOSITION_GUTTER_MM = 10;
-const ARTIFACT_RENDER_VERSION =
-  "ygf-agent-pass-layered-pdf-v2";
+export const AGENT_PASS_RENDER_VERSION =
+  "ygf-agent-pass-raster-pdf-v3";
 
 const COLOR = Object.freeze({
   cream: "#F6F0E4",
@@ -87,36 +80,37 @@ export const AGENT_PASS_COPY = Object.freeze({
 
 export const AGENT_PASS_VARIANTS: readonly AgentPassVariant[] = Object.freeze([
   Object.freeze({
-    crop: "xMinYMid",
     english: "STUDY",
     number: "01 / 04",
+    photoTranslateX: 382,
     slug: "study",
     title: "学习",
   }),
   Object.freeze({
-    crop: "xMidYMid",
     english: "CODING",
     number: "02 / 04",
+    photoTranslateX: 300,
     slug: "coding",
     title: "编程",
   }),
   Object.freeze({
-    crop: "xMaxYMid",
     english: "CAREER",
     number: "03 / 04",
+    photoTranslateX: 218,
     slug: "career",
     title: "求职",
   }),
   Object.freeze({
-    crop: "xMidYMid",
     english: "PICK MY BOWL",
     number: "04 / 04",
+    photoTranslateX: 136,
     slug: "pick-my-bowl",
     title: "下一碗",
   }),
 ]);
 
-const PAPERS: readonly Paper[] = Object.freeze([
+export const AGENT_PASS_PAPERS: readonly AgentPassPaper[] =
+  Object.freeze([
   Object.freeze({
     heightMm: 279.4,
     name: "letter",
@@ -127,7 +121,7 @@ const PAPERS: readonly Paper[] = Object.freeze([
     name: "a4",
     widthMm: 210,
   }),
-]);
+  ]);
 
 function escapeXml(value: string): string {
   return value
@@ -142,11 +136,13 @@ function formatNumber(value: number): string {
   return Number(value.toFixed(4)).toString();
 }
 
-function photoSymbol(photoHref: string): string {
+export function renderAgentPassPhotoSymbol(
+  photoHref: string,
+): string {
   return `<image id="agent-pass-photo-source" href="${escapeXml(photoHref)}" width="1600" height="1200"/>`;
 }
 
-function frontBody(
+export function renderAgentPassFrontBody(
   variant: AgentPassVariant,
   namespace: string,
 ): string {
@@ -158,15 +154,10 @@ function frontBody(
     variant.slug === "pick-my-bowl" ? 166 : 150;
   const numberLabelX =
     variant.slug === "pick-my-bowl" ? 166 : 150;
-  const photoX = {
-    xMaxYMid: 136,
-    xMidYMid: 259,
-    xMinYMid: 382,
-  }[variant.crop];
   return [
     `<defs><clipPath id="${clipId}"><rect x="382" y="0" width="474" height="540"/></clipPath></defs>`,
     `<rect width="856" height="540" fill="${COLOR.cream}"/>`,
-    `<g clip-path="url(#${clipId})"><use href="#agent-pass-photo-source" transform="translate(${photoX} 0) scale(0.45)"/></g>`,
+    `<g clip-path="url(#${clipId})"><use href="#agent-pass-photo-source" transform="translate(${variant.photoTranslateX} 0) scale(0.45)"/></g>`,
     `<rect x="0" y="0" width="472" height="540" fill="${COLOR.red}"/>`,
     `<path d="M472 0 L534 0 L472 84 Z" fill="${COLOR.gold}"/>`,
     `<rect x="18" y="18" width="820" height="504" rx="20" fill="none" stroke="${COLOR.gold}" stroke-width="3"/>`,
@@ -221,247 +212,6 @@ function sharedBackBody(namespace: string): string {
   ].join("\n");
 }
 
-function frontPdfTextCommands(
-  variant: AgentPassVariant,
-): readonly PdfTextCommand[] {
-  const pickMyBowl = variant.slug === "pick-my-bowl";
-  return [
-    {
-      color: COLOR.gold,
-      fontSize: 18,
-      fontWeight: 800,
-      letterSpacing: 2.8,
-      lines: ["YGF BOWL-TO-BUILD · AGENT PASS"],
-      x: 46,
-      y: 64,
-    },
-    {
-      color: COLOR.red,
-      fontSize: 31,
-      fontWeight: 900,
-      lines: [variant.title],
-      x: 66,
-      y: 126,
-    },
-    {
-      color: COLOR.red,
-      fontSize: pickMyBowl ? 10.5 : 16,
-      fontWeight: 800,
-      letterSpacing: pickMyBowl ? 0.7 : 1.4,
-      lines: [variant.english],
-      x: pickMyBowl ? 166 : 150,
-      y: 126,
-    },
-    {
-      color: COLOR.sage,
-      fontSize: 12,
-      fontWeight: 800,
-      letterSpacing: 1,
-      lines: [variant.number],
-      x: pickMyBowl ? 166 : 150,
-      y: 148,
-    },
-    {
-      color: COLOR.white,
-      fontSize: 31,
-      fontWeight: 900,
-      lineHeight: 42,
-      lines: ["吃饱了，也给你的 AI 充点", "算力。"],
-      x: 46,
-      y: 207,
-    },
-    {
-      color: COLOR.gold,
-      fontSize: 24,
-      fontWeight: 900,
-      lines: [AGENT_PASS_COPY.reward],
-      x: 46,
-      y: 304,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 17,
-      fontWeight: 900,
-      lines: [AGENT_PASS_COPY.duration],
-      textAnchor: "middle",
-      x: 117.5,
-      y: 355,
-    },
-    {
-      color: COLOR.white,
-      fontSize: 17,
-      fontWeight: 800,
-      lines: [AGENT_PASS_COPY.useCases],
-      x: 46,
-      y: 405,
-    },
-    {
-      color: COLOR.gold,
-      fontSize: 20,
-      fontWeight: 900,
-      lines: [AGENT_PASS_COPY.hashtag],
-      x: 46,
-      y: 442,
-    },
-    {
-      color: COLOR.red,
-      fontSize: 12,
-      fontWeight: 900,
-      lines: ["COLLECT ALL FOUR · BUILD YOUR NEXT MOVE"],
-      x: 46,
-      y: 478,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 17.5,
-      fontWeight: 700,
-      lineHeight: 22,
-      lines: [
-        "This promotion is offered by YGF for the USC community and is not sponsored,",
-        "endorsed by, or administered by the University of Southern California.",
-      ],
-      x: 46,
-      y: 501,
-    },
-  ];
-}
-
-function sharedBackPdfTextCommands(): readonly PdfTextCommand[] {
-  return [
-    {
-      color: COLOR.ink,
-      fontSize: 22,
-      fontWeight: 900,
-      lines: ["Y"],
-      textAnchor: "middle",
-      x: 64,
-      y: 46,
-    },
-    {
-      color: COLOR.white,
-      fontSize: 23,
-      fontWeight: 900,
-      letterSpacing: 2,
-      lines: ["YGF AGENT PASS"],
-      x: 96,
-      y: 49,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 33,
-      fontWeight: 900,
-      lines: [AGENT_PASS_COPY.reward],
-      x: 46,
-      y: 118,
-    },
-    {
-      color: COLOR.red,
-      fontSize: 18,
-      fontWeight: 900,
-      lines: [
-        `${AGENT_PASS_COPY.duration} · ${AGENT_PASS_COPY.hashtag}`,
-      ],
-      x: 46,
-      y: 151,
-    },
-    {
-      color: COLOR.sage,
-      fontSize: 13,
-      fontWeight: 900,
-      letterSpacing: 1,
-      lines: ["3 STEPS · 三步开始"],
-      x: 46,
-      y: 184,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 18,
-      fontWeight: 900,
-      lines: ["1 刮开 / OPEN"],
-      x: 62,
-      y: 235,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 18,
-      fontWeight: 900,
-      lines: ["2 扫码 / SCAN"],
-      x: 314,
-      y: 235,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 18,
-      fontWeight: 900,
-      lines: ["3 开始使用 / START USING"],
-      x: 566,
-      y: 235,
-    },
-    {
-      color: COLOR.red,
-      fontSize: 19,
-      fontWeight: 900,
-      letterSpacing: 1.2,
-      lines: ["PROTECTED CHECKOUT OVERLAY AREA"],
-      textAnchor: "middle",
-      x: 428,
-      y: 312,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 15,
-      fontWeight: 700,
-      lines: [
-        "The public template is intentionally credential-free.",
-      ],
-      textAnchor: "middle",
-      x: 428,
-      y: 341,
-    },
-    {
-      color: COLOR.sage,
-      fontSize: 13,
-      fontWeight: 600,
-      lines: [
-        "Fulfilled passes receive a matched human code and scan target here.",
-      ],
-      textAnchor: "middle",
-      x: 428,
-      y: 369,
-    },
-    {
-      color: COLOR.red,
-      fontSize: 20,
-      fontWeight: 900,
-      lines: ["刮开后请勿拍照分享"],
-      x: 46,
-      y: 425,
-    },
-    {
-      color: COLOR.ink,
-      fontSize: 13,
-      fontWeight: 800,
-      lines: [
-        "A physical claim unlocks credits. It is never an API credential.",
-      ],
-      x: 46,
-      y: 451,
-    },
-    {
-      color: COLOR.sage,
-      fontSize: 17.5,
-      fontWeight: 700,
-      lineHeight: 22,
-      lines: [
-        "This promotion is offered by YGF for the USC community and is not sponsored,",
-        "endorsed by, or administered by the University of Southern California.",
-      ],
-      x: 46,
-      y: 477,
-    },
-  ];
-}
-
 function svgDocument(options: Readonly<{
   body: string;
   description: string;
@@ -476,7 +226,7 @@ function svgDocument(options: Readonly<{
     `<desc id="agent-pass-description">${escapeXml(options.description)}</desc>`,
     `<metadata data-renderer="ygf-agent-pass-v1" data-card-width-mm="${AGENT_PASS_SIZE.widthMm}" data-card-height-mm="${AGENT_PASS_SIZE.heightMm}" data-photo-source="user-provided" data-rights-status="pending-brand-rights-confirmation" ${options.metadata}/>`,
     options.photoHref
-      ? `<defs>${photoSymbol(options.photoHref)}</defs>`
+      ? `<defs>${renderAgentPassPhotoSymbol(options.photoHref)}</defs>`
       : "",
     options.body,
     "</svg>",
@@ -496,7 +246,7 @@ export function renderAgentPassFrontSvg(
     throw new Error("AGENT_PASS_VARIANT_INVALID");
   }
   return svgDocument({
-    body: frontBody(variant, variant.slug),
+    body: renderAgentPassFrontBody(variant, variant.slug),
     description:
       "A photo-forward collectible YGF Agent Pass front with campaign copy and user-provided food photography.",
     metadata: `data-side="front" data-variant="${escapeXml(variant.slug)}" data-approved-headline="${escapeXml(AGENT_PASS_COPY.headline)}" data-approved-reward="${escapeXml(AGENT_PASS_COPY.reward)}" data-university-note="${escapeXml(AGENT_PASS_COPY.university)}"`,
@@ -515,7 +265,7 @@ export function renderAgentPassSharedBackSvg(): string {
   });
 }
 
-function cutMarks(
+export function renderAgentPassCutMarks(
   x: number,
   y: number,
   width: number,
@@ -541,8 +291,8 @@ function cutMarks(
     .join("");
 }
 
-function impositionCardPosition(
-  paper: Paper,
+export function agentPassImpositionCardPosition(
+  paper: AgentPassPaper,
   index: number,
 ): Readonly<{ x: number; y: number }> {
   const columns = 2;
@@ -570,7 +320,7 @@ function impositionCardPosition(
 }
 
 export function renderAgentPassImpositionSvg(
-  paper: Paper,
+  paper: AgentPassPaper,
   side: "backs" | "fronts",
   photoHref = PRINT_PHOTO_HREF,
 ): string {
@@ -584,10 +334,13 @@ export function renderAgentPassImpositionSvg(
   const marks: string[] = [];
 
   for (let index = 0; index < columns * rows; index += 1) {
-    const { x, y } = impositionCardPosition(paper, index);
+    const { x, y } = agentPassImpositionCardPosition(
+      paper,
+      index,
+    );
     const body =
       side === "fronts"
-        ? frontBody(
+        ? renderAgentPassFrontBody(
             AGENT_PASS_VARIANTS[index % AGENT_PASS_VARIANTS.length],
             `${paper.name}-${side}-${index}`,
           )
@@ -596,7 +349,7 @@ export function renderAgentPassImpositionSvg(
       `<g data-agent-pass-slot="${index + 1}" transform="translate(${formatNumber(x)} ${formatNumber(y)}) scale(${formatNumber(cardScaleX)} ${formatNumber(cardScaleY)})">${body}</g>`,
     );
     marks.push(
-      cutMarks(
+      renderAgentPassCutMarks(
         x,
         y,
         AGENT_PASS_SIZE.widthMm,
@@ -612,7 +365,7 @@ export function renderAgentPassImpositionSvg(
     `<desc id="sheet-description">Eight 85.6 by 54 millimeter YGF Agent Pass ${side} arranged at 100 percent scale with a 10 millimeter gutter and cut marks.</desc>`,
     `<metadata data-renderer="ygf-agent-pass-v1" data-paper="${paper.name}" data-side="${side}" data-card-width-mm="${AGENT_PASS_SIZE.widthMm}" data-card-height-mm="${AGENT_PASS_SIZE.heightMm}" data-gutter-mm="${IMPOSITION_GUTTER_MM}" data-scale="100-percent" data-rights-status="pending-brand-rights-confirmation"/>`,
     side === "fronts"
-      ? `<defs>${photoSymbol(photoHref)}</defs>`
+      ? `<defs>${renderAgentPassPhotoSymbol(photoHref)}</defs>`
       : "",
     `<rect width="${paper.widthMm}" height="${paper.heightMm}" fill="${COLOR.white}"/>`,
     cards.join("\n"),
@@ -726,9 +479,13 @@ function paethPredictor(
   return aboveDistance <= upperLeftDistance ? above : upperLeft;
 }
 
-function decodePngToPdfScanlines(buffer: Buffer): Readonly<{
+function decodePngToPdfScanlines(
+  buffer: Buffer,
+  includeRgbPixels = false,
+): Readonly<{
   compressedScanlines: Buffer;
   height: number;
+  rgbPixels?: Buffer;
   width: number;
 }> {
   const parsed = pngChunks(buffer);
@@ -746,6 +503,9 @@ function decodePngToPdfScanlines(buffer: Buffer): Readonly<{
   }
 
   const pdfScanlines = Buffer.alloc((width * 3 + 1) * height);
+  const rgbPixels = includeRgbPixels
+    ? Buffer.alloc(width * height * 3)
+    : undefined;
   let previous = Buffer.alloc(sourceStride);
   let rawOffset = 0;
   let pdfOffset = 0;
@@ -791,6 +551,10 @@ function decodePngToPdfScanlines(buffer: Buffer): Readonly<{
         pdfScanlines[pdfOffset] = Math.round(
           (value * alpha + 255 * (255 - alpha)) / 255,
         );
+        if (rgbPixels) {
+          rgbPixels[(y * width + x) * 3 + channel] =
+            pdfScanlines[pdfOffset];
+        }
         pdfOffset += 1;
       }
     }
@@ -802,7 +566,26 @@ function decodePngToPdfScanlines(buffer: Buffer): Readonly<{
       level: 9,
     }),
     height,
+    rgbPixels,
     width,
+  };
+}
+
+export function decodeAgentPassPngRgb(
+  buffer: Buffer,
+): Readonly<{
+  height: number;
+  pixels: Buffer;
+  width: number;
+}> {
+  const decoded = decodePngToPdfScanlines(buffer, true);
+  if (!decoded.rgbPixels) {
+    throw new Error("AGENT_PASS_RASTER_INVALID");
+  }
+  return {
+    height: decoded.height,
+    pixels: decoded.rgbPixels,
+    width: decoded.width,
   };
 }
 
@@ -817,234 +600,86 @@ function pdfStream(dictionary: string, data: Buffer): Buffer {
   ]);
 }
 
-function escapePdf(value: string): string {
-  return value
-    .replaceAll("\\", "\\\\")
-    .replaceAll("(", "\\(")
-    .replaceAll(")", "\\)")
-    .replaceAll("·", "\\267");
-}
-
-function pdfColor(color: string, operator: "RG" | "rg"): string {
-  if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
-    throw new Error("AGENT_PASS_PDF_COLOR_INVALID");
+export function buildAgentPassRasterPdf(options: Readonly<{
+  pageHeightPt: number;
+  pages: readonly Buffer[];
+  pageWidthPt: number;
+  sourceDigest: string;
+  title: string;
+}>): Buffer {
+  if (options.pages.length < 1) {
+    throw new Error("AGENT_PASS_PDF_PAGE_INVALID");
   }
-  const channels = [1, 3, 5].map(
-    (offset) =>
-      Number.parseInt(color.slice(offset, offset + 2), 16) /
-      255,
+  const images = options.pages.map((page) =>
+    decodePngToPdfScanlines(page),
   );
-  return `${channels.map(formatNumber).join(" ")} ${operator}`;
-}
+  const firstImage = images[0];
+  if (
+    images.some(
+      (image) =>
+        image.width !== firstImage.width ||
+        image.height !== firstImage.height,
+    )
+  ) {
+    throw new Error("AGENT_PASS_PDF_PAGE_INVALID");
+  }
 
-function usesCjkFont(value: string): boolean {
-  return [...value].some(
-    (character) =>
-      character !== "·" && /[^\x00-\x7f]/.test(character),
+  const pageObjectNumbers = images.map(
+    (_image, index) => 3 + index * 3,
   );
-}
-
-function splitPdfTextRuns(
-  value: string,
-): readonly Readonly<{ cjk: boolean; text: string }>[] {
-  const runs: Array<{ cjk: boolean; text: string }> = [];
-  for (const character of value) {
-    const cjk = usesCjkFont(character);
-    const previous = runs.at(-1);
-    if (previous?.cjk === cjk) {
-      previous.text += character;
-    } else {
-      runs.push({ cjk, text: character });
-    }
-  }
-  return runs;
-}
-
-function encodeCjkText(value: string): string {
-  let hex = "";
-  for (let index = 0; index < value.length; index += 1) {
-    hex += value
-      .charCodeAt(index)
-      .toString(16)
-      .padStart(4, "0");
-  }
-  return `<${hex}>`;
-}
-
-function estimateTextWidth(
-  value: string,
-  fontSize: number,
-  letterSpacing: number,
-): number {
-  let ems = 0;
-  for (const character of value) {
-    if (/[^\x00-\x7f]/.test(character)) {
-      ems += 1;
-    } else if (character === " ") {
-      ems += 0.28;
-    } else if (/[A-Z0-9]/.test(character)) {
-      ems += 0.62;
-    } else if (/[a-z]/.test(character)) {
-      ems += 0.5;
-    } else {
-      ems += 0.3;
-    }
-  }
-  return (
-    ems * fontSize +
-    Math.max(0, [...value].length - 1) * letterSpacing
-  );
-}
-
-function renderPdfTextCommands(
-  commands: readonly PdfTextCommand[],
-  pageWidthPt: number,
-  pageHeightPt: number,
-  sceneWidth: number,
-  sceneHeight: number,
-): string {
-  const scaleX = pageWidthPt / sceneWidth;
-  const scaleY = pageHeightPt / sceneHeight;
-  const rendered: string[] = [];
-  for (const command of commands) {
-    command.lines.forEach((line, index) => {
-      const letterSpacing = command.letterSpacing ?? 0;
-      const baseline =
-        command.y + index * (command.lineHeight ?? 0);
-      const anchorOffset =
-        command.textAnchor === "middle"
-          ? estimateTextWidth(
-              line,
-              command.fontSize,
-              letterSpacing,
-            ) / 2
-          : 0;
-      const fontSizePt = command.fontSize * scaleY;
-      const runs = splitPdfTextRuns(line);
-      let cursor = command.x - anchorOffset;
-      runs.forEach((run, runIndex) => {
-        const font =
-          run.cjk
-            ? "F3"
-            : command.fontWeight >= 700
-              ? "F2"
-              : "F1";
-        const fakeCjkBold =
-          run.cjk && command.fontWeight >= 700;
-        rendered.push(
-          [
-            "BT",
-            pdfColor(command.color, "rg"),
-            fakeCjkBold
-              ? pdfColor(command.color, "RG")
-              : "",
-            fakeCjkBold
-              ? `${formatNumber(
-                  Math.max(0.12, fontSizePt * 0.018),
-                )} w`
-              : "",
-            fakeCjkBold ? "2 Tr" : "0 Tr",
-            `/${font} ${formatNumber(fontSizePt)} Tf`,
-            `${formatNumber(letterSpacing * scaleX)} Tc`,
-            `1 0 0 1 ${formatNumber(
-              cursor * scaleX,
-            )} ${formatNumber(
-              pageHeightPt - baseline * scaleY,
-            )} Tm`,
-            `${
-              run.cjk
-                ? encodeCjkText(run.text)
-                : `(${escapePdf(run.text)})`
-            } Tj`,
-            "0 Tr",
-            "ET",
-          ]
-            .filter(Boolean)
-            .join("\n"),
-        );
-        cursor += estimateTextWidth(
-          run.text,
-          command.fontSize,
-          letterSpacing,
-        );
-        if (runIndex < runs.length - 1) {
-          cursor += letterSpacing;
-        }
-      });
-    });
-  }
-  return rendered.join("\n");
-}
-
-function buildLayeredPdf(
-  png: Buffer,
-  pageWidthPt: number,
-  pageHeightPt: number,
-  title: string,
-  textCommands: readonly PdfTextCommand[],
-  sceneWidth: number,
-  sceneHeight: number,
-  sourceDigest: string,
-): Buffer {
-  const image = decodePngToPdfScanlines(png);
-  const content = Buffer.from(
-    [
-      "q",
-      `${formatNumber(pageWidthPt)} 0 0 ${formatNumber(pageHeightPt)} 0 0 cm`,
-      "/Im0 Do",
-      "Q",
-      renderPdfTextCommands(
-        textCommands,
-        pageWidthPt,
-        pageHeightPt,
-        sceneWidth,
-        sceneHeight,
-      ),
-      "",
-    ].join("\n"),
-    "ascii",
-  );
-  const integrityPlaceholder =
-    `${PDF_INTEGRITY_PREFIX}${"0".repeat(64)}`;
-  const safeTitle = title.replaceAll(/[()\\]/g, "");
   const objects: Buffer[] = [
     Buffer.from("<< /Type /Catalog /Pages 2 0 R >>", "ascii"),
-    Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>", "ascii"),
     Buffer.from(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${formatNumber(pageWidthPt)} ${formatNumber(pageHeightPt)}] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> /XObject << /Im0 8 0 R >> >> /Contents 9 0 R >>`,
-      "ascii",
-    ),
-    Buffer.from(
-      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-      "ascii",
-    ),
-    Buffer.from(
-      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
-      "ascii",
-    ),
-    Buffer.from(
-      "<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UCS2-H /DescendantFonts [7 0 R] >>",
-      "ascii",
-    ),
-    Buffer.from(
-      "<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 2 >> /DW 1000 >>",
-      "ascii",
-    ),
-    pdfStream(
-      `/Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns ${image.width} >>`,
-      image.compressedScanlines,
-    ),
-    pdfStream("", content),
-    Buffer.from(
-      `<< /Title (${safeTitle}) /Subject (${PDF_SOURCE_PREFIX}${sourceDigest}) /Creator (YGF Agent Pass renderer) /Producer (YGF Agent Pass renderer) /Keywords (${integrityPlaceholder}) >>`,
+      `<< /Type /Pages /Kids [${pageObjectNumbers
+        .map((objectNumber) => `${objectNumber} 0 R`)
+        .join(" ")}] /Count ${images.length} >>`,
       "ascii",
     ),
   ];
-  const header = Buffer.from("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n", "binary");
+  images.forEach((image, index) => {
+    const pageObjectNumber = pageObjectNumbers[index];
+    const imageObjectNumber = pageObjectNumber + 1;
+    const contentObjectNumber = pageObjectNumber + 2;
+    const content = Buffer.from(
+      [
+        "q",
+        `${formatNumber(options.pageWidthPt)} 0 0 ${formatNumber(options.pageHeightPt)} 0 0 cm`,
+        "/Im0 Do",
+        "Q",
+        "",
+      ].join("\n"),
+      "ascii",
+    );
+    objects.push(
+      Buffer.from(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${formatNumber(options.pageWidthPt)} ${formatNumber(options.pageHeightPt)}] /Resources << /XObject << /Im0 ${imageObjectNumber} 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`,
+        "ascii",
+      ),
+      pdfStream(
+        `/Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns ${image.width} >>`,
+        image.compressedScanlines,
+      ),
+      pdfStream("", content),
+    );
+  });
+
+  const integrityPlaceholder =
+    `${PDF_INTEGRITY_PREFIX}${"0".repeat(64)}`;
+  const safeTitle = options.title.replaceAll(/[()\\]/g, "");
+  objects.push(
+    Buffer.from(
+      `<< /Title (${safeTitle}) /Subject (${PDF_SOURCE_PREFIX}${options.sourceDigest}) /Creator (YGF Agent Pass raster renderer) /Producer (YGF Agent Pass raster renderer) /Keywords (${integrityPlaceholder}) >>`,
+      "ascii",
+    ),
+  );
+
+  const header = Buffer.from(
+    "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n",
+    "binary",
+  );
   const chunks: Buffer[] = [header];
   const offsets = [0];
   let cursor = header.length;
-
   objects.forEach((body, index) => {
     offsets.push(cursor);
     const object = Buffer.concat([
@@ -1056,6 +691,7 @@ function buildLayeredPdf(
     cursor += object.length;
   });
   const xrefOffset = cursor;
+  const infoObjectNumber = objects.length;
   chunks.push(
     Buffer.from(
       [
@@ -1067,7 +703,7 @@ function buildLayeredPdf(
             (offset) =>
               `${offset.toString().padStart(10, "0")} 00000 n `,
           ),
-        `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info 10 0 R >>`,
+        `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info ${infoObjectNumber} 0 R >>`,
         `startxref\n${xrefOffset}`,
         "%%EOF",
         "",
@@ -1217,14 +853,16 @@ function verifyPngIntegrity(
   }
 }
 
-function millimetersToPixels(
+export function agentPassMillimetersToPixels(
   millimeters: number,
   dpi: number,
 ): number {
   return Math.round((millimeters / 25.4) * dpi);
 }
 
-function millimetersToPoints(millimeters: number): number {
+export function agentPassMillimetersToPoints(
+  millimeters: number,
+): number {
   return (millimeters / 25.4) * 72;
 }
 
@@ -1243,7 +881,7 @@ function inlinePhoto(svg: string, photo: Buffer): string {
   return inlined;
 }
 
-async function rasterizeSvg(
+export async function rasterizeAgentPassSvg(
   svg: string,
   widthPixels: number,
   heightPixels: number,
@@ -1297,7 +935,7 @@ function expectedPrintSvgs(): ReadonlyMap<string, string> {
     "shared-back.svg",
     renderAgentPassSharedBackSvg(),
   ]);
-  for (const paper of PAPERS) {
+  for (const paper of AGENT_PASS_PAPERS) {
     for (const side of ["fronts", "backs"] as const) {
       entries.push([
         `${side}-${paper.name}.svg`,
@@ -1312,84 +950,33 @@ function expectedPrintSvgs(): ReadonlyMap<string, string> {
   return new Map(entries);
 }
 
-function stripSvgText(svg: string): string {
-  return svg.replace(/<text\b[^>]*>[\s\S]*?<\/text>/g, "");
-}
-
-function transformPdfTextCommands(
-  commands: readonly PdfTextCommand[],
-  x: number,
-  y: number,
-  scale: number,
-): readonly PdfTextCommand[] {
-  return commands.map((command) => ({
-    ...command,
-    fontSize: command.fontSize * scale,
-    letterSpacing:
-      command.letterSpacing === undefined
-        ? undefined
-        : command.letterSpacing * scale,
-    lineHeight:
-      command.lineHeight === undefined
-        ? undefined
-        : command.lineHeight * scale,
-    x: x + command.x * scale,
-    y: y + command.y * scale,
-  }));
-}
-
-function pdfTextForPrintFile(
-  file: string,
-  paper: Paper | undefined,
-): Readonly<{
-  commands: readonly PdfTextCommand[];
-  sceneHeight: number;
-  sceneWidth: number;
-}> {
-  const variant = AGENT_PASS_VARIANTS.find(
-    ({ slug }) => file === `${slug}-front.svg`,
+function sameStringSet(
+  actual: readonly string[],
+  expected: readonly string[],
+): boolean {
+  const sortedActual = [...actual].sort();
+  const sortedExpected = [...expected].sort();
+  return (
+    sortedActual.length === sortedExpected.length &&
+    sortedActual.every(
+      (value, index) => value === sortedExpected[index],
+    )
   );
-  if (variant) {
-    return {
-      commands: frontPdfTextCommands(variant),
-      sceneHeight: AGENT_PASS_SIZE.viewHeight,
-      sceneWidth: AGENT_PASS_SIZE.viewWidth,
-    };
+}
+
+function assertSecretFreePublicArtifact(
+  value: Buffer | string,
+): void {
+  const searchable =
+    typeof value === "string"
+      ? value
+      : value.toString("latin1");
+  if (
+    /\/redeem#code=|data-qr-url=/i.test(searchable) ||
+    /(?:ygf_|sk-)[A-Za-z0-9_-]{16,}/.test(searchable)
+  ) {
+    throw new Error("AGENT_PASS_PUBLIC_SECRET_INVALID");
   }
-  if (file === "shared-back.svg") {
-    return {
-      commands: sharedBackPdfTextCommands(),
-      sceneHeight: AGENT_PASS_SIZE.viewHeight,
-      sceneWidth: AGENT_PASS_SIZE.viewWidth,
-    };
-  }
-  if (!paper) {
-    throw new Error("AGENT_PASS_PDF_SCENE_INVALID");
-  }
-  const fronts = file.startsWith("fronts-");
-  const backs = file.startsWith("backs-");
-  if (!fronts && !backs) {
-    throw new Error("AGENT_PASS_PDF_SCENE_INVALID");
-  }
-  const commands: PdfTextCommand[] = [];
-  for (let index = 0; index < 8; index += 1) {
-    const { x, y } = impositionCardPosition(paper, index);
-    const cardCommands = fronts
-      ? frontPdfTextCommands(
-          AGENT_PASS_VARIANTS[
-            index % AGENT_PASS_VARIANTS.length
-          ],
-        )
-      : sharedBackPdfTextCommands();
-    commands.push(
-      ...transformPdfTextCommands(cardCommands, x, y, 0.1),
-    );
-  }
-  return {
-    commands,
-    sceneHeight: paper.heightMm,
-    sceneWidth: paper.widthMm,
-  };
 }
 
 function artifactSourceDigest(
@@ -1400,7 +987,7 @@ function artifactSourceDigest(
   kind: "pdf" | "preview",
 ): string {
   return createHash("sha256")
-    .update(ARTIFACT_RENDER_VERSION)
+    .update(AGENT_PASS_RENDER_VERSION)
     .update("\0")
     .update(kind)
     .update("\0")
@@ -1472,27 +1059,26 @@ export async function renderAgentPassAssets(
     const isSheet =
       file.startsWith("fronts-") ||
       file.startsWith("backs-");
-    const paper = PAPERS.find(({ name }) =>
+    const paper = AGENT_PASS_PAPERS.find(({ name }) =>
       file.endsWith(`-${name}.svg`),
     );
     const widthMm = paper?.widthMm ?? AGENT_PASS_SIZE.widthMm;
     const heightMm =
       paper?.heightMm ?? AGENT_PASS_SIZE.heightMm;
-    const printWidthPixels = millimetersToPixels(
+    const printWidthPixels = agentPassMillimetersToPixels(
       widthMm,
       PRINT_DPI,
     );
-    const printHeightPixels = millimetersToPixels(
+    const printHeightPixels = agentPassMillimetersToPixels(
       heightMm,
       PRINT_DPI,
     );
-    const png = await rasterizeSvg(
-      stripSvgText(svg),
+    const png = await rasterizeAgentPassSvg(
+      svg,
       printWidthPixels,
       printHeightPixels,
       photo,
     );
-    const pdfText = pdfTextForPrintFile(file, paper);
     const pdfSourceDigest = artifactSourceDigest(
       svg,
       photo,
@@ -1503,29 +1089,26 @@ export async function renderAgentPassAssets(
     const pdfFile = file.replace(/\.svg$/, ".pdf");
     await writeFile(
       path.join(printDirectory, pdfFile),
-      buildLayeredPdf(
-        png,
-        millimetersToPoints(widthMm),
-        millimetersToPoints(heightMm),
-        `YGF Agent Pass ${file.replace(/\.svg$/, "")}`,
-        pdfText.commands,
-        pdfText.sceneWidth,
-        pdfText.sceneHeight,
-        pdfSourceDigest,
-      ),
+      buildAgentPassRasterPdf({
+        pageHeightPt: agentPassMillimetersToPoints(heightMm),
+        pages: [png],
+        pageWidthPt: agentPassMillimetersToPoints(widthMm),
+        sourceDigest: pdfSourceDigest,
+        title: `YGF Agent Pass ${file.replace(/\.svg$/, "")}`,
+      }),
     );
     pdfCount += 1;
 
     if (isSheet) {
-      const previewWidthPixels = millimetersToPixels(
+      const previewWidthPixels = agentPassMillimetersToPixels(
         widthMm,
         PREVIEW_DPI,
       );
-      const previewHeightPixels = millimetersToPixels(
+      const previewHeightPixels = agentPassMillimetersToPixels(
         heightMm,
         PREVIEW_DPI,
       );
-      const preview = await rasterizeSvg(
+      const preview = await rasterizeAgentPassSvg(
         svg,
         previewWidthPixels,
         previewHeightPixels,
@@ -1583,6 +1166,32 @@ export async function verifyAgentPassAssets(
   assertSafePhoto(inspectAgentPassPhoto(photo));
   const publicSvgs = expectedPublicSvgs();
   const printSvgs = expectedPrintSvgs();
+  const expectedPreviewFiles = AGENT_PASS_PAPERS.flatMap(
+    (paper) =>
+      (["fronts", "backs"] as const).map(
+        (side) => `${side}-${paper.name}-preview.png`,
+      ),
+  );
+  const expectedPrintFiles = [
+    ...printSvgs.keys(),
+    ...[...printSvgs.keys()].map((file) =>
+      file.replace(/\.svg$/, ".pdf"),
+    ),
+    "previews",
+  ];
+  const [publicFiles, printFiles, previewFiles] =
+    await Promise.all([
+      readdir(publicDirectory),
+      readdir(printDirectory),
+      readdir(path.join(printDirectory, "previews")),
+    ]);
+  if (
+    !sameStringSet(publicFiles, [...publicSvgs.keys()]) ||
+    !sameStringSet(printFiles, expectedPrintFiles) ||
+    !sameStringSet(previewFiles, expectedPreviewFiles)
+  ) {
+    throw new Error("AGENT_PASS_ARTIFACT_SET_INVALID");
+  }
 
   for (const [file, expected] of publicSvgs) {
     const actual = await readFile(
@@ -1594,6 +1203,7 @@ export async function verifyAgentPassAssets(
         `Agent Pass public SVG ${file} does not match its deterministic render.`,
       );
     }
+    assertSecretFreePublicArtifact(actual);
   }
   for (const [file, expected] of printSvgs) {
     const actual = await readFile(
@@ -1605,17 +1215,18 @@ export async function verifyAgentPassAssets(
         `Agent Pass print SVG ${file} does not match its deterministic render.`,
       );
     }
-    const paper = PAPERS.find(({ name }) =>
+    assertSecretFreePublicArtifact(actual);
+    const paper = AGENT_PASS_PAPERS.find(({ name }) =>
       file.endsWith(`-${name}.svg`),
     );
     const widthMm = paper?.widthMm ?? AGENT_PASS_SIZE.widthMm;
     const heightMm =
       paper?.heightMm ?? AGENT_PASS_SIZE.heightMm;
-    const printWidthPixels = millimetersToPixels(
+    const printWidthPixels = agentPassMillimetersToPixels(
       widthMm,
       PRINT_DPI,
     );
-    const printHeightPixels = millimetersToPixels(
+    const printHeightPixels = agentPassMillimetersToPixels(
       heightMm,
       PRINT_DPI,
     );
@@ -1627,16 +1238,27 @@ export async function verifyAgentPassAssets(
     );
     const mediaBox =
       `/MediaBox [0 0 ${formatNumber(
-        millimetersToPoints(widthMm),
-      )} ${formatNumber(millimetersToPoints(heightMm))}]`;
+        agentPassMillimetersToPoints(widthMm),
+      )} ${formatNumber(
+        agentPassMillimetersToPoints(heightMm),
+      )}]`;
     if (
       !pdf.subarray(0, 8).toString("latin1").startsWith("%PDF-1.4") ||
-      !pdf.toString("latin1").includes(mediaBox)
+      !pdf.toString("latin1").includes(mediaBox) ||
+      !pdf
+        .toString("latin1")
+        .includes(
+          `/Width ${printWidthPixels} /Height ${printHeightPixels} /ColorSpace /DeviceRGB`,
+        ) ||
+      /\/Font\b|\/BaseFont\b|\/Subtype\s+\/Type[01]\b|(?:^|\s)(?:Tf|Tj|TJ)(?:\s|$)/m.test(
+        pdf.toString("latin1"),
+      )
     ) {
       throw new Error(
         `Agent Pass PDF ${file.replace(/\.svg$/, ".pdf")} has invalid page dimensions.`,
       );
     }
+    assertSecretFreePublicArtifact(pdf);
     verifyPdfIntegrity(
       pdf,
       `YGF Agent Pass ${file.replace(/\.svg$/, "")}`,
@@ -1649,7 +1271,7 @@ export async function verifyAgentPassAssets(
       ),
     );
   }
-  for (const paper of PAPERS) {
+  for (const paper of AGENT_PASS_PAPERS) {
     for (const side of ["fronts", "backs"] as const) {
       const preview = await readFile(
         path.join(
@@ -1661,9 +1283,15 @@ export async function verifyAgentPassAssets(
       const details = inspectAgentPassPhoto(preview);
       if (
         details.width !==
-          millimetersToPixels(paper.widthMm, PREVIEW_DPI) ||
+          agentPassMillimetersToPixels(
+            paper.widthMm,
+            PREVIEW_DPI,
+          ) ||
         details.height !==
-          millimetersToPixels(paper.heightMm, PREVIEW_DPI)
+          agentPassMillimetersToPixels(
+            paper.heightMm,
+            PREVIEW_DPI,
+          )
       ) {
         throw new Error(
           `Agent Pass preview ${side}-${paper.name} has invalid dimensions.`,
@@ -1676,22 +1304,23 @@ export async function verifyAgentPassAssets(
           printSvgs.get(`${side}-${paper.name}.svg`) ??
             "",
           photo,
-          millimetersToPixels(
+          agentPassMillimetersToPixels(
             paper.widthMm,
             PREVIEW_DPI,
           ),
-          millimetersToPixels(
+          agentPassMillimetersToPixels(
             paper.heightMm,
             PREVIEW_DPI,
           ),
           "preview",
         ),
       );
+      assertSecretFreePublicArtifact(preview);
     }
   }
   return {
     pdfCount: printSvgs.size,
-    previewCount: PAPERS.length * 2,
+    previewCount: AGENT_PASS_PAPERS.length * 2,
     printSvgCount: printSvgs.size,
     publicSvgCount: publicSvgs.size,
   };

@@ -85,8 +85,8 @@ technology, and production-origin behavior remain external gates.
 | Counter PDF | 5x7 inch page, raster inspection, decoder contract | counter lighting and physical scan |
 | SVG variants | deterministic copy, dimensions, quiet zones, URLs | social-platform preview |
 | Food image | generated beta fallback recorded in media ledger | rights-cleared real YGF photography |
-| Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG/PDF and raster review | physical registration, scratch layer, or store scan |
-| Private Agent Pass fixture | matching text/QR decoder proof, ignored 0600 no-overwrite renderer | real batch custody or physical fulfillment |
+| Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG plus full-page 300-DPI raster-only PDF review | physical registration, scratch layer, or store scan |
+| Private Agent Pass fixture | matching text/QR decoded from final PDF raster, ignored 0700/0600 no-overwrite renderer, reflected long-edge duplex sheets | real batch custody or physical fulfillment |
 | Safe check-in card | explicit SVG download with fixed public fields only | automatic social-platform upload or account identity |
 
 Any change to public origin, image, copy, font metrics, QR modules, quiet zone,

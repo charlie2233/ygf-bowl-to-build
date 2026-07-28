@@ -2,29 +2,26 @@ import { CheckCircle2, Soup, Ticket } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 
-type CampaignStep = Readonly<{
-  description: string;
+import {
+  campaignHomeCopy,
+  type CampaignHomeCopy,
+} from "@/lib/i18n/campaign";
+
+type CampaignStepVisual = Readonly<{
   icon: LucideIcon;
-  title: string;
 }>;
 
-const steps = [
+const stepVisuals = [
   {
-    title: "Buy a bowl",
-    description: "Spend $16+ in one transaction.",
     icon: Soup,
   },
   {
-    title: "Claim your code",
-    description: "Get your code at checkout.",
     icon: Ticket,
   },
   {
-    title: "Use Build Credits",
-    description: "Redeem your code and start building.",
     icon: CheckCircle2,
   },
-] as const satisfies readonly CampaignStep[];
+] as const satisfies readonly CampaignStepVisual[];
 
 function BusyWeekIllustration() {
   return (
@@ -41,8 +38,10 @@ function BusyWeekIllustration() {
 }
 
 export function HowItWorks({
+  copy = campaignHomeCopy.en.howItWorks,
   eagerImage = false,
 }: {
+  copy?: CampaignHomeCopy["howItWorks"];
   eagerImage?: boolean;
 } = {}) {
   return (
@@ -52,17 +51,14 @@ export function HowItWorks({
         className="how-it-works"
         id="how-it-works"
       >
-        <div className="how-it-works__lead container">
+        <div className="how-it-works__lead container" data-motion-reveal>
           <div>
-            <h2 id="how-it-works-title">From checkout to build mode.</h2>
-            <p>
-              Spend $16+ in one transaction. Get your code at checkout. Credits
-              expire 14 days after redemption.
-            </p>
+            <h2 id="how-it-works-title">{copy.heading}</h2>
+            <p>{copy.description}</p>
           </div>
           <div className="how-it-works__photo">
             <Image
-              alt="Assorted YGF ingredients ready to choose at the counter"
+              alt={copy.photoAlt}
               fill
               loading={eagerImage ? "eager" : "lazy"}
               sizes="(max-width: 760px) 100vw, 48vw"
@@ -71,32 +67,33 @@ export function HowItWorks({
           </div>
         </div>
 
-        <ol className="campaign-steps container">
-          {steps.map(({ description, icon: Icon, title }, index) => (
-            <li className="campaign-step" key={title}>
-              <span aria-hidden="true" className="campaign-step__number">
-                {index + 1}
-              </span>
-              <Icon
-                aria-hidden="true"
-                className="campaign-step__icon"
-                strokeWidth={1.6}
-              />
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </li>
-          ))}
+        <ol className="campaign-steps container" data-motion-reveal>
+          {copy.steps.map(({ description, title }, index) => {
+            const { icon: Icon } = stepVisuals[index];
+
+            return (
+              <li className="campaign-step" key={title}>
+                <span aria-hidden="true" className="campaign-step__number">
+                  {index + 1}
+                </span>
+                <Icon
+                  aria-hidden="true"
+                  className="campaign-step__icon"
+                  strokeWidth={1.6}
+                />
+                <h3>{title}</h3>
+                <p>{description}</p>
+              </li>
+            );
+          })}
         </ol>
       </section>
 
       <section aria-labelledby="busy-week-title" className="busy-week">
-        <div className="busy-week__inner container">
+        <div className="busy-week__inner container" data-motion-reveal>
           <div>
-            <h2 id="busy-week-title">Built for a busy week.</h2>
-            <p>
-              Move-in, classes, projects, recruiting — get to a useful first
-              result in under 90 seconds.
-            </p>
+            <h2 id="busy-week-title">{copy.busyHeading}</h2>
+            <p>{copy.busyDescription}</p>
           </div>
           <BusyWeekIllustration />
         </div>

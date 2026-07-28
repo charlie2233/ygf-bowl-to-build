@@ -20,6 +20,10 @@ is never an API key. Provider credentials stay on the server.
 ## What is in this repository
 
 - Next.js 16 App Router application and responsive campaign UI
+- five-language public home (English, Chinese, Spanish, French, and Russian)
+  with a persistent, accessible language control
+- a numbered **01 Claim / 02 Connect my Agent** first-viewport path with
+  reduced-motion-safe Web Animations API and CSS 3D depth
 - Supabase Auth/Postgres production adapter, RLS, and atomic ledger RPCs
 - deterministic local demo mode with the receipt code `BOWL7K2A`
 - fixed-endpoint OpenAI Chat Completions adapter plus deterministic demo provider

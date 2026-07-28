@@ -21,6 +21,24 @@ The hierarchy is intentionally spare: campaign label, large two-line
 headline, short qualifying-offer explanation, four use-case cards, public QR
 CTA, then complete fine print. Avoid extra stacked microcopy.
 
+## Web interaction and localization
+
+- The public first viewport presents **01 Claim Build Credits** as the primary
+  path and **02 Connect my Agent** as the secondary path. The Agent path is
+  advanced and does not replace scan/code redemption.
+- English, Simplified Chinese, Spanish, French, and Russian share the same
+  layout and typed content structure. The visible locale code and globe wrap
+  a native language `select`; the document `lang` must follow the selection.
+- Use only subtle entrance, scroll-reveal, image-depth, and phone-tilt motion.
+  The native Web Animations API and CSS 3D implementation is dependency-free;
+  do not load GSAP, Three.js, Remotion, or remote scripts solely for decorative
+  movement.
+- Disable pointer parallax on coarse/touch pointers. Under
+  `prefers-reduced-motion: reduce`, render every section immediately and remove
+  decorative transforms.
+- Long French and Russian copy must reflow without shrinking controls below
+  usable touch sizes or introducing horizontal overflow at 320px.
+
 ## Approved copy
 
 - Headline: **Buy a bowl. Build with AI.**

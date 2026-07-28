@@ -856,3 +856,23 @@ rewriting the historical task record above.
 - [ ] Keep `YGF_AGENT_GATEWAY_ENABLED=false` until the live success,
   conservative-failure settlement, replay, rate/concurrency, and exact `$3`
   wallet-boundary smokes pass.
+
+## July 28, 2026 addendum — localized home and Agent step 02
+
+This additive UI phase preserves the completed QR/code, wallet, task, and
+Agent gateway work.
+
+- [x] Keep claim redemption as the first and dominant public action.
+- [x] Add a numbered `02 Connect my Agent` action on the first viewport,
+  linking only to the first-party `/connect/agent` flow.
+- [x] Add a persistent accessible selector for English, Simplified Chinese,
+  Spanish, French, and Russian, with a matching document language.
+- [x] Add dependency-free Web Animations API entrances, intersection reveals,
+  and CSS 3D fine-pointer depth.
+- [x] Disable decorative parallax for touch/coarse pointers and honor
+  `prefers-reduced-motion`.
+- [x] Add typed localization-contract tests plus desktop/mobile Playwright
+  coverage for language persistence, overflow, and reduced motion.
+- [ ] Re-run the Playwright matrix in an environment permitted to bind the
+  isolated localhost test server; the current managed sandbox returns
+  `listen EPERM` before the application starts.

@@ -2,7 +2,10 @@ import { Clock3 } from "lucide-react";
 import Image from "next/image";
 
 import { ButtonLink } from "@/components/ui/button";
-import { uscShortDisclaimer } from "@/lib/content/legal";
+import {
+  campaignHomeCopy,
+  type CampaignHomeCopy,
+} from "@/lib/i18n/campaign";
 
 function ReceiptQrIllustration() {
   return (
@@ -17,9 +20,17 @@ function ReceiptQrIllustration() {
   );
 }
 
-export function Hero() {
+export function Hero({
+  copy = campaignHomeCopy.en.hero,
+}: Readonly<{
+  copy?: CampaignHomeCopy["hero"];
+}> = {}) {
   return (
-    <section aria-labelledby="campaign-hero-title" className="marketing-hero">
+    <section
+      aria-labelledby="campaign-hero-title"
+      className="marketing-hero"
+      data-motion-hero
+    >
       <Image
         alt="Generated overhead image of a malatang bowl"
         className="marketing-hero__image"
@@ -31,34 +42,39 @@ export function Hero() {
       />
 
       <div className="marketing-hero__inner container">
-        <div className="marketing-hero__copy">
+        <div className="marketing-hero__copy" data-motion-hero-copy>
           <h1 id="campaign-hero-title">
-            <span>Buy a bowl.</span>
+            <span>{copy.titleLineOne}</span>
             {" "}
-            <span>Build with AI.</span>
+            <span>{copy.titleLineTwo}</span>
           </h1>
           <p className="marketing-hero__subhead">
-            A qualifying YGF purchase unlocks limited Build Credits for study
-            help, coding help, career tasks, and smarter bowl picks.
+            {copy.subhead}
           </p>
           <div className="marketing-hero__actions">
-            <ButtonLink className="marketing-hero__cta" href="/redeem">
-              Claim Build Credits
+            <ButtonLink
+              className="marketing-hero__cta marketing-hero__cta--step"
+              data-step="01"
+              href="/redeem"
+            >
+              {copy.claimCredits}
             </ButtonLink>
             <ButtonLink
-              className="marketing-hero__cta"
-              href="#how-it-works"
+              className="marketing-hero__cta marketing-hero__cta--step marketing-hero__cta--secondary"
+              data-step="02"
+              href="/connect/agent"
               variant="secondary"
             >
-              How it works
+              {copy.connectAgent}
             </ButtonLink>
           </div>
-          <p className="marketing-hero__disclaimer">{uscShortDisclaimer}</p>
+          <p className="marketing-hero__disclaimer">{copy.disclaimer}</p>
         </div>
 
         <div
-          aria-label="Illustration of a receipt QR and printed code that can be scanned or entered; example only, not live"
+          aria-label={copy.phoneAriaLabel}
           className="campaign-phone"
+          data-motion-phone
           role="img"
         >
           <div aria-hidden="true" className="campaign-phone__screen">
@@ -73,29 +89,29 @@ export function Hero() {
             </div>
             <div className="campaign-phone__receipt">
               <strong>YGF Malatang</strong>
-              <span>Qualifying purchase</span>
+              <span>{copy.receipt.qualifyingPurchase}</span>
               <dl>
                 <div>
-                  <dt>Total</dt>
+                  <dt>{copy.receipt.total}</dt>
                   <dd>$16+</dd>
                 </div>
                 <div>
-                  <dt>Status</dt>
-                  <dd>Ready</dd>
+                  <dt>{copy.receipt.status}</dt>
+                  <dd>{copy.receipt.ready}</dd>
                 </div>
               </dl>
             </div>
             <div className="campaign-phone__wallet">
-              <span>Illustrative receipt code</span>
+              <span>{copy.receipt.illustrativeCode}</span>
               <div className="campaign-phone__claim">
                 <ReceiptQrIllustration />
                 <strong>A7K3B9Q2</strong>
               </div>
-              <span>Scan receipt QR or enter code</span>
-              <em>Example only — not a live claim code.</em>
+              <span>{copy.receipt.scanOrEnter}</span>
+              <em>{copy.receipt.exampleOnly}</em>
               <small>
                 <Clock3 aria-hidden="true" size={14} />
-                Expires 14 days after redemption
+                {copy.receipt.expires}
               </small>
             </div>
           </div>

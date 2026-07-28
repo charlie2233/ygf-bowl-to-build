@@ -39,6 +39,9 @@ describe("public campaign pages", () => {
     const claimLink = Array.from(body.querySelectorAll("a")).find(
       (link) => normalizedText(link) === "Claim Build Credits",
     );
+    const agentLink = Array.from(body.querySelectorAll("a")).find(
+      (link) => normalizedText(link) === "Connect my Agent",
+    );
     const bowlImage = Array.from(body.querySelectorAll("img")).find((image) =>
       /malatang bowl/i.test(image.getAttribute("alt") ?? ""),
     );
@@ -50,6 +53,9 @@ describe("public campaign pages", () => {
     expect(normalizedText(heading)).toBe("Buy a bowl. Build with AI.");
     expect(body.querySelectorAll("h1")).toHaveLength(1);
     expect(claimLink?.getAttribute("href")).toBe("/redeem");
+    expect(agentLink?.getAttribute("href")).toBe("/connect/agent");
+    expect(claimLink?.getAttribute("data-step")).toBe("01");
+    expect(agentLink?.getAttribute("data-step")).toBe("02");
     expect(normalizedText(body)).toMatch(/not affiliated with or endorsed by USC/i);
     expect(bowlImage).toBeTruthy();
     expect(bowlImage?.getAttribute("loading")).toBe("eager");

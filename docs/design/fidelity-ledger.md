@@ -99,13 +99,15 @@ fragment was removed before submission, and the rendered balance changed from
 
 | Comparison | Reference evidence | Final rendered treatment | Closure |
 | --- | --- | --- | --- |
-| Above-fold copy | “Buy a bowl. Build with AI.”, qualifying-purchase subhead, claim/how-it-works actions, USC disclaimer | Exact canonical H1, approved subhead, both actions, and non-affiliation line remain in the first viewport | Matched |
+| Above-fold copy | “Buy a bowl. Build with AI.”, qualifying-purchase subhead, claim/how-it-works actions, USC disclaimer | Exact canonical English H1 and approved subhead remain; the explicitly requested secondary action is now numbered `02 Connect my Agent`, while `How it works` remains in navigation | Matched with requested CTA evolution |
 | First-viewport composition | Editorial copy left, dominant bowl media, receipt/wallet phone at right | Same visual order and one dominant media frame; phone remains illustrative and explicitly says its claim is not live | Matched |
 | Typography and hierarchy | Large dark editorial H1 with restrained supporting copy | Bold system/Geist-compatible display scale, short line lengths, and quieter control type; one H1 per page | Matched |
 | Palette and surfaces | Warm cream, true white, burgundy, gold, teal/sage | Shared tokens use the locked values without gradients, glows, or university colors/marks | Matched |
 | Media treatment | Overhead malatang hero with no embedded words or logos | Controlled responsive hero crop remains unchanged; the repeated below-fold image is now the sanitized user-provided YGF ingredient-counter photo with meaningful alt text and lazy home-page loading | Matched for beta; hero source replacement and photo-rights confirmation pending |
 | Container model | Open landing layout and bounded white workflow/result panels | Marketing stays open; wallet/task/admin use thin borders, 18px radii, restrained shadows, and stable wide containers | Matched |
 | Controls and icons | Clear rectangular actions and simple line metaphors | Semantic buttons/links, Lucide or code-native line icons, visible focus, and no model/provider jargon on the default path | Matched |
+| Language access | Not present in the accepted concept | Compact native selector adds English, Chinese, Spanish, French, and Russian; selection persists locally and updates document language | Intentional requested enhancement |
+| Motion and depth | Static concept frame | Dependency-free Web Animations API entrances, intersection reveals, and fine-pointer CSS 3D parallax; touch and reduced-motion paths remain static | Intentional requested enhancement |
 | Redeem state | One obvious code field, receipt cue, short path to credits | QR fragment prefills and disappears; typed code remains available; one terms check plus one confirmation completes the demo claim | Matched with stronger privacy behavior |
 | Wallet state | One dominant balance and four task shortcuts | One 3,000-credit balance, exact expiry, correct progress math, four large launch cards, advanced selector collapsed | Matched |
 | Task success | Two-column desktop composer/result and stacked mobile result with Q/A rows | Desktop and mobile preserve the same hierarchy, actions, review note, 2,880 balance, structured Q/A flashcards, and post-success YGF Agent CTA | Matched |
@@ -128,6 +130,12 @@ fragment was removed before submission, and the rendered balance changed from
    project rather than emulating mobile Safari in Chromium. Both passed
    locally. Firefox, physical device/camera behavior, and
    assistive-technology manual review remain external coverage.
+6. The 2026-07-28 home enhancement keeps redemption as step 01 and promotes
+   the already built first-party Agent setup as step 02. It adds no external
+   partner claim and does not make API knowledge part of redemption.
+7. GSAP, Three.js, and Remotion were not installed in the locked checkout.
+   Equivalent presentation behavior uses browser-native APIs to avoid a new
+   remote runtime, bundle dependency, or mobile performance gate.
 
 ### Above-the-fold copy diff
 
@@ -136,7 +144,8 @@ No material copy mismatch remains:
 - H1: exact canonical text.
 - Offer: qualifying purchase language and $16+ detail remain consistent.
 - Primary action: `Claim Build Credits`.
-- Secondary action: `How it works`.
+- Secondary action: `Connect my Agent` (numbered step 02); `How it works`
+  remains in the public navigation.
 - Disclaimer: YGF for the USC community, with no USC sponsorship or
   endorsement claim.
 

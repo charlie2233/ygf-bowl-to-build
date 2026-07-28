@@ -1,16 +1,23 @@
-import { uscShortDisclaimer } from "@/lib/content/legal";
+import {
+  campaignHomeCopy,
+  type CampaignHomeCopy,
+} from "@/lib/i18n/campaign";
 
-export function SiteFooter() {
+export function SiteFooter({
+  copy = campaignHomeCopy.en.footer,
+}: Readonly<{
+  copy?: CampaignHomeCopy["footer"];
+}> = {}) {
   return (
     <footer className="site-footer">
       <div className="site-footer__inner container">
-        <nav aria-label="Footer navigation">
-          <a href="/terms">Terms</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/creator-kit">Creator kit</a>
-          <a href="/staff">Staff help</a>
+        <nav aria-label={copy.navigationLabel}>
+          <a href="/terms">{copy.terms}</a>
+          <a href="/privacy">{copy.privacy}</a>
+          <a href="/creator-kit">{copy.creatorKit}</a>
+          <a href="/staff">{copy.staffHelp}</a>
         </nav>
-        <p>{uscShortDisclaimer}</p>
+        <p>{copy.disclaimer}</p>
       </div>
     </footer>
   );

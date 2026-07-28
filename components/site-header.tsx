@@ -3,10 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import {
+  CampaignLanguageSelector,
+  useCampaignLanguage,
+} from "@/components/campaign-language";
 import { ButtonLink } from "@/components/ui/button";
+import { campaignHomeCopy } from "@/lib/i18n/campaign";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { locale } = useCampaignLanguage();
+  const isCampaignHome = pathname === "/";
+  const homeCopy = campaignHomeCopy[locale].header;
   const isWorkspace =
     pathname === "/wallet" ||
     pathname === "/history" ||
@@ -109,15 +117,27 @@ export function SiteHeader() {
             </details>
           </>
         ) : (
-          <nav aria-label="Primary navigation" className="site-nav">
-            <Link className="site-nav__link" href="/#how-it-works">
-              How it works
+          <nav
+            aria-label="Primary navigation"
+            className={`site-nav${isCampaignHome ? " site-nav--campaign" : ""}`}
+          >
+            {isCampaignHome ? (
+              <CampaignLanguageSelector label={homeCopy.languageLabel} />
+            ) : null}
+            <Link
+              className="site-nav__link site-nav__link--how"
+              href="/#how-it-works"
+            >
+              {isCampaignHome ? homeCopy.howItWorks : "How it works"}
             </Link>
-            <Link className="site-nav__link" href="/faq">
-              FAQ
+            <Link
+              className="site-nav__link site-nav__link--faq"
+              href="/faq"
+            >
+              {isCampaignHome ? homeCopy.faq : "FAQ"}
             </Link>
             <ButtonLink href="/redeem" size="small">
-              Redeem
+              {isCampaignHome ? homeCopy.redeem : "Redeem"}
             </ButtonLink>
           </nav>
         )}

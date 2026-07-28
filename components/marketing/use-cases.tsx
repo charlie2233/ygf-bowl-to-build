@@ -1,63 +1,67 @@
 import { BookOpen, Briefcase, Laptop, Soup } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-type UseCase = Readonly<{
-  description: string;
+import {
+  campaignHomeCopy,
+  type CampaignHomeCopy,
+} from "@/lib/i18n/campaign";
+
+type UseCaseVisual = Readonly<{
   icon: LucideIcon;
-  title: string;
   tone: "accent" | "primary";
 }>;
 
-const useCases = [
+const useCaseVisuals = [
   {
-    title: "Study",
-    description: "Get explanations, summaries, and step-by-step help.",
     icon: BookOpen,
     tone: "primary",
   },
   {
-    title: "Coding",
-    description: "Debug, refactor, and build with AI pair programming.",
     icon: Laptop,
     tone: "accent",
   },
   {
-    title: "Career",
-    description: "Polish resumes, prep for interviews, and more.",
     icon: Briefcase,
     tone: "primary",
   },
   {
-    title: "Pick My Bowl",
-    description: "Get smarter bowl recommendations.",
     icon: Soup,
     tone: "accent",
   },
-] as const satisfies readonly UseCase[];
+] as const satisfies readonly UseCaseVisual[];
 
-export function UseCases() {
+export function UseCases({
+  copy = campaignHomeCopy.en.useCases,
+}: Readonly<{
+  copy?: CampaignHomeCopy["useCases"];
+}> = {}) {
   return (
     <section
       aria-labelledby="use-cases-title"
       className="use-cases"
+      data-motion-reveal
       id="use-cases"
     >
       <div className="container">
-        <h2 id="use-cases-title">One pass. Four useful ways to build.</h2>
+        <h2 id="use-cases-title">{copy.heading}</h2>
         <div className="use-cases__grid">
-          {useCases.map(({ description, icon: Icon, title, tone }) => (
-            <article className="use-case" key={title}>
-              <Icon
-                aria-hidden="true"
-                className={`use-case__icon use-case__icon--${tone}`}
-                strokeWidth={1.6}
-              />
-              <div>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </div>
-            </article>
-          ))}
+          {copy.items.map(({ description, title }, index) => {
+            const { icon: Icon, tone } = useCaseVisuals[index];
+
+            return (
+              <article className="use-case" key={title}>
+                <Icon
+                  aria-hidden="true"
+                  className={`use-case__icon use-case__icon--${tone}`}
+                  strokeWidth={1.6}
+                />
+                <div>
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

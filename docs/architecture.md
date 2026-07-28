@@ -21,6 +21,27 @@ There are four relevant trust boundaries:
    capacity first, performs the external call without holding a database lock,
    then commits or refunds the reservation.
 
+## Public presentation and language boundary
+
+The public home is localized in English, Simplified Chinese, Spanish, French,
+and Russian from one typed copy contract. A compact native `select` is the
+accessible input; the selected locale is stored only in browser
+`localStorage`, updates the document `lang`, and contains no account, wallet,
+claim, prompt, or provider data. Legal, wallet, task, and Agent workspace
+routes remain on their reviewed English contracts until they receive complete
+translations.
+
+The first viewport shows two numbered paths: **01 Claim Build Credits** remains
+the dominant ordinary-user action, while **02 Connect my Agent** links to the
+existing identity-gated `/connect/agent` flow. It does not bypass redemption,
+wallet ownership, identity upgrade, or key policy.
+
+Campaign depth uses browser-native Web Animations API, CSS 3D transforms, and
+intersection observation. Fine-pointer parallax is decorative, never changes
+content or navigation, is skipped on touch devices, and is disabled when
+`prefers-reduced-motion: reduce` is active. No animation library or remote
+runtime script is required.
+
 ## Scan-first anonymous identity
 
 The public claim is validated before any user is created. After a same-origin

@@ -79,12 +79,14 @@ rather than scaling the current artwork.
 
 ## Photography and illustration
 
-The bowl is the only photographic focal point. Keep a controlled cover crop,
-with ingredients recognizable and no embedded text, university mark, or
-third-party logo. `public/media/malatang-hero.png` is a generated beta fallback
-and must be replaced before public launch by a **rights-cleared real YGF food
-photo** approved by the brand owner. Update the media and fidelity ledgers,
-then regenerate every output.
+The bowl remains the only first-viewport photographic focal point. Keep its
+controlled cover crop, with ingredients recognizable and no embedded text,
+university mark, or third-party logo. A single supporting real YGF
+ingredient-counter frame may appear below the fold; keep it metadata-free and
+visually secondary to the campaign offer. `public/media/malatang-hero.png` is
+a generated beta fallback and must be replaced before public launch by a
+**rights-cleared real YGF food photo** approved by the brand owner. Update the
+media and fidelity ledgers, then regenerate every affected output.
 
 Study, Coding, Career, and Pick My Bowl use simple code-native red line icons.
 Maintain consistent stroke, round caps/joins, and a white card field. Do not

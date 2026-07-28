@@ -18,6 +18,10 @@ licenses or permissions that have not been supplied.
 - Visual inspection: the food display is legible at card scale and contains
   no embedded copy, QR code, API credential, university logo, or other
   visible brand mark.
+- Runtime use: the same sanitized file is the supporting photo in the
+  below-fold “From checkout to build mode” section. The home page loads it
+  lazily; the standalone offer page may load it eagerly because that section
+  appears immediately after the offer introduction.
 - Rights status: **user-provided; pending brand-rights confirmation**. Receipt
   of the archive is not treated as a license or a representation that the
   photo is rights-cleared.
@@ -75,7 +79,10 @@ licenses or permissions that have not been supplied.
   other visible logo was found.
 - Supplied-media audit: the provided `南加大杨国福` materials contained a cost
   workbook, but no standalone food photograph and no photograph embedded in
-  that workbook was found.
+  that workbook was found. A later user-provided `南加大图片.zip` archive did
+  supply real ingredient-counter media; one sanitized photo now supports the
+  below-fold web experience and Agent Pass artwork, while this generated bowl
+  remains the beta hero.
 - Rights status: no license or usage-rights claim is invented or inferred for
   this generated fallback.
 - Launch gate: before public launch, a manager must supply and approve a

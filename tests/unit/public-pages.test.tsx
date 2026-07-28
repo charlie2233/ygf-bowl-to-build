@@ -42,6 +42,10 @@ describe("public campaign pages", () => {
     const bowlImage = Array.from(body.querySelectorAll("img")).find((image) =>
       /malatang bowl/i.test(image.getAttribute("alt") ?? ""),
     );
+    const realYgfImage = Array.from(body.querySelectorAll("img")).find(
+      (image) =>
+        /assorted ygf ingredients/i.test(image.getAttribute("alt") ?? ""),
+    );
 
     expect(normalizedText(heading)).toBe("Buy a bowl. Build with AI.");
     expect(body.querySelectorAll("h1")).toHaveLength(1);
@@ -49,7 +53,28 @@ describe("public campaign pages", () => {
     expect(normalizedText(body)).toMatch(/not affiliated with or endorsed by USC/i);
     expect(bowlImage).toBeTruthy();
     expect(bowlImage?.getAttribute("loading")).toBe("eager");
+    expect(
+      decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
+    ).toContain(
+      "/media/ygf-user-photo.png",
+    );
+    expect(realYgfImage?.hasAttribute("data-photo-source")).toBe(false);
+    expect(realYgfImage?.getAttribute("loading")).toBe("lazy");
     expect(normalizedText(body)).not.toMatch(/\btoken(s)?\b/i);
+  });
+
+  it("loads the real YGF supporting photo eagerly on the offer page", () => {
+    const body = renderPage(<OfferPage />);
+    const realYgfImage = Array.from(body.querySelectorAll("img")).find(
+      (image) =>
+        /assorted ygf ingredients/i.test(image.getAttribute("alt") ?? ""),
+    );
+
+    expect(
+      decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
+    ).toContain("/media/ygf-user-photo.png");
+    expect(realYgfImage?.getAttribute("loading")).toBe("eager");
+    expect(realYgfImage?.hasAttribute("data-photo-source")).toBe(false);
   });
 
   it("shows an illustrative receipt QR and printed-code handoff", () => {

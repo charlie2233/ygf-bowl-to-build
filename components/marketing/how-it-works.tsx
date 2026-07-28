@@ -41,7 +41,7 @@ function BusyWeekIllustration() {
 }
 
 export function HowItWorks({
-  eagerImage = true,
+  eagerImage = false,
 }: {
   eagerImage?: boolean;
 } = {}) {
@@ -60,13 +60,13 @@ export function HowItWorks({
               expire 14 days after redemption.
             </p>
           </div>
-          <div aria-hidden="true" className="how-it-works__photo">
+          <div className="how-it-works__photo">
             <Image
-              alt=""
+              alt="Assorted YGF ingredients ready to choose at the counter"
               fill
               loading={eagerImage ? "eager" : "lazy"}
               sizes="(max-width: 760px) 100vw, 48vw"
-              src="/media/malatang-hero.png"
+              src="/media/ygf-user-photo.png"
             />
           </div>
         </div>

@@ -36,6 +36,10 @@ const PUBLIC_ROUTES = [
   },
 ] as const;
 
+const REAL_PHOTO_ROUTES = ["/", "/offer"] as const;
+const REAL_PHOTO_ALT =
+  "Assorted YGF ingredients ready to choose at the counter";
+
 for (const route of PUBLIC_ROUTES) {
   test(`${route.path} is accessible and does not overflow`, async ({
     page,
@@ -50,6 +54,52 @@ for (const route of PUBLIC_ROUTES) {
 
     await expectNoHorizontalOverflow(page, route.path);
     await expectNoAccessibilityViolations(page, route.path);
+  });
+}
+
+for (const path of REAL_PHOTO_ROUTES) {
+  test(`${path} loads and decodes the real YGF supporting photo`, async ({
+    page,
+  }) => {
+    const failedMediaRequests: string[] = [];
+    const failedMediaResponses: string[] = [];
+    const isMediaRequest = (url: string) =>
+      url.includes("/_next/image") || url.includes("/media/");
+
+    page.on("requestfailed", (request) => {
+      if (isMediaRequest(request.url())) {
+        failedMediaRequests.push(request.url());
+      }
+    });
+    page.on("response", (response) => {
+      if (isMediaRequest(response.url()) && response.status() >= 400) {
+        failedMediaResponses.push(
+          `${response.status()} ${response.url()}`,
+        );
+      }
+    });
+
+    await page.goto(path);
+    const image = page.getByRole("img", { name: REAL_PHOTO_ALT });
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toBeVisible();
+    await expect
+      .poll(() =>
+        image.evaluate((element) => {
+          const photo = element as HTMLImageElement;
+          return {
+            complete: photo.complete,
+            decoded: photo.naturalHeight > 0 && photo.naturalWidth > 0,
+          };
+        }),
+      )
+      .toEqual({
+        complete: true,
+        decoded: true,
+      });
+
+    expect(failedMediaRequests).toEqual([]);
+    expect(failedMediaResponses).toEqual([]);
   });
 }
 

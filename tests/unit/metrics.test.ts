@@ -230,9 +230,69 @@ describe("campaign analytics metrics", () => {
       redeemed: 1,
       redemptionRate: 0.1,
       sevenDayReturnRate: 1,
+      sevenDayEligible: 1,
       sevenDayReturned: 1,
       shareCardCreators: 1,
       shareCardRate: 1,
     });
+  });
+
+  it("uses only mature valid redemption cohorts for the seven-day return rate", () => {
+    const metrics = computeMetrics(
+      [
+        event("mature", "code_redeemed", {
+          createdAt: "2026-07-10T00:00:00.000Z",
+          metadata: { outcome: "success" },
+          userId: "mature-user",
+        }),
+        event("mature-return", "task_completed", {
+          createdAt: "2026-07-12T00:00:00.000Z",
+          metadata: { outcome: "success", taskType: "study" },
+          userId: "mature-user",
+        }),
+        event("mature-no-return", "code_redeemed", {
+          createdAt: "2026-07-11T00:00:00.000Z",
+          metadata: { outcome: "success" },
+          userId: "mature-no-return-user",
+        }),
+        event("immature", "code_redeemed", {
+          createdAt: "2026-07-18T00:00:01.000Z",
+          metadata: { outcome: "success" },
+          userId: "immature-user",
+        }),
+        event("immature-activity", "task_completed", {
+          createdAt: "2026-07-19T00:00:01.000Z",
+          metadata: { outcome: "success", taskType: "coding" },
+          userId: "immature-user",
+        }),
+        event("invalid-time", "code_redeemed", {
+          createdAt: "not-a-date",
+          metadata: { outcome: "success" },
+          userId: "invalid-time-user",
+        }),
+      ],
+      { asOf: "2026-07-25T00:00:00.000Z" },
+    );
+
+    expect(metrics.redeemed).toBe(4);
+    expect(metrics.sevenDayEligible).toBe(2);
+    expect(metrics.sevenDayReturned).toBe(1);
+    expect(metrics.sevenDayReturnRate).toBe(0.5);
+  });
+
+  it("fails the seven-day cohort closed for an invalid asOf timestamp", () => {
+    const metrics = computeMetrics(
+      [
+        event("redeem", "code_redeemed", {
+          createdAt: "2026-07-01T00:00:00.000Z",
+          metadata: { outcome: "success" },
+          userId: "user-1",
+        }),
+      ],
+      { asOf: "invalid" },
+    );
+
+    expect(metrics.sevenDayEligible).toBe(0);
+    expect(metrics.sevenDayReturnRate).toBe(0);
   });
 });

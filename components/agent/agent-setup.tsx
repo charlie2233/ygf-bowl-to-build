@@ -129,6 +129,15 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatProviderSpend(microUsd: number) {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 4,
+    minimumFractionDigits: 4,
+    style: "currency",
+  }).format(microUsd / 1_000_000);
+}
+
 function keyLabel(key: AgentKeyDescriptor) {
   return `${key.prefix}••••••••${key.last4}`;
 }
@@ -658,6 +667,14 @@ export function AgentSetup({
                       <dt>Credits remaining</dt>
                       <dd>
                         {key.remainingCredits.toLocaleString("en-US")}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Provider spend</dt>
+                      <dd>
+                        {formatProviderSpend(
+                          key.providerCommittedMicroUsd,
+                        )}
                       </dd>
                     </div>
                     <div>

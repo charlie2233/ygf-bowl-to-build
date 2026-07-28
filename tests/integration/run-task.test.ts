@@ -234,6 +234,23 @@ class SharedExecutionRepository
     return this.base.listHistory(input);
   }
 
+  async getEarliestCompletedTask(
+    input: Parameters<MemoryCampaignRepository["listHistory"]>[0],
+  ) {
+    const completed = (await this.base.listHistory(input))
+      .filter((session) => session.status === "completed")
+      .sort((left, right) => {
+        const byTime =
+          new Date(left.createdAt).getTime() -
+          new Date(right.createdAt).getTime();
+        if (byTime !== 0) {
+          return byTime;
+        }
+        return left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
+      });
+    return completed[0] ?? null;
+  }
+
   recordEvent(
     input: Parameters<MemoryCampaignRepository["recordEvent"]>[0],
   ) {

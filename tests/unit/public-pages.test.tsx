@@ -84,7 +84,8 @@ describe("public campaign pages", () => {
     const privacyText = normalizedText(renderPage(<PrivacyPage />));
     const staffText = normalizedText(renderPage(<StaffPage />));
 
-    expect(privacyText).toMatch(/email\/account identifier/i);
+    expect(privacyText).toMatch(/account identifier/i);
+    expect(privacyText).toMatch(/Supabase anonymous user identifier/i);
     expect(privacyText).toMatch(/Do not submit SSNs, payment card numbers, medical data/i);
     expect(staffText).toMatch(/staff only hand the code after the receipt threshold is met/i);
     expect(staffText).toMatch(/Do not submit SSNs, payment card numbers, medical data/i);
@@ -102,7 +103,10 @@ describe("public campaign pages", () => {
     expect(text).toMatch(/90-day retain_until default/i);
     expect(text).toMatch(/explicit per-record expiry/i);
     expect(text).toMatch(/14 days.*not the same as record deletion/i);
-    expect(text).toMatch(/saved outputs persist when explicitly saved/i);
+    expect(text).toMatch(/saved web outputs persist when explicitly saved/i);
+    expect(text).toMatch(/stored in Postgres.*15-minute/i);
+    expect(text).toMatch(/can repeat or echo submitted input/i);
+    expect(text).toMatch(/bounded scheduled cleanup.*launch gate/i);
     expect(text).toMatch(/no fixed deletion deadline/i);
     expect(text).toMatch(
       /manager-approved, technically enforced retention\/deletion schedule is a launch gate before accepting live redemptions/i,

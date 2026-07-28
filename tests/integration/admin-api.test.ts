@@ -400,6 +400,7 @@ describe("partner handoff event API", () => {
       getUser: async () => ({
         email: "student@example.com",
         id: "student-1",
+        isAnonymous: false,
       }),
       recordSignal,
     });
@@ -424,7 +425,10 @@ describe("partner handoff event API", () => {
   it("rejects every caller-selected event payload before signal recording", async () => {
     const recordSignal = vi.fn(async () => true);
     const handler = createPartnerHandoffSignalHandler({
-      getUser: async () => ({ id: "student-1" }),
+      getUser: async () => ({
+        id: "student-1",
+        isAnonymous: false,
+      }),
       recordSignal,
     });
 
@@ -457,7 +461,10 @@ describe("partner handoff event API", () => {
       recordSignal,
     });
     const eligibleUser = createPartnerHandoffSignalHandler({
-      getUser: async () => ({ id: "student-1" }),
+      getUser: async () => ({
+        id: "student-1",
+        isAnonymous: false,
+      }),
       recordSignal,
     });
 

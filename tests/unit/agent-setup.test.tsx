@@ -105,6 +105,31 @@ describe("AgentSetup", () => {
     ).toBeTruthy();
   });
 
+  it("renders bounded provider spend without revealing a stored secret", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          keys: [
+            {
+              ...KEY,
+              providerCommittedMicroUsd: 12_345,
+            },
+          ],
+        }),
+      ),
+    );
+
+    await act(async () => {
+      root.render(<AgentSetup />);
+    });
+    await settle();
+
+    expect(container.textContent).toContain("Provider spend");
+    expect(container.textContent).toContain("$0.0123");
+    expect(container.textContent).not.toContain(API_KEY);
+  });
+
   it("reveals a new key once, copies configs, and runs a bounded connection check", async () => {
     const writeText = vi.fn(async () => undefined);
     Object.defineProperty(navigator, "clipboard", {

@@ -15,6 +15,10 @@ test("establishes the single demo claim and first useful result", async ({
     .poll(() => new URL(page.url()).hash)
     .toBe("");
   expect(new URL(page.url()).pathname).toBe("/redeem");
+  await expect(
+    page.getByText(/no login screen/i),
+  ).toBeVisible();
+  await expect(page.getByText(/API key|OpenAI-compatible/i)).toHaveCount(0);
 
   await page
     .getByRole("checkbox", { name: /promotional terms/i })
@@ -131,7 +135,8 @@ test("establishes the single demo claim and first useful result", async ({
   ).toBeVisible();
 
   await page.goto("/share");
-  await page.getByLabel("First task (optional)").selectOption("study");
+  await expect(page.getByText("First build: Study")).toBeVisible();
+  await expect(page.locator("select")).toHaveCount(0);
   const downloadPromise = page.waitForEvent("download");
   const shareSignalPromise = page.waitForResponse(
     (response) =>

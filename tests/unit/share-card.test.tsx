@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import SharePage from "@/app/share/page";
+import { SharePageContent } from "@/app/share/page";
 import { ShareCardBuilder } from "@/components/share/share-card-builder";
 import {
   createShareCardSvg,
@@ -118,7 +118,7 @@ describe("safe share card", () => {
 
   it("presents one page heading and makes automatic posting explicitly absent", async () => {
     await act(async () => {
-      root.render(<SharePage />);
+      root.render(<SharePageContent firstTaskType="study" />);
     });
 
     const headings = container.querySelectorAll("h1");
@@ -133,6 +133,8 @@ describe("safe share card", () => {
     expect(
       container.querySelector('[role="img"]')?.getAttribute("aria-label"),
     ).toContain("Today’s bowl powered 3,000 AI Credits.");
+    expect(container.textContent).toContain("First build: Study");
+    expect(container.querySelector("select")).toBeNull();
   });
 
   it("waits for an explicit accessible download action", async () => {
@@ -171,19 +173,15 @@ describe("safe share card", () => {
     });
 
     await act(async () => {
-      root.render(<ShareCardBuilder />);
+      root.render(<ShareCardBuilder firstTaskType="study" />);
     });
 
-    const select = container.querySelector("select");
     const button = Array.from(container.querySelectorAll("button")).find(
       (candidate) => candidate.textContent === "Download SVG card",
     );
     const status = container.querySelector('[role="status"]');
 
-    expect(select?.labels?.[0]?.textContent).toContain(
-      "First task (optional)",
-    );
-    expect(select?.querySelectorAll("option")).toHaveLength(5);
+    expect(container.querySelector("select")).toBeNull();
     expect(status?.getAttribute("aria-live")).toBe("polite");
     expect(button).toBeTruthy();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -228,6 +226,7 @@ describe("safe share card", () => {
     );
     const downloadedSvg = await readBlobAsText(downloadedBlob);
     expect(downloadedSvg).toContain('href="data:image/png;base64,');
+    expect(downloadedSvg).toContain("First build: Study");
     expect(downloadedSvg).not.toContain(
       `href="${SHARE_CARD_HERO_PATH}"`,
     );

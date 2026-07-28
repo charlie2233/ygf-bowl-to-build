@@ -34,7 +34,7 @@ physical-print proof.
 | Provider failure evades provider cap | Ceiling is reserved before provider work; provider/validation failures and stale reserved leases refund user Credits while conservatively committing the reserved provider ceiling. Later same-user task admission drains a bounded `SKIP LOCKED` batch first and throttles while any older reserved stale row remains. |
 | Arbitrary model or provider request | Friendly server allowlist only; bounded non-streaming message contract; provider endpoint and provider IDs stay server-owned; redirects are rejected and response bytes/content/usage/cost are validated. |
 | SSRF or credential forwarding | Reviewed HTTPS provider endpoint resolution, no browser-selected endpoint, `redirect: "error"`, server-only provider Authorization, and fixed request fields. |
-| Prompt or response over-retention | Raw messages are HMAC-fingerprinted and not stored or analyzed. Terminal response replay is bounded to 15 minutes and then lazily replaced with a generic tombstone while accounting/idempotency proof remains. |
+| Prompt or response over-retention | The raw request prompt is not a separate column. A successful response payload is stored in Postgres for a logical 15-minute replay window and can echo input. Tombstoning is lazy; an indexed, bounded scheduled cleanup remains a production gate. |
 | RLS or direct-client bypass | Agent tables have enabled and forced RLS, no public/anon/authenticated table grants, and explicit service-role-only function grants. |
 | Production accidentally serves demo/provider traffic | Demo mode is refused in production; provider-backed Agent traffic also requires explicit `YGF_AGENT_GATEWAY_ENABLED=true` plus server credentials. |
 | Secret-bearing physical output escapes | Private renderer accepts only direct ignored `private/` files, verifies the ignore rule and restrictive directory/source permissions, refuses overwrite, emits mode 0600, and keeps claims out of stdout. |
@@ -47,8 +47,10 @@ They never include a raw message, generated response, full key, key digest,
 claim, QR value, email, provider payload, or raw network address. Dashboard
 metrics are derived from distinct users and aggregate wallet totals.
 
-The digital check-in generator accepts only a fixed optional task enum and
-fixed public campaign copy. Its SVG does not expose a user ID, email, claim,
+The digital check-in generator receives only the server-derived earliest
+successful task type and fixed public campaign copy. Its event endpoint accepts
+only `{}` and records at most one signal per wallet. Its SVG does not expose a
+user ID, email, claim,
 private QR, API key, or exact remaining balance, and nothing is posted
 automatically.
 
@@ -81,9 +83,10 @@ handoff:
 
 Dedicated unit and integration contracts cover:
 
-- a disposable PGlite/Postgres application of all four migrations with only
+- a disposable PGlite/Postgres application of all current migrations with only
   Supabase role/auth stubs, followed by real task reserve, exact failure,
-  replay, and stale-reservation accounting transitions;
+  replay, stale-reservation accounting transitions, and idempotent one-row
+  share-card signal execution;
 - at least 256-bit key material, HMAC descriptors, and secret-free
   serialization;
 - creation/list/revoke/rotate, same-origin checks, owner isolation, and the
@@ -108,6 +111,12 @@ the final commands complete.
   RLS, ownership, concurrent multi-key, stale-worker, and failure-injection
   tests before production. PGlite is single-connection, so it validates SQL
   execution and accounting but cannot prove multi-session lock behavior.
+- Enable and test Supabase anonymous sign-in, CAPTCHA/Turnstile, manual
+  Google/Apple identity linking, and anonymous cleanup. Until linking, clearing
+  browser data permanently loses access to the guest wallet.
+- Install and exercise an indexed, bounded scheduled replay-tombstone cleanup;
+  the logical 15-minute window and traffic-triggered cleanup are not an
+  idle-system deletion guarantee.
 - Add and exercise a scheduled bounded global stale-reservation cleanup. The
   request-time same-user sweep prevents new spend on later traffic, but cannot
   settle a wallet that never sends another request.

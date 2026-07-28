@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button";
 import {
   createShareCardSvg,
   getShareCardTaskLabel,
-  isShareCardTaskType,
   SHARE_CARD_COPY,
   SHARE_CARD_FILENAME,
   SHARE_CARD_HERO_PATH,
-  SHARE_CARD_TASK_TYPES,
   type ShareCardTaskType,
 } from "@/lib/share/card";
 
@@ -69,13 +67,9 @@ function downloadSvg(svg: string) {
   URL.revokeObjectURL(objectUrl);
 }
 
-function recordShareCardGeneration(
-  firstTaskType?: ShareCardTaskType,
-) {
+function recordShareCardGeneration() {
   void fetch("/api/share-card", {
-    body: JSON.stringify({
-      ...(firstTaskType ? { taskType: firstTaskType } : {}),
-    }),
+    body: "{}",
     cache: "no-store",
     credentials: "same-origin",
     headers: { "content-type": "application/json" },
@@ -84,12 +78,12 @@ function recordShareCardGeneration(
   }).catch(() => undefined);
 }
 
-export function ShareCardBuilder() {
-  const selectId = useId();
+export function ShareCardBuilder({
+  firstTaskType,
+}: {
+  firstTaskType?: ShareCardTaskType;
+}) {
   const statusId = useId();
-  const [firstTaskType, setFirstTaskType] = useState<
-    "" | ShareCardTaskType
-  >("");
   const [isPreparing, setIsPreparing] = useState(false);
   const [status, setStatus] = useState("");
   const taskLabel = firstTaskType
@@ -112,11 +106,9 @@ export function ShareCardBuilder() {
     setIsPreparing(true);
     setStatus("Preparing your SVG card…");
     try {
-      const svg = await createStandaloneShareCard(
-        firstTaskType || undefined,
-      );
+      const svg = await createStandaloneShareCard(firstTaskType);
       downloadSvg(svg);
-      recordShareCardGeneration(firstTaskType || undefined);
+      recordShareCardGeneration();
       setStatus("Your SVG card downloaded.");
     } catch {
       setStatus("We couldn’t prepare the card. Please try again.");
@@ -154,31 +146,10 @@ export function ShareCardBuilder() {
       </div>
 
       <div className="share-builder__controls">
-        <div>
-          <label htmlFor={selectId}>First task (optional)</label>
-          <select
-            id={selectId}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-              if (value === "" || isShareCardTaskType(value)) {
-                setFirstTaskType(value);
-                setStatus("");
-              }
-            }}
-            value={firstTaskType}
-          >
-            <option value="">No task selected</option>
-            {SHARE_CARD_TASK_TYPES.map((taskType) => (
-              <option key={taskType} value={taskType}>
-                {getShareCardTaskLabel(taskType)}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <p>
-          Your card uses only the public campaign milestone and your
-          optional first task. Nothing is posted automatically.
+          Your card uses only the public campaign milestone
+          {taskLabel ? " and your verified first completed task" : ""}.
+          Nothing is posted automatically.
         </p>
 
         <Button

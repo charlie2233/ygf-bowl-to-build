@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -6,6 +7,9 @@ const navigationMocks = vi.hoisted(() => ({
   redirect: vi.fn((destination: string): never => {
     throw new Error(`REDIRECT:${destination}`);
   }),
+}));
+const taskWorkflowMocks = vi.hoisted(() => ({
+  getEarliestCompletedTask: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => navigationMocks);
@@ -21,11 +25,18 @@ vi.mock("@/lib/auth/user", () => ({
 vi.mock("@/lib/repositories", () => ({
   getCampaignRepository: vi.fn(),
 }));
+vi.mock("@/lib/repositories/task-workflow-repository", () => ({
+  getTaskWorkflowRepository: () => ({
+    getEarliestCompletedTask:
+      taskWorkflowMocks.getEarliestCompletedTask,
+  }),
+}));
 
 import { GET as authCallback } from "@/app/auth/callback/route";
 import AgentConnectPage from "@/app/connect/agent/page";
 import AuthPage from "@/app/auth/page";
 import RedeemSuccessPage from "@/app/redeem/success/page";
+import SharePage from "@/app/share/page";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
 import { createAuthServerClient } from "@/lib/auth/server";
 import { getAuthenticatedUser } from "@/lib/auth/user";
@@ -54,6 +65,8 @@ describe("authentication pages", () => {
     vi.clearAllMocks();
     exchangeCodeForSession.mockReset();
     getWallet.mockReset();
+    taskWorkflowMocks.getEarliestCompletedTask.mockReset();
+    taskWorkflowMocks.getEarliestCompletedTask.mockResolvedValue(null);
     exchangeCodeForSession.mockResolvedValue({ error: null });
     vi.mocked(createAuthServerClient).mockResolvedValue({
       auth: { exchangeCodeForSession },
@@ -97,6 +110,40 @@ describe("authentication pages", () => {
     );
     expect(response.headers.get("cache-control")).toBe(
       "private, no-store",
+    );
+    expect(exchangeCodeForSession).toHaveBeenCalledWith("valid");
+  });
+
+  it("preserves the exact Agent-upgrade destination across the auth page and callback", async () => {
+    vi.mocked(resolveAuthRuntime).mockReturnValue({
+      mode: "supabase",
+      publishableKey: "publishable",
+      serviceKey: "service",
+      url: "https://project.supabase.co",
+    });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "anonymous-user",
+      isAnonymous: true,
+    });
+
+    const page = await AuthPage({
+      searchParams: Promise.resolve({
+        next: "/connect/agent",
+        upgrade: "1",
+      }),
+    });
+    const panel = page.props.children as ReactElement<{
+      nextPath: string;
+    }>;
+    expect(panel.props.nextPath).toBe("/connect/agent");
+
+    const response = await authCallback(
+      new NextRequest(
+        "https://build.ygf.example/auth/callback?code=valid&next=/connect/agent",
+      ),
+    );
+    expect(response.headers.get("location")).toBe(
+      "https://build.ygf.example/connect/agent",
     );
     expect(exchangeCodeForSession).toHaveBeenCalledWith("valid");
   });
@@ -145,7 +192,10 @@ describe("authentication pages", () => {
   });
 
   it("redirects an authenticated visitor without a wallet to redemption", async () => {
-    vi.mocked(getAuthenticatedUser).mockResolvedValue({ id: "user-1" });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "user-1",
+      isAnonymous: false,
+    });
     getWallet.mockRejectedValue(
       new CampaignDomainError("WALLET_NOT_FOUND"),
     );
@@ -154,7 +204,10 @@ describe("authentication pages", () => {
   });
 
   it("redirects an expired wallet away from the active success state", async () => {
-    vi.mocked(getAuthenticatedUser).mockResolvedValue({ id: "user-1" });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "user-1",
+      isAnonymous: false,
+    });
     getWallet.mockResolvedValue({
       ...ACTIVE_WALLET,
       expiresAt: "2020-01-01T00:00:00.000Z",
@@ -164,7 +217,10 @@ describe("authentication pages", () => {
   });
 
   it("renders success only for an authenticated visitor with an active wallet", async () => {
-    vi.mocked(getAuthenticatedUser).mockResolvedValue({ id: "user-1" });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "user-1",
+      isAnonymous: false,
+    });
     getWallet.mockResolvedValue(ACTIVE_WALLET);
 
     const html = renderToStaticMarkup(await RedeemSuccessPage());
@@ -181,7 +237,10 @@ describe("authentication pages", () => {
     );
 
     vi.clearAllMocks();
-    vi.mocked(getAuthenticatedUser).mockResolvedValue({ id: "user-1" });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "user-1",
+      isAnonymous: false,
+    });
     getWallet.mockResolvedValue(ACTIVE_WALLET);
     const html = renderToStaticMarkup(await AgentConnectPage());
 
@@ -189,5 +248,93 @@ describe("authentication pages", () => {
     expect(html).toContain("Use YGF AI instead");
     expect(html).toContain("Developer API key");
     expect(getWallet).toHaveBeenCalledWith({ userId: "user-1" });
+  });
+
+  it("routes anonymous wallet users to account linking before Agent setup", async () => {
+    vi.mocked(resolveAuthRuntime).mockReturnValue({
+      mode: "supabase",
+      publishableKey: "publishable",
+      serviceKey: "service",
+      url: "https://project.supabase.co",
+    });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "anonymous-user",
+      isAnonymous: true,
+    });
+
+    await expect(AgentConnectPage()).rejects.toThrow(
+      "REDIRECT:/auth?next=/connect/agent&upgrade=1",
+    );
+  });
+
+  it("renders anonymous account linking without an unsafe magic-link takeover path", async () => {
+    vi.mocked(resolveAuthRuntime).mockReturnValue({
+      mode: "supabase",
+      publishableKey: "publishable",
+      serviceKey: "service",
+      url: "https://project.supabase.co",
+    });
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "anonymous-user",
+      isAnonymous: true,
+    });
+
+    const html = renderToStaticMarkup(
+      await AuthPage({
+        searchParams: Promise.resolve({
+          next: "/connect/agent",
+          upgrade: "1",
+        }),
+      }),
+    );
+
+    expect(html).toContain("Upgrade to connect an Agent");
+    expect(html).toContain("clearing this browser");
+    expect(html).toContain("Link Google");
+    expect(html).toContain("Link Apple");
+    expect(html).not.toContain("Email me a sign-in link");
+  });
+
+  it("gates share cards to an active wallet while allowing anonymous wallet users", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
+    await expect(SharePage()).rejects.toThrow("REDIRECT:/redeem");
+
+    vi.clearAllMocks();
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "anonymous-user",
+      isAnonymous: true,
+    });
+    getWallet.mockRejectedValue(
+      new CampaignDomainError("WALLET_NOT_FOUND"),
+    );
+    await expect(SharePage()).rejects.toThrow("REDIRECT:/redeem");
+
+    vi.clearAllMocks();
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "anonymous-user",
+      isAnonymous: true,
+    });
+    getWallet.mockResolvedValue({
+      ...ACTIVE_WALLET,
+      expiresAt: "2020-01-01T00:00:00.000Z",
+      userId: "anonymous-user",
+    });
+    await expect(SharePage()).rejects.toThrow("REDIRECT:/expired");
+
+    vi.clearAllMocks();
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "anonymous-user",
+      isAnonymous: true,
+    });
+    getWallet.mockResolvedValue({
+      ...ACTIVE_WALLET,
+      userId: "anonymous-user",
+    });
+    taskWorkflowMocks.getEarliestCompletedTask.mockResolvedValue(null);
+    const html = renderToStaticMarkup(await SharePage());
+    expect(html).toContain("Create your check-in card");
+    expect(
+      taskWorkflowMocks.getEarliestCompletedTask,
+    ).toHaveBeenCalledWith({ userId: "anonymous-user" });
   });
 });

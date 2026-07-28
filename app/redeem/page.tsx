@@ -76,8 +76,8 @@ export default async function RedeemPage() {
               <Laptop aria-hidden="true" />
               <h2>What happens next</h2>
               <p>
-                Sign in if needed, confirm the claim, and choose your first AI
-                task.
+                We create a private guest wallet in this browser, add your
+                credits, and let you choose your first AI task—no login screen.
               </p>
             </div>
           </aside>

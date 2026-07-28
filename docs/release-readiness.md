@@ -104,6 +104,14 @@ checkout:
   anonymous, user, admin, and service-role paths.
 - [ ] Configure magic link, Google, and Apple callbacks in Supabase and test
   each approved provider.
+- [ ] Enable Supabase anonymous sign-in and prove scan → anonymous wallet →
+  first web AI result with no login screen. Verify the session receives the
+  `authenticated` role and remains inside user-bound RLS.
+- [ ] Enable manual identity linking and prove Google/Apple upgrades preserve
+  the same wallet. Configure CAPTCHA/Turnstile, edge limits, and an approved
+  anonymous-user cleanup policy; none is claimed as applied by this checkout.
+- [ ] Run the indexed, bounded scheduled Agent replay cleanup while traffic is
+  idle; logical 15-minute expiry alone is not physical deletion proof.
 - [ ] Install independent production claim-cookie, abuse-signal, and task
   fingerprint secrets.
 - [ ] Install independent Agent key-digest and request-fingerprint secrets;

@@ -54,7 +54,10 @@ describe("Task 4 route composition in demo mode", () => {
       /ygf_pending_claim=([^;]+)/.exec(setCookie)?.[1];
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ eligible: true, next: null });
+    expect(body).toEqual({
+      eligible: true,
+      requiresAnonymousSession: false,
+    });
     expect(setCookie).toMatch(/HttpOnly/i);
     expect(setCookie).toMatch(/SameSite=lax/i);
     expect(setCookie).toMatch(/Max-Age=600/i);

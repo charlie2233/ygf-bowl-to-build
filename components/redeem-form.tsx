@@ -8,6 +8,7 @@ import {
   type FormEvent,
 } from "react";
 
+import { createAuthBrowserClient } from "@/lib/auth/client";
 import { parseClaimFragment } from "@/lib/campaign/claim-url";
 
 export interface RedeemFormSubmission {
@@ -17,6 +18,7 @@ export interface RedeemFormSubmission {
 
 export interface RedeemFormProps {
   confirmPendingClaim?: () => Promise<void>;
+  createAnonymousSession?: () => Promise<void>;
   pendingClaimReady?: boolean;
   submitClaim?: (submission: RedeemFormSubmission) => Promise<void>;
 }
@@ -39,7 +41,19 @@ async function defaultConfirmPendingClaim() {
   window.location.assign("/redeem/success");
 }
 
-async function defaultSubmitClaim(submission: RedeemFormSubmission) {
+async function defaultCreateAnonymousSession() {
+  const client = createAuthBrowserClient();
+  const { data, error } = await client.auth.signInAnonymously();
+  if (error || !data.user || data.user.is_anonymous !== true) {
+    throw new Error("ANONYMOUS_AUTH_UNAVAILABLE");
+  }
+}
+
+async function defaultSubmitClaim(
+  submission: RedeemFormSubmission,
+  createAnonymousSession: () => Promise<void>,
+  confirmPendingClaim: () => Promise<void>,
+) {
   const validation = await fetch("/api/code/validate", {
     body: JSON.stringify(submission),
     headers: { "content-type": "application/json" },
@@ -48,6 +62,7 @@ async function defaultSubmitClaim(submission: RedeemFormSubmission) {
   const validationBody = (await validation.json()) as {
     eligible?: boolean;
     next?: string;
+    requiresAnonymousSession?: boolean;
   };
 
   if (validation.status === 429) {
@@ -64,7 +79,10 @@ async function defaultSubmitClaim(submission: RedeemFormSubmission) {
     return;
   }
 
-  await defaultConfirmPendingClaim();
+  if (validationBody.requiresAnonymousSession) {
+    await createAnonymousSession();
+  }
+  await confirmPendingClaim();
 }
 
 export function redemptionErrorDestination(error: string | undefined) {
@@ -99,20 +117,26 @@ function userFacingError(error: unknown) {
     ) {
       return "Claims are temporarily unavailable. Your saved claim is safe—try again shortly.";
     }
+    if (error.message === "ANONYMOUS_AUTH_UNAVAILABLE") {
+      return "Quick guest access is unavailable. Your secured claim is still ready; use account sign-in instead.";
+    }
   }
   return "We couldn’t complete the claim. Please try again.";
 }
 
 export function RedeemForm({
   confirmPendingClaim = defaultConfirmPendingClaim,
+  createAnonymousSession = defaultCreateAnonymousSession,
   pendingClaimReady = false,
-  submitClaim = defaultSubmitClaim,
+  submitClaim,
 }: RedeemFormProps) {
   const codeId = useId();
   const termsId = useId();
   const [code, setCode] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showManualAuthFallback, setShowManualAuthFallback] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -159,6 +183,7 @@ export function RedeemForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setShowManualAuthFallback(false);
 
     if (pendingClaimReady) {
       setIsSubmitting(true);
@@ -183,11 +208,24 @@ export function RedeemForm({
 
     setIsSubmitting(true);
     try {
-      await submitClaim({
+      const submission = {
         code,
-        termsAccepted: true,
-      });
+        termsAccepted: true as const,
+      };
+      if (submitClaim) {
+        await submitClaim(submission);
+      } else {
+        await defaultSubmitClaim(
+          submission,
+          createAnonymousSession,
+          confirmPendingClaim,
+        );
+      }
     } catch (submissionError) {
+      setShowManualAuthFallback(
+        submissionError instanceof Error &&
+          submissionError.message === "ANONYMOUS_AUTH_UNAVAILABLE",
+      );
       setError(userFacingError(submissionError));
     } finally {
       setIsSubmitting(false);
@@ -243,6 +281,13 @@ export function RedeemForm({
             ? "One confirmation finishes your claim."
             : "Invalid, used, or expired codes will show an error here.")}
       </p>
+      {showManualAuthFallback ? (
+        <p className="redeem-form__fallback">
+          <Link href="/auth?next=/redeem&error=anonymous">
+            Use account sign-in instead
+          </Link>
+        </p>
+      ) : null}
 
       <p className="redeem-form__rule">
         One redemption per person. Credits expire 14 days after redemption.

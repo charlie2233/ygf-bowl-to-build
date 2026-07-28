@@ -13,6 +13,7 @@ const migrationNames = [
   "202607270002_agent_gateway.sql",
   "202607270003_campaign_failure_accounting.sql",
   "202607270004_agent_request_admission.sql",
+  "202607270005_anonymous_share_integrity.sql",
 ] as const;
 
 const userId = "11111111-1111-4111-8111-111111111111";
@@ -21,6 +22,7 @@ const staleOwner = "33333333-3333-4333-8333-333333333333";
 const nextOwner = "44444444-4444-4444-8444-444444444444";
 const legacyUserId = "55555555-5555-4555-8555-555555555555";
 const legacyOwner = "66666666-6666-4666-8666-666666666666";
+const expiredUserId = "77777777-7777-4777-8777-777777777777";
 const legacyKeyHash = "L".repeat(43);
 
 const bootstrapSql = `
@@ -434,6 +436,43 @@ describe("disposable Postgres campaign migrations", () => {
             (row) => row.service_role_can_execute === true,
           ),
         ).toBe(true);
+        const sharePrivileges = await onlyRow<{
+          authenticated_can_execute: boolean;
+          authenticated_can_select: boolean;
+          service_role_can_execute: boolean;
+          service_role_can_select: boolean;
+        }>(
+          database,
+          `
+            select
+              pg_catalog.has_function_privilege(
+                'authenticated',
+                'public.record_share_card_generation(uuid,uuid)',
+                'EXECUTE'
+              ) as authenticated_can_execute,
+              pg_catalog.has_function_privilege(
+                'service_role',
+                'public.record_share_card_generation(uuid,uuid)',
+                'EXECUTE'
+              ) as service_role_can_execute,
+              pg_catalog.has_table_privilege(
+                'authenticated',
+                'public.share_card_generations',
+                'SELECT'
+              ) as authenticated_can_select,
+              pg_catalog.has_table_privilege(
+                'service_role',
+                'public.share_card_generations',
+                'SELECT'
+              ) as service_role_can_select;
+          `,
+        );
+        expect(sharePrivileges).toEqual({
+          authenticated_can_execute: false,
+          authenticated_can_select: false,
+          service_role_can_execute: true,
+          service_role_can_select: true,
+        });
 
         await database.query(
           "insert into auth.users (id) values ($1::uuid);",
@@ -464,6 +503,109 @@ describe("disposable Postgres campaign migrations", () => {
         );
 
         await database.exec("set role service_role;");
+        const firstShare = await onlyRow<{ recorded: boolean }>(
+          database,
+          `
+            select public.record_share_card_generation(
+              $1::uuid,
+              $2::uuid
+            ) as recorded;
+          `,
+          [userId, wallet.id],
+        );
+        const replayedShare = await onlyRow<{ recorded: boolean }>(
+          database,
+          `
+            select public.record_share_card_generation(
+              $1::uuid,
+              $2::uuid
+            ) as recorded;
+          `,
+          [userId, wallet.id],
+        );
+        expect(firstShare.recorded).toBe(true);
+        expect(replayedShare.recorded).toBe(false);
+        await database.exec("reset role;");
+        const shareCounts = await onlyRow<{
+          event_count: number;
+          marker_count: number;
+        }>(
+          database,
+          `
+            select
+              (
+                select pg_catalog.count(*)::integer
+                from public.share_card_generations
+                where wallet_id = $1::uuid
+                  and user_id = $2::uuid
+              ) as marker_count,
+              (
+                select pg_catalog.count(*)::integer
+                from public.events
+                where user_id = $2::uuid
+                  and name = 'share_card_generated'
+              ) as event_count;
+          `,
+          [wallet.id, userId],
+        );
+        expect(shareCounts).toEqual({
+          event_count: 1,
+          marker_count: 1,
+        });
+        await database.exec("set role service_role;");
+        await expect(
+          database.query(
+            `
+              select public.record_share_card_generation(
+                $1::uuid,
+                $2::uuid
+              );
+            `,
+            [legacyUserId, wallet.id],
+          ),
+        ).rejects.toThrow("WALLET_NOT_FOUND");
+        await database.exec("reset role;");
+        await database.query(
+          "insert into auth.users (id) values ($1::uuid);",
+          [expiredUserId],
+        );
+        await database.query(
+          `
+            with authoritative_clock as (
+              select pg_catalog.clock_timestamp() - interval '15 days'
+                as created_at
+            )
+            insert into public.wallets (
+              user_id,
+              created_at,
+              expires_at
+            )
+            select
+              $1::uuid,
+              authoritative_clock.created_at,
+              authoritative_clock.created_at + interval '14 days'
+            from authoritative_clock;
+          `,
+          [expiredUserId],
+        );
+        const expiredWallet = await onlyRow<{ id: string }>(
+          database,
+          "select id from public.wallets where user_id = $1::uuid;",
+          [expiredUserId],
+        );
+        await database.exec("set role service_role;");
+        await expect(
+          database.query(
+            `
+              select public.record_share_card_generation(
+                $1::uuid,
+                $2::uuid
+              );
+            `,
+            [expiredUserId, expiredWallet.id],
+          ),
+        ).rejects.toThrow("WALLET_EXPIRED");
+
         const agentKey = await onlyRow<{ key_id: string }>(
           database,
           `

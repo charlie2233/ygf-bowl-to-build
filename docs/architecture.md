@@ -21,6 +21,26 @@ There are four relevant trust boundaries:
    capacity first, performs the external call without holding a database lock,
    then commits or refunds the reservation.
 
+## Scan-first anonymous identity
+
+The public claim is validated before any user is created. After a same-origin
+eligibility response and accepted terms, a Supabase-mode browser with no
+session calls `signInAnonymously()` and immediately confirms the already
+secured, HttpOnly pending claim. Demo mode follows the same visible flow
+without external auth. If anonymous sign-in is unavailable, the pending claim
+remains intact and the UI exposes an explicit account-sign-in fallback.
+
+Supabase anonymous users carry the `authenticated` database role. Existing
+wallet, task, history, and event RLS therefore continue to bind rows to the
+trusted JWT subject; the application does not invent a browser-controlled
+guest identity. The server derives `isAnonymous` only from the trusted
+`is_anonymous` claim. Anonymous users can redeem and use web AI, but key
+creation/rotation and `/connect/agent` require an identity upgrade.
+Google/Apple upgrades use `linkIdentity`, not a new OAuth sign-in that could
+strand the wallet on a second user. Manual linking, anonymous sign-in,
+CAPTCHA/Turnstile, edge limits, dynamic rendering, and anonymous-user cleanup
+must still be configured and verified in the live Supabase project.
+
 ## Receipt fragment handling
 
 A qualifying receipt has one eight-character uppercase alphanumeric claim. The
@@ -95,6 +115,18 @@ snapshot, even if later tasks changed the live wallet. The Supabase repository
 maps that single RPC row directly and must not perform follow-up wallet or
 ledger reads: a read failure after commit cannot be allowed to report a
 successful grant as failed.
+
+## Share-card integrity
+
+`/share` is dynamically rendered and requires a current user plus a redeemed,
+unexpired wallet; an anonymous wallet is sufficient. The optional task label
+is selected only from the earliest successful completed task in trusted server
+history. The browser cannot submit a task label to analytics:
+`POST /api/share-card` accepts only `{}`, rechecks same origin, session, and
+wallet, then calls the service-only `record_share_card_generation` RPC.
+`share_card_generations` has forced RLS and one row per wallet/user. Its atomic
+insert writes at most one fixed, secret-free event, while pre-migration
+duplicate events remain untouched.
 
 ## Public-validation admission
 
@@ -273,15 +305,20 @@ Concurrent duplicates see the running owner and cannot call the provider.
 Expired leases refund on the next wallet admission. Completed response content
 is returned from the persisted terminal row, after canonical JSON validation,
 so the first response and exact replay share the same authoritative balance.
-It is replayable for 15 minutes and then lazily replaced with a generic
-tombstone; the idempotency and accounting proof remains.
+The successful response payload is stored in Postgres and logically replayable
+for 15 minutes. It can contain provider text that repeats submitted input.
+After expiry it is lazily replaced with a generic tombstone; a reviewed
+indexed, bounded scheduled cleanup remains required so idle traffic cannot
+delay physical replacement. The idempotency and accounting proof remains.
 
 Keys are limited to three active rows and ten creates/replacements per wallet
 per rolling 24 hours. The RPM counter is a single row per key, so over-limit
 traffic creates neither request/event rows nor provider calls.
 
-Raw messages are used only to compute an HMAC request fingerprint and make the
-provider request. They are not stored in Agent tables or analytics. Analytics
+Raw messages are used to compute an HMAC request fingerprint and make the
+provider request. They are not stored as a separate request/prompt column or
+in analytics; the short-lived successful response payload can echo them.
+Analytics
 uses fixed event names with friendly model, bounded credit count, outcome,
 user ID, and timestamp only. Full keys, claims, request bodies, provider
 payloads, email, and raw network identifiers are excluded.
@@ -336,8 +373,10 @@ Campaign administrators are identified by the database-owned
 `profiles.campaign_role`, evaluated through a fixed-search-path
 `SECURITY DEFINER` helper. A normal user can update only the `display_name`
 column, so RLS cannot be used to self-promote. Batch, code, policy, attempts, and
-cross-user dashboard access remains behind admin policies. The anonymous role
-receives no campaign table or mutation grants.
+cross-user dashboard access remains behind admin policies. The Postgres
+`anon` role receives no campaign table or mutation grants. A Supabase
+anonymous user is different: after sign-in its JWT uses the `authenticated`
+role and all user-owned RLS predicates still apply.
 
 The migration includes foreign-key indexes, active/terminal partial indexes,
 check constraints, updated-at triggers, explicit function revokes/grants, and
@@ -355,6 +394,12 @@ HMAC-derived with a server-only secret, version, purpose, and five-minute time
 bucket. Empty or oversized values and secrets shorter than 32 bytes are
 rejected. Persisted signals have an explicit expiry and can be deleted by a
 retention job without retaining the originating value.
+
+Agent request rows retain a successful response payload for a logical
+15-minute idempotent replay window; the payload may echo submitted input.
+Physical tombstoning is lazy, and the repository does not claim a scheduled
+bounded cleanup is already installed. That job and an approved broader
+retention/deletion schedule are production gates.
 
 History stores task type, title, model, usage, status, provider-cost integer,
 and timestamps. Submitted task text is not part of the repository interface.

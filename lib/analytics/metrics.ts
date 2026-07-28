@@ -14,6 +14,7 @@ export interface MetricEvent {
 }
 
 export interface MetricTotals {
+  asOf?: string;
   providerCostMicroUsd?: number;
   remainingCredits?: number;
 }
@@ -47,6 +48,7 @@ export interface CampaignMetrics {
   redemptionRate: number;
   remainingCredits: number;
   returned: number;
+  sevenDayEligible: number;
   sevenDayReturnRate: number;
   sevenDayReturned: number;
   shareCardCreators: number;
@@ -87,6 +89,20 @@ function rate(numerator: number, denominator: number) {
 function eventTimestamp(event: MetricEvent): number | undefined {
   const timestamp = new Date(event.createdAt).getTime();
   return Number.isFinite(timestamp) ? timestamp : undefined;
+}
+
+function analyticsAsOf(
+  events: readonly MetricEvent[],
+  configured: string | undefined,
+): number | undefined {
+  if (configured !== undefined) {
+    const timestamp = new Date(configured).getTime();
+    return Number.isFinite(timestamp) ? timestamp : undefined;
+  }
+  const timestamps = events
+    .map(eventTimestamp)
+    .filter((value): value is number => value !== undefined);
+  return timestamps.length > 0 ? Math.max(...timestamps) : undefined;
 }
 
 export function computeMetrics(
@@ -242,7 +258,15 @@ export function computeMetrics(
   const returned = [...successfulTasksByUser.values()].filter(
     (successfulTaskCount) => successfulTaskCount >= 2,
   ).length;
-  const sevenDayReturned = [...redeemedUsers].filter((userId) => {
+  const asOf = analyticsAsOf(events, totals.asOf);
+  const sevenDayEligibleUsers = [...redeemedUsers].filter((userId) => {
+    const redeemedAt = firstRedemptionAt.get(userId);
+    if (redeemedAt === undefined || asOf === undefined) {
+      return false;
+    }
+    return redeemedAt <= asOf - 7 * 24 * 60 * 60 * 1_000;
+  });
+  const sevenDayReturned = sevenDayEligibleUsers.filter((userId) => {
     const redeemedAt = firstRedemptionAt.get(userId);
     if (redeemedAt === undefined) {
       return false;
@@ -288,9 +312,10 @@ export function computeMetrics(
     redemptionRate: rate(redeemedUsers.size, distributed),
     remainingCredits: boundedTotal(totals.remainingCredits),
     returned,
+    sevenDayEligible: sevenDayEligibleUsers.length,
     sevenDayReturnRate: rate(
       sevenDayReturned,
-      redeemedUsers.size,
+      sevenDayEligibleUsers.length,
     ),
     sevenDayReturned,
     shareCardCreators: shareCardCreators.size,

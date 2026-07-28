@@ -29,6 +29,7 @@ export default async function AdminDashboardPage() {
 
   const dashboard = await getAdminCodeGateway().getAnalyticsData();
   const metrics = computeMetrics(dashboard.events, {
+    asOf: new Date().toISOString(),
     providerCostMicroUsd: dashboard.providerCostMicroUsd,
     remainingCredits: dashboard.remainingCredits,
   });

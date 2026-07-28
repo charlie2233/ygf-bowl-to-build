@@ -146,6 +146,70 @@ describe("personal Agent key APIs", () => {
     ).resolves.toHaveLength(0);
   });
 
+  it("requires an account upgrade for anonymous key creation and rotation while list/revoke stay safe", async () => {
+    const context = await setup();
+    const anonymousHandlers = createKeyCollectionHandlers({
+      createKey: context.createKey,
+      environment: ENVIRONMENT,
+      getUser: async () => ({
+        id: "demo-user",
+        isAnonymous: true,
+      }),
+      repository: context.repository,
+    });
+
+    expect(
+      (await anonymousHandlers.post(mutation("/api/keys"))).status,
+    ).toBe(403);
+    expect(
+      await (
+        await anonymousHandlers.post(mutation("/api/keys"))
+      ).json(),
+    ).toEqual({ error: "ACCOUNT_UPGRADE_REQUIRED" });
+    expect((await anonymousHandlers.get()).status).toBe(200);
+
+    const key = await context.createKey("demo-user");
+    const rotate = createKeyRotateHandler({
+      environment: ENVIRONMENT,
+      getUser: async () => ({
+        id: "demo-user",
+        isAnonymous: true,
+      }),
+      rotate: context.rotate,
+    });
+    expect(
+      (
+        await rotate(
+          new Request(
+            `https://build.ygf.test/api/keys/${key.key.id}/rotate`,
+            {
+              headers: { origin: "https://build.ygf.test" },
+              method: "POST",
+            },
+          ),
+          key.key.id,
+        )
+      ).status,
+    ).toBe(403);
+
+    const revoke = createKeyRevokeHandler({
+      environment: ENVIRONMENT,
+      getUser: async () => ({
+        id: "demo-user",
+        isAnonymous: true,
+      }),
+      repository: context.repository,
+    });
+    expect(
+      (
+        await revoke(
+          mutation(`/api/keys/${key.key.id}`, "DELETE"),
+          key.key.id,
+        )
+      ).status,
+    ).toBe(200);
+  });
+
   it("revokes and rotates only through the authenticated owner path", async () => {
     const context = await setup();
     const first = await context.createKey("demo-user");

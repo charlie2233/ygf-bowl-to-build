@@ -4,12 +4,14 @@ YGF Bowl-to-Build turns a qualifying meal into one simple AI balance:
 
 1. A guest spends $16+ in one completed transaction.
 2. Staff hand over one private row containing the same claim as text and QR.
-3. The guest scans or enters the claim, confirms once, and receives 3,000
-   non-cash Build Credits for 14 days.
+3. The guest scans or enters the claim, accepts the terms, and receives 3,000
+   non-cash Build Credits for 14 days in a private guest wallet—without a
+   login screen.
 4. Study, Coding, Career, and Pick My Bowl each spend 120 credits per run.
-5. As an optional advanced path, the guest can create a personal, limited
-   `ygf_…` API key and connect an OpenAI-compatible Agent. Agent calls reserve
-   and settle variable credits from the same wallet.
+5. As an optional advanced path, the guest can link Google or Apple, then
+   create a personal, limited `ygf_…` API key and connect an
+   OpenAI-compatible Agent. Agent calls reserve and settle variable credits
+   from the same wallet.
 
 The default experience is task-first: **Use AI now** is dominant, **Connect my
 Agent** is secondary, and **Developer API key** is advanced. A physical claim
@@ -99,9 +101,19 @@ supabase db push
 pnpm dev
 ```
 
-Configure the approved Supabase magic-link, Google, and Apple providers and
-their exact callback URLs in the Supabase console. Console configuration is
-external state and is not completed merely by applying this repository.
+Enable Supabase anonymous sign-ins for the scan-first wallet. Configure the
+approved Google and Apple providers, exact callback URLs, and manual identity
+linking in the Supabase console. Magic link remains a manual fallback for a
+non-anonymous account; it is intentionally hidden while upgrading an
+anonymous wallet because it must not create a separate account.
+
+Anonymous users receive Supabase’s `authenticated` database role and stay
+inside the same user-bound wallet/task RLS policies. They are not custom guest
+IDs. Until an identity is linked, clearing site data can permanently lose
+access to that wallet. Anonymous-user cleanup is not automatic in this
+repository. Supabase dashboard configuration, CAPTCHA/Turnstile, edge rate
+limits, manual-linking behavior, anonymous cleanup, and a live upgrade test
+are external state and are not completed merely by applying migrations.
 
 ## Mode 3: production
 
@@ -116,6 +128,8 @@ Deploy the application only after:
 - verifying RLS and server-only service-role access with separate user/admin
   accounts;
 - configuring auth callback origins and provider credentials;
+- enabling and testing anonymous sign-in, manual identity linking,
+  CAPTCHA/Turnstile, edge rate limiting, and anonymous-user cleanup;
 - setting both independent Agent HMAC secrets and explicitly enabling the
   gateway only after one real provider request, refund, and cost-cap smoke;
 - setting provider usage and billing alerts;
@@ -155,6 +169,10 @@ wallet-wide $0.25 beta provider-cost ceiling. Provider failures refund user
 Credits but conservatively commit the reserved provider ceiling, so a possibly
 billed upstream attempt cannot evade the wallet cap; wallet-scoped idempotency
 prevents multiple keys from charging the same request twice.
+
+Anonymous wallet users can use the web tools, history, and safe check-in card,
+but cannot create or rotate Agent keys. They must link Google or Apple to the
+same Supabase user first. Listing or revoking an existing key remains safe.
 
 ```env
 OPENAI_BASE_URL=https://<approved-production-origin>/v1
@@ -303,6 +321,13 @@ test, or approve launch. Those gates are tracked in
 - Input is bounded to 12,000 text characters. Submitted prompt text is not
   retained by default; a generated output enters history only after an
   explicit save.
+- Successful Agent response payloads are stored in Postgres for a logical
+  15-minute replay window and may echo request text. The raw request prompt is
+  not a separate column. Physical tombstoning is lazy; a reviewed indexed,
+  bounded scheduled cleanup remains a launch gate.
+- A check-in task label comes only from the server’s earliest successful task
+  history. `/api/share-card` accepts only `{}` and records at most one
+  generation signal per wallet.
 - Pick My Bowl is general guidance only. Staff must confirm live price,
   availability, ingredients, nutrition, and allergens.
 - Partner connection is promoted only after a completed task and is not live

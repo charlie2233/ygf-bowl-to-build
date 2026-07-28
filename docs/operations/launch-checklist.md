@@ -98,6 +98,20 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 
 ## External accounts and operations gates
 
+- [ ] Enable Supabase anonymous sign-ins and verify a valid receipt can reach
+  a first web AI result without a Google/Apple/Magic Link screen.
+- [ ] Enable and verify manual identity linking so Google/Apple upgrades keep
+  the same anonymous user and wallet; do not substitute a second-account OAuth
+  sign-in.
+- [ ] Configure and test CAPTCHA/Turnstile plus edge rate limits for anonymous
+  signup/claim traffic. The repository does not claim these dashboard controls
+  are already applied.
+- [ ] Approve and schedule anonymous-user cleanup. Deleting unlinked anonymous
+  users is not automatic, and clearing browser data makes their wallets
+  unrecoverable.
+- [ ] Install an indexed, bounded scheduled Agent replay-tombstone cleanup and
+  prove it runs while the gateway is idle.
+
 - [ ] Each external account has a named YGF owner, least-privilege access,
   recovery method, and billing/usage alert. Do not put secrets in this
   checklist.

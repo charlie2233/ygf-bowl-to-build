@@ -96,6 +96,9 @@ export interface TaskWorkflowRepository {
     sessionId: string,
   ): Promise<unknown | null>;
   getRemainingCredits?(userId: string): Promise<number>;
+  getEarliestCompletedTask(
+    input: ListHistoryInput,
+  ): Promise<TaskSession | null>;
   listHistory(input: ListHistoryInput): Promise<readonly TaskSession[]>;
   recordEvent(input: RecordEventInput): Promise<CampaignEvent>;
   recordSession(input: RecordSessionInput): Promise<TaskSession>;
@@ -719,6 +722,27 @@ export class SupabaseTaskWorkflowRepository
     return data.map((row) => mapTaskSession(row as TaskSessionRow));
   }
 
+  async getEarliestCompletedTask({
+    userId,
+  }: ListHistoryInput): Promise<TaskSession | null> {
+    const service = createServiceRoleClient();
+    const { data, error } = await service
+      .from("task_sessions")
+      .select(
+        "id,user_id,reservation_id,task_type,title,model_id,input_units,output_units,provider_cost_micro_usd,status,saved_output,saved_output_retained,created_at",
+      )
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      return unavailable();
+    }
+    return data ? mapTaskSession(data as TaskSessionRow) : null;
+  }
+
   async saveSessionOutput({
     output,
     sessionId,
@@ -775,7 +799,9 @@ export class SupabaseTaskWorkflowRepository
   }
 }
 
-class DemoTaskWorkflowRepository implements TaskWorkflowRepository {
+export class DemoTaskWorkflowRepository
+  implements TaskWorkflowRepository
+{
   readonly #repository: CampaignRepository;
   readonly #savedOutputs = new Map<string, string>();
 
@@ -820,6 +846,31 @@ class DemoTaskWorkflowRepository implements TaskWorkflowRepository {
         ? session
         : { ...session, savedOutput };
     });
+  }
+
+  async getEarliestCompletedTask(
+    input: ListHistoryInput,
+  ): Promise<TaskSession | null> {
+    const sessions = await this.listHistory(input);
+    let earliest: TaskSession | null = null;
+    for (const session of sessions) {
+      if (session.status !== "completed") {
+        continue;
+      }
+      if (!earliest) {
+        earliest = session;
+        continue;
+      }
+      const sessionTime = new Date(session.createdAt).getTime();
+      const earliestTime = new Date(earliest.createdAt).getTime();
+      if (
+        sessionTime < earliestTime ||
+        (sessionTime === earliestTime && session.id < earliest.id)
+      ) {
+        earliest = session;
+      }
+    }
+    return earliest;
   }
 
   async saveSessionOutput({

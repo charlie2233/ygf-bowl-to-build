@@ -40,7 +40,8 @@ export const publicFaq: readonly PublicFaqItem[] = [
   },
   {
     question: "Do I need a school email?",
-    answer: "No. A USC email is not required.",
+    answer:
+      "No. A receipt scan can create a private guest wallet in this browser without a login screen. Link Google or Apple only if you want recovery, cross-device access, or an Agent API key.",
   },
   {
     question: "What are Build Credits?",
@@ -117,10 +118,10 @@ export const privacySections: readonly LegalSection[] = [
   {
     title: "What YGF processes",
     body: [
-      "YGF may process your email/account identifier, redemption activity, and prompts you submit to provide this promotional AI service.",
+      "YGF processes an account identifier, redemption activity, and prompts you submit to provide this promotional AI service. A scan-first guest wallet uses a Supabase anonymous user identifier; YGF receives an email only if you later link or use an email-based account.",
       "History stores task type, generated title, an optional user-saved result, usage, and timestamps.",
       "If you create a developer key, YGF stores a keyed digest, a short prefix and last four characters, ownership, expiry, revocation, and usage/accounting records. YGF does not store the full plaintext key.",
-      "Agent request accounting stores a keyed request fingerprint, selected allowlisted model, status, credits, provider cost, and timestamps—not the raw prompt.",
+      "Agent request accounting stores a keyed request fingerprint, selected allowlisted model, status, credits, provider cost, and timestamps. The raw request prompt is not stored in a separate database column.",
     ],
   },
   {
@@ -144,9 +145,11 @@ export const privacySections: readonly LegalSection[] = [
       "HMAC-derived abuse signals rotate every five minutes. Persisted redemption-attempt rows have an explicit per-record expiry. Raw IP addresses and full plaintext codes are never stored.",
       "Event metadata has a 90-day retain_until default.",
       "Wallet credits expire after 14 days, but that is not the same as record deletion.",
-      "Prompt payloads are not retained by YGF by default. Saved outputs persist when explicitly saved.",
-      "Successful Agent responses may remain in short-lived process memory for up to 15 minutes only to return safe idempotent retries; the raw Agent prompt is not retained.",
+      "Raw request prompts are not stored in a separate prompt column. Saved web outputs persist when explicitly saved.",
+      "A successful Agent response payload is stored in Postgres for a logical 15-minute idempotent replay window. A provider response can repeat or echo submitted input, so the replay payload can contain text derived from the request even though the raw request prompt is not stored as its own field.",
+      "After the logical replay window expires, response payload tombstoning is lazy and may be delayed while the gateway is idle. A reviewed, indexed, bounded scheduled cleanup job is still a production launch gate and is not claimed as configured.",
       "Personal API key plaintext is returned only when a key is created or rotated. Only its keyed digest and non-secret display metadata persist.",
+      "A guest wallet remains tied to this browser until an identity is linked. Clearing browser site data can permanently remove access. Supabase anonymous-user cleanup is not automatic in this codebase.",
       "The current beta has no fixed deletion deadline or self-service deletion for account, redemption, ledger, history, saved-output, or privacy/contact records.",
       "A manager-approved, technically enforced retention/deletion schedule is a launch gate before accepting live redemptions.",
       "Long-lived dietary or allergy histories are avoided unless they are truly needed.",

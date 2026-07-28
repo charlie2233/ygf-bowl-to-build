@@ -69,7 +69,8 @@ describe("admin campaign UI", () => {
           redemptionRate: 66 / 300,
           remainingCredits: 75_000,
           returned: 20,
-          sevenDayReturnRate: 18 / 66,
+          sevenDayReturnRate: 18 / 60,
+          sevenDayEligible: 60,
           sevenDayReturned: 18,
           shareCardCreators: 12,
           shareCardRate: 12 / 66,
@@ -92,6 +93,7 @@ describe("admin campaign UI", () => {
     expect(document.body.textContent).toContain("Task error rate");
     expect(document.body.textContent).toContain("Agent first success");
     expect(document.body.textContent).toContain("7-day revisit");
+    expect(document.body.textContent).toContain("18 / 60");
     expect(document.body.textContent).toContain("12.5%");
   });
 });

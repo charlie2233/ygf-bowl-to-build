@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     const user = await getAuthenticatedUser();
     const response = NextResponse.json({
       eligible: true,
-      next: user ? null : "/auth?next=/redeem",
+      requiresAnonymousSession: user === null,
     });
     response.cookies.set(
       PENDING_CLAIM_COOKIE,

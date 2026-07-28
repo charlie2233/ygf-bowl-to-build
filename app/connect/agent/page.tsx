@@ -49,6 +49,9 @@ export default async function AgentConnectPage() {
   if (!user) {
     redirect("/auth?next=/connect/agent");
   }
+  if (user.isAnonymous) {
+    redirect("/auth?next=/connect/agent&upgrade=1");
+  }
 
   try {
     const wallet = await getCampaignRepository().getWallet({

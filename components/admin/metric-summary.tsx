@@ -45,8 +45,10 @@ export function MetricSummary({
     ],
     ["Returned users", wholeNumber(metrics.returned)],
     [
-      "7-day revisit · rate",
-      funnel(metrics.sevenDayReturned, metrics.sevenDayReturnRate),
+      "7-day revisit / eligible · rate",
+      `${wholeNumber(metrics.sevenDayReturned)} / ${wholeNumber(
+        metrics.sevenDayEligible,
+      )} · ${percentage(metrics.sevenDayReturnRate)}`,
     ],
     [
       "API key creators · rate",

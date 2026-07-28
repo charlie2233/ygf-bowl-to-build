@@ -1,5 +1,9 @@
 const DEFAULT_AUTH_NEXT_PATH = "/redeem";
-const ALLOWED_AUTH_NEXT_PATHS = new Set(["/redeem", "/wallet"]);
+const ALLOWED_AUTH_NEXT_PATHS = new Set([
+  "/connect/agent",
+  "/redeem",
+  "/wallet",
+]);
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f-\u009f]/;
 const MAXIMUM_DECODE_PASSES = 3;
 

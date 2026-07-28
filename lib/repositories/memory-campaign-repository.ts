@@ -743,6 +743,31 @@ export class MemoryCampaignRepository implements CampaignRepository {
       .map(cloneSession);
   }
 
+  async getEarliestCompletedTask({
+    userId,
+  }: ListHistoryInput): Promise<TaskSession | null> {
+    validateUserId(userId);
+    let earliest: TaskSession | null = null;
+    for (const session of this.#sessions) {
+      if (session.userId !== userId || session.status !== "completed") {
+        continue;
+      }
+      if (!earliest) {
+        earliest = session;
+        continue;
+      }
+      const sessionTime = new Date(session.createdAt).getTime();
+      const earliestTime = new Date(earliest.createdAt).getTime();
+      if (
+        sessionTime < earliestTime ||
+        (sessionTime === earliestTime && session.id < earliest.id)
+      ) {
+        earliest = session;
+      }
+    }
+    return earliest ? cloneSession(earliest) : null;
+  }
+
   async recordEvent(input: RecordEventInput): Promise<CampaignEvent> {
     if (input.userId !== undefined) {
       validateUserId(input.userId);

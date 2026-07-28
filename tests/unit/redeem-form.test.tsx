@@ -104,6 +104,143 @@ describe("RedeemForm", () => {
     ).toBe(false);
   });
 
+  it("creates an anonymous Supabase session only after eligibility, then claims immediately", async () => {
+    const callOrder: string[] = [];
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/api/code/validate") {
+        callOrder.push("eligible");
+        return Response.json({
+          eligible: true,
+          requiresAnonymousSession: true,
+        });
+      }
+      if (url === "/api/redeem") {
+        callOrder.push("redeem");
+        return Response.json({ next: "/redeem/success" });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    const createAnonymousSession = vi.fn(async () => {
+      callOrder.push("anonymous-session");
+    });
+    const confirmPendingClaim = vi.fn(async () => {
+      callOrder.push("redeem");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await act(async () => {
+      root.render(
+        <RedeemForm
+          createAnonymousSession={createAnonymousSession}
+          confirmPendingClaim={confirmPendingClaim}
+        />,
+      );
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(callOrder).toEqual([
+      "eligible",
+      "anonymous-session",
+      "redeem",
+    ]);
+    expect(createAnonymousSession).toHaveBeenCalledTimes(1);
+    expect(confirmPendingClaim).toHaveBeenCalledTimes(1);
+    expect(container.textContent).not.toMatch(/API key|model|Google|Apple/i);
+  });
+
+  it("never creates an anonymous user for an ineligible code", async () => {
+    const createAnonymousSession = vi.fn(async () => undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({ eligible: false }, { status: 200 }),
+      ),
+    );
+
+    await act(async () => {
+      root.render(
+        <RedeemForm createAnonymousSession={createAnonymousSession} />,
+      );
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(createAnonymousSession).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("invalid or unavailable");
+  });
+
+  it("preserves the secured claim and shows manual sign-in only when anonymous auth is unavailable", async () => {
+    const createAnonymousSession = vi.fn(async () => {
+      throw new Error("ANONYMOUS_AUTH_UNAVAILABLE");
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({
+          eligible: true,
+          requiresAnonymousSession: true,
+        }),
+      ),
+    );
+
+    await act(async () => {
+      root.render(
+        <RedeemForm createAnonymousSession={createAnonymousSession} />,
+      );
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.textContent).toContain(
+      "Your secured claim is still ready",
+    );
+    expect(
+      container
+        .querySelector<HTMLAnchorElement>(
+          'a[href="/auth?next=/redeem&error=anonymous"]',
+        )
+        ?.textContent,
+    ).toContain("Use account sign-in");
+  });
+
   it("finishes a saved post-auth claim with one confirmation tap", async () => {
     const confirmPendingClaim = vi.fn(async () => undefined);
 

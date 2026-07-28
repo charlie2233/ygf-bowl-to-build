@@ -4,6 +4,7 @@ import { createAuthServerClient } from "@/lib/auth/server";
 export interface AuthenticatedCampaignUser {
   email?: string;
   id: string;
+  isAnonymous: boolean;
 }
 
 function isUnauthenticatedError(
@@ -23,25 +24,38 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedCampaignUser 
     return {
       email: "demo@local.ygf",
       id: "demo-user",
+      isAnonymous: false,
     };
   }
 
   const client = await createAuthServerClient();
   const { data, error } = await client.auth.getClaims();
-  const subject = data?.claims?.sub;
-
   if (error && !isUnauthenticatedError(error)) {
     throw new Error("AUTHENTICATION_UNAVAILABLE");
   }
-  if (typeof subject !== "string" || subject.length === 0) {
+  return authenticatedCampaignUserFromClaims(data?.claims);
+}
+
+export function authenticatedCampaignUserFromClaims(
+  claims: unknown,
+): AuthenticatedCampaignUser | null {
+  if (
+    typeof claims !== "object" ||
+    claims === null ||
+    Array.isArray(claims)
+  ) {
+    return null;
+  }
+  const record = claims as Record<string, unknown>;
+  if (typeof record.sub !== "string" || record.sub.length === 0) {
     return null;
   }
 
   return {
-    email:
-      typeof data?.claims?.email === "string"
-        ? data.claims.email
-        : undefined,
-    id: subject,
+    ...(typeof record.email === "string"
+      ? { email: record.email }
+      : {}),
+    id: record.sub,
+    isAnonymous: record.is_anonymous === true,
   };
 }

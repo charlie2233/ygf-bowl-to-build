@@ -20,7 +20,9 @@ const PRIVATE_HEADERS = {
 
 interface RotateKeyDependencies {
   environment?: Readonly<Record<string, string | undefined>>;
-  getUser: () => Promise<{ id: string } | null>;
+  getUser: () => Promise<
+    { id: string; isAnonymous?: boolean } | null
+  >;
   rotate?: (
     userId: string,
     keyId: string,
@@ -56,7 +58,7 @@ export function createKeyRotateHandler({
     if (!KEY_ID_PATTERN.test(normalized)) {
       return response({ error: "KEY_NOT_FOUND" }, 404);
     }
-    let user: { id: string } | null;
+    let user: { id: string; isAnonymous?: boolean } | null;
     try {
       user = await getUser();
     } catch {
@@ -64,6 +66,9 @@ export function createKeyRotateHandler({
     }
     if (!user) {
       return response({ error: "AUTHENTICATION_REQUIRED" }, 401);
+    }
+    if (user.isAnonymous) {
+      return response({ error: "ACCOUNT_UPGRADE_REQUIRED" }, 403);
     }
     try {
       const rotated = await rotate(user.id, normalized);

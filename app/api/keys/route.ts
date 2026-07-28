@@ -22,6 +22,7 @@ const MAX_KEY_BODY_BYTES = 256;
 
 interface AuthenticatedUser {
   id: string;
+  isAnonymous?: boolean;
 }
 
 interface KeyRouteDependencies {
@@ -150,6 +151,9 @@ export function createKeyCollectionHandlers({
     }
     if (!user) {
       return response({ error: "AUTHENTICATION_REQUIRED" }, 401);
+    }
+    if (user.isAnonymous) {
+      return response({ error: "ACCOUNT_UPGRADE_REQUIRED" }, 403);
     }
     try {
       const created = await createKey(user.id);

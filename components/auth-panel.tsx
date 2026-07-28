@@ -6,6 +6,7 @@ import { createAuthBrowserClient } from "@/lib/auth/client";
 
 interface AuthPanelProps {
   initialError?: string;
+  isAnonymous?: boolean;
   mode: "demo" | "supabase";
   nextPath: string;
 }
@@ -18,6 +19,7 @@ function callbackUrl(nextPath: string) {
 
 export function AuthPanel({
   initialError,
+  isAnonymous = false,
   mode,
   nextPath,
 }: AuthPanelProps) {
@@ -35,10 +37,15 @@ export function AuthPanel({
     setMessage(null);
     setMessageKind("status");
     const client = createAuthBrowserClient();
-    const { error } = await client.auth.signInWithOAuth({
-      options: { redirectTo: callbackUrl(nextPath) },
-      provider,
-    });
+    const { error } = isAnonymous
+      ? await client.auth.linkIdentity({
+          options: { redirectTo: callbackUrl(nextPath) },
+          provider,
+        })
+      : await client.auth.signInWithOAuth({
+          options: { redirectTo: callbackUrl(nextPath) },
+          provider,
+        });
     if (error) {
       setMessage("Sign-in could not start. Please try another option.");
       setMessageKind("error");
@@ -101,11 +108,48 @@ export function AuthPanel({
     );
   }
 
+  if (isAnonymous) {
+    return (
+      <div className="auth-panel">
+        <h1>Upgrade to connect an Agent</h1>
+        <p>
+          Your guest wallet already works for YGF web AI. Link a verified
+          identity only for personal Agent keys, recovery, and cross-device
+          access.
+        </p>
+        <p className="auth-panel__warning">
+          Until you link an account, clearing this browser’s site data can
+          permanently remove access to this guest wallet.
+        </p>
+        <div className="auth-panel__providers">
+          <button
+            className="button button--secondary button--medium"
+            disabled={busy}
+            onClick={() => void signInWithProvider("google")}
+            type="button"
+          >
+            Link Google
+          </button>
+          <button
+            className="button button--secondary button--medium"
+            disabled={busy}
+            onClick={() => void signInWithProvider("apple")}
+            type="button"
+          >
+            Link Apple
+          </button>
+        </div>
+        {messageElement}
+      </div>
+    );
+  }
+
   return (
     <div className="auth-panel">
-      <h1>Sign in to claim your wallet</h1>
+      <h1>Sign in to recover your wallet</h1>
       <p>
-        Choose a quick sign-in option. A school email is not required.
+        Normal receipt scans use a guest wallet without a login screen.
+        Choose an account only for recovery or cross-device access.
       </p>
       <div className="auth-panel__providers">
         <button

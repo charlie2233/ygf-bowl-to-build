@@ -273,6 +273,59 @@ describe("SupabaseTaskWorkflowRepository", () => {
     });
   });
 
+  it("queries the authoritative earliest completed task without a newest-history cap", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        created_at: "2026-07-01T12:00:00.000Z",
+        id: "00000000-0000-4000-8000-000000000001",
+        input_units: 80,
+        model_id: "openai/gpt-4.1-mini",
+        output_units: 140,
+        provider_cost_micro_usd: 2_400,
+        reservation_id:
+          "00000000-0000-4000-8000-000000000002",
+        saved_output: null,
+        saved_output_retained: false,
+        status: "completed",
+        task_type: "study",
+        title: "Earliest completed task",
+        user_id: "00000000-0000-4000-8000-000000000003",
+      },
+      error: null,
+    });
+    const query = {
+      eq: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle,
+      order: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+    };
+    const from = vi.fn().mockReturnValue(query);
+    createServiceClientMock.mockReturnValue({ from } as never);
+    const repository = new SupabaseTaskWorkflowRepository();
+
+    await expect(
+      repository.getEarliestCompletedTask({
+        userId: "00000000-0000-4000-8000-000000000003",
+      }),
+    ).resolves.toMatchObject({
+      id: "00000000-0000-4000-8000-000000000001",
+      status: "completed",
+      taskType: "study",
+    });
+    expect(from).toHaveBeenCalledWith("task_sessions");
+    expect(query.eq.mock.calls).toEqual([
+      ["user_id", "00000000-0000-4000-8000-000000000003"],
+      ["status", "completed"],
+    ]);
+    expect(query.order.mock.calls).toEqual([
+      ["created_at", { ascending: true }],
+      ["id", { ascending: true }],
+    ]);
+    expect(query.limit).toHaveBeenCalledWith(1);
+    expect(maybeSingle).toHaveBeenCalledOnce();
+  });
+
   it("maps database details to typed domain or safe infrastructure errors", async () => {
     const repository = new SupabaseTaskWorkflowRepository();
     createServiceClientMock.mockReturnValue({

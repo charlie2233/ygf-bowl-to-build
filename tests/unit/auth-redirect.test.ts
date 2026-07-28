@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { safeAuthNextPath } from "@/lib/auth/redirect";
 
 describe("safe auth redirects", () => {
-  it.each(["/redeem", "/wallet"] as const)(
+  it.each(["/connect/agent", "/redeem", "/wallet"] as const)(
     "allows the known internal destination %s",
     (destination) => {
       expect(safeAuthNextPath(destination)).toBe(destination);
@@ -25,6 +25,10 @@ describe("safe auth redirects", () => {
     "/redeem%0a",
     "/redeem?next=/wallet",
     "/wallet#credits",
+    "/connect/agent/",
+    "/connect/agent/keys",
+    "/connect/agent?next=/wallet",
+    "/connect/agent#developer-api-key",
     "/redeem/../wallet",
     "%",
   ])("rejects the unsafe destination %j", (destination) => {

@@ -2,14 +2,15 @@ import {
   BoundedBodyError,
   readBoundedRequestText,
 } from "@/lib/admin/http";
-import { recordProductSignal } from "@/lib/analytics/product-signals";
 import { isSameOriginMutation } from "@/lib/auth/admin";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { isWalletExpired } from "@/lib/campaign/credits";
-import type { TaskType } from "@/lib/campaign/types";
 import type { CampaignRepository } from "@/lib/repositories/campaign-repository";
-import type { RecordEventInput } from "@/lib/repositories/campaign-repository";
 import { getCampaignRepository } from "@/lib/repositories";
+import {
+  getShareCardSignalGateway,
+  type ShareCardSignalGateway,
+} from "@/lib/repositories/share-card-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -18,19 +19,13 @@ const PRIVATE_HEADERS = {
   expires: "0",
   pragma: "no-cache",
 };
-const MAX_BODY_BYTES = 64;
-const TASK_TYPES = new Set<TaskType>([
-  "study",
-  "coding",
-  "career",
-  "pick-my-bowl",
-]);
+const MAX_BODY_BYTES = 16;
 
 interface ShareCardEventDependencies {
   environment?: Readonly<Record<string, string | undefined>>;
   getUser?: typeof getAuthenticatedUser;
-  recordEvent?: (input: RecordEventInput) => Promise<unknown>;
   repository?: Pick<CampaignRepository, "getWallet">;
+  signalGateway?: ShareCardSignalGateway;
 }
 
 function jsonError(error: string, status: number) {
@@ -40,39 +35,23 @@ function jsonError(error: string, status: number) {
   );
 }
 
-function parseBody(value: unknown): { taskType?: TaskType } {
+function parseBody(value: unknown): Record<string, never> {
   if (
     typeof value !== "object" ||
     value === null ||
-    Array.isArray(value)
+    Array.isArray(value) ||
+    Object.keys(value).length !== 0
   ) {
     throw new Error("SHARE_EVENT_INVALID");
   }
-  const keys = Object.keys(value);
-  if (
-    keys.some((key) => key !== "taskType") ||
-    keys.length > 1
-  ) {
-    throw new Error("SHARE_EVENT_INVALID");
-  }
-  const taskType = (value as { taskType?: unknown }).taskType;
-  if (taskType === undefined) {
-    return {};
-  }
-  if (
-    typeof taskType !== "string" ||
-    !TASK_TYPES.has(taskType as TaskType)
-  ) {
-    throw new Error("SHARE_EVENT_INVALID");
-  }
-  return { taskType: taskType as TaskType };
+  return {};
 }
 
 export function createShareCardEventHandler({
   environment = process.env,
   getUser = getAuthenticatedUser,
-  recordEvent = recordProductSignal,
   repository,
+  signalGateway,
 }: ShareCardEventDependencies = {}) {
   return async function handle(request: Request) {
     if (!isSameOriginMutation(request, environment)) {
@@ -88,13 +67,12 @@ export function createShareCardEventHandler({
       return jsonError("SHARE_EVENT_INVALID", 400);
     }
 
-    let input: { taskType?: TaskType };
     try {
       const text = await readBoundedRequestText(
         request,
         MAX_BODY_BYTES,
       );
-      input = parseBody(JSON.parse(text) as unknown);
+      parseBody(JSON.parse(text) as unknown);
     } catch (error) {
       const tooLarge =
         error instanceof BoundedBodyError &&
@@ -121,14 +99,11 @@ export function createShareCardEventHandler({
       if (isWalletExpired(wallet.expiresAt)) {
         return jsonError("WALLET_EXPIRED", 410);
       }
-      await recordEvent({
-        metadata: {
-          outcome: "success",
-          ...(input.taskType ? { taskType: input.taskType } : {}),
-        },
-        name: "share_card_generated",
-        source: "share",
+      await (
+        signalGateway ?? getShareCardSignalGateway()
+      ).recordGeneration({
         userId: user.id,
+        walletId: wallet.id,
       });
       return new Response(null, {
         headers: PRIVATE_HEADERS,

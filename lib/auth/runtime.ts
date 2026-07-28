@@ -55,6 +55,8 @@ export function resolveAuthRuntime(
 
 export function serverSecret(
   name:
+    | "YGF_AGENT_API_KEY_DIGEST_SECRET"
+    | "YGF_AGENT_REQUEST_FINGERPRINT_SECRET"
     | "YGF_ABUSE_SIGNAL_SECRET"
     | "YGF_CLAIM_COOKIE_SECRET"
     | "YGF_TASK_FINGERPRINT_SECRET",
@@ -66,7 +68,11 @@ export function serverSecret(
     return configured;
   }
 
+  const requiresExplicitConfiguration =
+    name === "YGF_TASK_FINGERPRINT_SECRET" ||
+    name === "YGF_AGENT_REQUEST_FINGERPRINT_SECRET";
   if (
+    !requiresExplicitConfiguration &&
     nodeEnvironment !== "production" &&
     environment.YGF_DEMO_MODE === "true"
   ) {

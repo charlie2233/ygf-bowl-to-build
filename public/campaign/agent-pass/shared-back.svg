@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="agent-pass-title agent-pass-description" width="85.6mm" height="54mm" viewBox="0 0 856 540">
+<title id="agent-pass-title">YGF Agent Pass shared back template</title>
+<desc id="agent-pass-description">The shared credential-free YGF Agent Pass back template. A protected claim overlay is applied only in private fulfillment.</desc>
+<metadata data-renderer="ygf-agent-pass-v1" data-card-width-mm="85.6" data-card-height-mm="54" data-photo-source="user-provided" data-rights-status="pending-brand-rights-confirmation" data-side="back" data-variant="shared"/>
+
+<rect width="856" height="540" fill="#F6F0E4"/>
+<rect x="0" y="0" width="856" height="78" fill="#D84A32"/>
+<rect x="18" y="18" width="820" height="504" rx="20" fill="none" stroke="#E8B94A" stroke-width="3"/>
+<circle cx="64" cy="39" r="18" fill="#E8B94A"/>
+<text x="64" y="46" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="22" font-weight="900">Y</text>
+<text x="96" y="49" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="23" font-weight="900" letter-spacing="2">YGF AGENT PASS</text>
+<text x="46" y="118" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="31" font-weight="900">领取 3,000 YGF AI Credits</text>
+<text x="46" y="151" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="900">14 天有效 · #一碗一算力</text>
+<text x="46" y="184" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="900" letter-spacing="1">3 STEPS · 三步开始</text>
+<g data-agent-pass-steps="scratch-scan-start">
+<rect x="46" y="198" width="216" height="60" rx="12" fill="#FFFFFF"/>
+<rect x="298" y="198" width="216" height="60" rx="12" fill="#FFFFFF"/>
+<rect x="550" y="198" width="260" height="60" rx="12" fill="#FFFFFF"/>
+<text x="62" y="235" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="900">1 刮开 / OPEN</text>
+<text x="314" y="235" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="900">2 扫码 / SCAN</text>
+<text x="566" y="235" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="900">3 开始使用 / START USING</text>
+</g>
+<g data-protected-overlay-slot="empty" aria-label="Protected checkout overlay area">
+<rect x="46" y="275" width="764" height="120" rx="18" fill="#FFFFFF" stroke="#D84A32" stroke-width="3" stroke-dasharray="10 8"/>
+<text x="428" y="312" text-anchor="middle" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="19" font-weight="900" letter-spacing="1.2">PROTECTED CHECKOUT OVERLAY AREA</text>
+<text x="428" y="341" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="15" font-weight="700">The public template is intentionally credential-free.</text>
+<text x="428" y="369" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="600">Fulfilled passes receive a matched human code and scan target here.</text>
+</g>
+<text x="46" y="425" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="20" font-weight="900">刮开后请勿拍照分享</text>
+<text x="46" y="451" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="800">A physical claim unlocks credits. It is never an API credential.</text>
+<text x="46" y="477" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="17.5" font-weight="700"><tspan x="46" dy="0">This promotion is offered by YGF for the USC community and is not sponsored,</tspan><tspan x="46" dy="22">endorsed by, or administered by the University of Southern California.</tspan></text>
+<metadata data-back-namespace="shared-back"/>
+</svg>

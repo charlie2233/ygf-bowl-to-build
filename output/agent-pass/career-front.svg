@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="agent-pass-title agent-pass-description" width="85.6mm" height="54mm" viewBox="0 0 856 540">
+<title id="agent-pass-title">YGF Agent Pass CAREER front</title>
+<desc id="agent-pass-description">A photo-forward collectible YGF Agent Pass front with campaign copy and user-provided food photography.</desc>
+<metadata data-renderer="ygf-agent-pass-v1" data-card-width-mm="85.6" data-card-height-mm="54" data-photo-source="user-provided" data-rights-status="pending-brand-rights-confirmation" data-side="front" data-variant="career" data-approved-headline="吃饱了，也给你的 AI 充点算力。" data-approved-reward="领取 3,000 YGF AI Credits" data-university-note="This promotion is offered by YGF for the USC community and is not sponsored, endorsed by, or administered by the University of Southern California."/>
+<defs><image id="agent-pass-photo-source" href="../../public/media/ygf-user-photo.png" width="1600" height="1200"/></defs>
+<defs><clipPath id="agent-pass-photo-clip-career"><rect x="382" y="0" width="474" height="540"/></clipPath></defs>
+<rect width="856" height="540" fill="#F6F0E4"/>
+<g clip-path="url(#agent-pass-photo-clip-career)"><use href="#agent-pass-photo-source" transform="translate(136 0) scale(0.45)"/></g>
+<rect x="0" y="0" width="472" height="540" fill="#D84A32"/>
+<path d="M472 0 L534 0 L472 84 Z" fill="#E8B94A"/>
+<rect x="18" y="18" width="820" height="504" rx="20" fill="none" stroke="#E8B94A" stroke-width="3"/>
+<text x="46" y="64" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="800" letter-spacing="2.8">YGF BOWL-TO-BUILD · AGENT PASS</text>
+<g aria-labelledby="agent-pass-use-case-career">
+<rect x="46" y="88" width="212" height="72" rx="12" fill="#F6F0E4"/>
+<text id="agent-pass-use-case-career" x="66" y="126" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="31" font-weight="900">求职</text>
+<text x="150" y="126" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="16" font-weight="800" letter-spacing="1.4">CAREER</text>
+<text x="150" y="148" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" letter-spacing="1">03 / 04</text>
+</g>
+<text x="46" y="207" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="33" font-weight="900"><tspan x="46" dy="0">吃饱了，也给你的 AI 充点</tspan><tspan x="46" dy="42">算力。</tspan></text>
+<text x="46" y="304" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="24" font-weight="900">领取 3,000 YGF AI Credits</text>
+<rect x="46" y="328" width="143" height="40" rx="20" fill="#E8B94A"/>
+<text x="117.5" y="355" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="17" font-weight="900">14 天有效</text>
+<text x="46" y="405" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="17" font-weight="800">学习 · 编程 · 求职 · 下一碗</text>
+<text x="46" y="442" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="20" font-weight="900">#一碗一算力</text>
+<rect x="0" y="456" width="856" height="84" fill="#F6F0E4" fill-opacity="0.96"/>
+<text x="46" y="478" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="12" font-weight="900">COLLECT ALL FOUR · BUILD YOUR NEXT MOVE</text>
+<text x="46" y="501" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="17.5" font-weight="700"><tspan x="46" dy="0">This promotion is offered by YGF for the USC community and is not sponsored,</tspan><tspan x="46" dy="22">endorsed by, or administered by the University of Southern California.</tspan></text>
+</svg>

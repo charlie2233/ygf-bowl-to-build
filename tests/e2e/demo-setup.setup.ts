@@ -26,9 +26,18 @@ test("establishes the single demo claim and first useful result", async ({
       name: "Your Build Credits are ready",
     }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Use AI now" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Connect my Agent" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Developer API key" }),
+  ).toBeVisible();
 
   await page
-    .getByRole("link", { name: "Choose your first task" })
+    .getByRole("link", { name: "Use AI now" })
     .click();
   await expect(page).toHaveURL(/\/wallet$/);
   await expect(
@@ -75,5 +84,72 @@ test("establishes the single demo claim and first useful result", async ({
   ).toBeVisible();
   await expect(
     page.getByText("Keep building with OpenRouter"),
+  ).toBeVisible();
+
+  await page.goto("/connect/agent");
+  await expect(
+    page.getByRole("heading", { name: "Connect your own Agent" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Your key list is up to date."),
+  ).toBeVisible();
+
+  const createKeyResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/keys" &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Create personal key" })
+    .click();
+  expect((await createKeyResponse).status()).toBe(201);
+  await expect(
+    page
+      .getByRole("region", { name: "New API key" })
+      .locator("code"),
+  ).toHaveText(/^ygf_[A-Za-z0-9_-]{43}$/u);
+  await expect(
+    page.getByText(
+      "Key created. Copy it now—the full secret appears only this time.",
+    ),
+  ).toBeVisible();
+
+  const connectionResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname ===
+        "/v1/chat/completions" &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Test connection" })
+    .click();
+  expect((await connectionResponse).status()).toBe(200);
+  await expect(
+    page.getByText(
+      "Connection successful. 2,870 credits remain.",
+    ),
+  ).toBeVisible();
+
+  await page.goto("/share");
+  await page.getByLabel("First task (optional)").selectOption("study");
+  const downloadPromise = page.waitForEvent("download");
+  const shareSignalPromise = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/share-card" &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Download SVG card" })
+    .click();
+  const [download, shareSignal] = await Promise.all([
+    downloadPromise,
+    shareSignalPromise,
+  ]);
+  expect(download.suggestedFilename()).toBe(
+    "ygf-bowl-to-build-check-in.svg",
+  );
+  expect(shareSignal.status()).toBe(204);
+  await expect(
+    page.getByText("Your SVG card downloaded."),
   ).toBeVisible();
 });

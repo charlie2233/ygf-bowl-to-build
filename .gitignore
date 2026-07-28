@@ -5,6 +5,7 @@ out/
 coverage/
 playwright-report/
 test-results/
+.playwright-cli/
 .env
 .env.local
 .env.*.local

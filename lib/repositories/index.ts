@@ -11,15 +11,19 @@ const globalRepositories = globalThis as typeof globalThis & {
   ygfDemoRepository?: MemoryCampaignRepository;
 };
 
+export function getDemoCampaignRepository(): MemoryCampaignRepository {
+  globalRepositories.ygfDemoRepository ??=
+    new MemoryCampaignRepository({ demoMode: true });
+  return globalRepositories.ygfDemoRepository;
+}
+
 export function getCampaignRepository(): Task4CampaignRepository {
   const runtime = resolveAuthRuntime();
   if (runtime.mode === "supabase") {
     return new SupabaseCampaignRepository();
   }
 
-  globalRepositories.ygfDemoRepository ??=
-    new MemoryCampaignRepository({ demoMode: true });
-  return globalRepositories.ygfDemoRepository;
+  return getDemoCampaignRepository();
 }
 
 export function resetDemoRepositoryForTests() {

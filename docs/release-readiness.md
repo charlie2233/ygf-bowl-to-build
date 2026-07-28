@@ -48,6 +48,16 @@ Required behavioral evidence:
 - a successful task deducts exactly 120 credits;
 - a failed provider call refunds the reservation;
 - exact task retries do not run the provider or spend twice;
+- a personal `ygf_` key is shown once while persistence contains only its
+  keyed digest and safe descriptor;
+- valid/revoked/rotated/expired key behavior and the OpenAI-compatible demo
+  request are covered;
+- multiple keys share the wallet-wide cost/idempotency ceiling, provider
+  failure refunds, and expired replay content cannot re-execute;
+- ordinary redemption reaches a useful AI task without exposing API concepts,
+  while the optional Agent page copies config and tests a bounded request;
+- the user-triggered check-in card contains no claim, private QR, key, email,
+  user ID, or exact remaining balance;
 - all four task presets use a small server allowlist of models;
 - saved history contains output only after explicit user action;
 - duplicate, expired, revoked, blocked, throttled, and malformed states fail
@@ -75,6 +85,9 @@ technology, and production-origin behavior remain external gates.
 | Counter PDF | 5x7 inch page, raster inspection, decoder contract | counter lighting and physical scan |
 | SVG variants | deterministic copy, dimensions, quiet zones, URLs | social-platform preview |
 | Food image | generated beta fallback recorded in media ledger | rights-cleared real YGF photography |
+| Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG/PDF and raster review | physical registration, scratch layer, or store scan |
+| Private Agent Pass fixture | matching text/QR decoder proof, ignored 0600 no-overwrite renderer | real batch custody or physical fulfillment |
+| Safe check-in card | explicit SVG download with fixed public fields only | automatic social-platform upload or account identity |
 
 Any change to public origin, image, copy, font metrics, QR modules, quiet zone,
 or page dimensions reopens the affected artifact gates.
@@ -93,14 +106,20 @@ checkout:
   each approved provider.
 - [ ] Install independent production claim-cookie, abuse-signal, and task
   fingerprint secrets.
+- [ ] Install independent Agent key-digest and request-fingerprint secrets;
+  test rotation with the documented incident process.
 - [ ] Install the server-only provider key and verify the allowlisted models,
   request timeout, safe error mapping, usage accounting, and billing alerts.
+- [ ] Keep `YGF_AGENT_GATEWAY_ENABLED=false` until a staging key lifecycle,
+  `/v1/models`, one completion, idempotent replay, provider failure refund,
+  rate/concurrency limit, and wallet-wide $0.25 cap smoke all pass.
 - [ ] Confirm production logs contain no plaintext claim, raw IP, submitted
   prompt, provider credential, service-role value, or full provider payload.
 - [ ] Verify alerting and a server-side stop path for redemption and provider
   execution.
 - [ ] Keep partner OAuth disabled until credentials, scopes, terms, callback,
-  and disconnect behavior are approved.
+  and disconnect behavior are approved. Do not represent OpenRouter or another
+  provider as a partner without a signed relationship.
 
 ## Store and campaign launch gates
 
@@ -108,15 +127,17 @@ These require named human owners:
 
 - [ ] YGF manager verifies the participating location, current menu/prices,
   qualifying $16+ checkout rule, ingredient facts, and allergen escalation.
-- [ ] Brand owner supplies and approves a rights-cleared real YGF food photo.
+- [ ] Brand owner confirms rights for the selected user-provided YGF photo or
+  supplies an approved replacement; regenerate all affected artifacts.
 - [ ] Legal/privacy owner approves terms, privacy, university disclaimer,
   retention/deletion schedule, and incident path.
 - [ ] Campaign owner renders every public QR with the live HTTPS origin and
   decodes final digital and physical proofs.
 - [ ] Manager creates, secures, reconciles, and trains staff on the approved
   private claim batch.
-- [ ] Printer produces 100%-scale 24x36 and 5x7 proofs; staff scan them under
-  real store conditions.
+- [ ] Printer produces 100%-scale poster/counter and 85.6×54 mm Agent Pass
+  proofs with the approved scratch/fold/tear protection; staff scan them under
+  real store conditions and verify front/back registration.
 - [ ] The documented 10–20-person soft test closes every critical issue.
 - [ ] Named owners complete the go/no-go record and rollback drill in
   `docs/operations/launch-checklist.md`.

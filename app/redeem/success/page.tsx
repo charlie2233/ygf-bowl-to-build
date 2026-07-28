@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAuthenticatedUser } from "@/lib/auth/user";
@@ -47,9 +48,26 @@ export default async function RedeemSuccessPage() {
           Your AI balance is active. Pick a useful task and get to a first
           result.
         </p>
-        <a className="button button--primary button--medium" href="/wallet">
-          Choose your first task
-        </a>
+        <div className="redemption-state__actions">
+          <Link className="button button--primary button--medium" href="/wallet">
+            Use AI now
+          </Link>
+          <Link
+            className="button button--secondary button--medium"
+            href="/connect/agent"
+          >
+            Connect my Agent
+          </Link>
+        </div>
+        <Link
+          className="redemption-state__advanced"
+          href="/connect/agent#developer-api-key"
+        >
+          Developer API key
+        </Link>
+        <Link className="redemption-state__share" href="/share">
+          Generate a safe check-in card
+        </Link>
       </div>
     </section>
   );

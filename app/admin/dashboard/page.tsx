@@ -91,6 +91,37 @@ export default async function AdminDashboardPage() {
         </section>
 
         <section className="admin-table-card">
+          <h2>Agent model usage</h2>
+          <table>
+            <caption>
+              Successful Agent calls by server-allowlisted model
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Model</th>
+                <th scope="col">Successful calls</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.modelUsage.length > 0 ? (
+                metrics.modelUsage.map((row) => (
+                  <tr key={row.model}>
+                    <th scope="row">{row.model}</th>
+                    <td>{wholeNumber(row.calls)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2}>
+                    No successful Agent calls yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="admin-table-card">
           <h2>Redemptions by source</h2>
           <table>
             <caption>

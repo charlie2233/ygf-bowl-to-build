@@ -18,6 +18,7 @@ import type {
   RecordSessionInput,
   RefundSpendInput,
   ReserveSpendInput,
+  SettleFailedSpendInput,
   SpendResult,
 } from "@/lib/repositories/campaign-repository";
 
@@ -49,6 +50,11 @@ export interface BeginTaskExecutionInput {
   requestFingerprint: string;
   taskType: TaskSession["taskType"];
   userId: string;
+}
+
+export interface ReserveTaskSpendInput {
+  executionId: string;
+  ownerToken: string;
 }
 
 export interface TaskExecutionResult {
@@ -94,6 +100,12 @@ export interface TaskWorkflowRepository {
   recordEvent(input: RecordEventInput): Promise<CampaignEvent>;
   recordSession(input: RecordSessionInput): Promise<TaskSession>;
   refundSpend(input: RefundSpendInput): Promise<RepositorySpendResult>;
+  reserveTaskSpend?(
+    input: ReserveTaskSpendInput,
+  ): Promise<RepositorySpendResult>;
+  settleFailedSpend?(
+    input: SettleFailedSpendInput,
+  ): Promise<RepositorySpendResult>;
   reserveSpend(input: ReserveSpendInput): Promise<RepositorySpendResult>;
   saveSessionOutput?(
     input: SaveSessionOutputInput,
@@ -512,6 +524,30 @@ export class SupabaseTaskWorkflowRepository
     };
   }
 
+  async reserveTaskSpend(
+    input: ReserveTaskSpendInput,
+  ): Promise<CompactSpendResult> {
+    const service = createServiceRoleClient();
+    const { data, error } = await service.rpc(
+      "reserve_campaign_task_spend",
+      {
+        p_execution_id: input.executionId,
+        p_owner_token: input.ownerToken,
+      },
+    );
+    if (error) {
+      return mapDatabaseError(error.message);
+    }
+    const row = parseSpendRow(data);
+    if (row.ledger_state !== "reserved") {
+      return unavailable();
+    }
+    return {
+      remainingCredits: row.remaining_balance,
+      reservationId: row.ledger_entry_id,
+    };
+  }
+
   async commitSpend(
     input: CommitSpendInput,
   ): Promise<CompactSpendResult> {
@@ -757,6 +793,10 @@ class DemoTaskWorkflowRepository implements TaskWorkflowRepository {
 
   refundSpend(input: RefundSpendInput) {
     return this.#repository.refundSpend(input);
+  }
+
+  settleFailedSpend(input: SettleFailedSpendInput) {
+    return this.#repository.settleFailedSpend(input);
   }
 
   recordSession(input: RecordSessionInput) {

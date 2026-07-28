@@ -608,3 +608,209 @@ Commit: `test: verify YGF beta release readiness`
 - Desktop/mobile screenshots match the accepted concepts with no material visual mismatch.
 - Git history contains scoped commits; remote branch and repository commit are verified after push.
 - External launch gates are named honestly: provider/auth console credentials, a manager-supplied rights-cleared YGF photo, manager-verified menu/prices/allergens, printed materials, staff training, soft-test completion, live deployment, and university/provider policy re-verification.
+
+---
+
+## Phase 2: Bowl-to-Build Agent Pass
+
+This phase starts only after the Tasks 1–8 checkpoint is committed, pushed,
+and its remote SHA is verified. The stable checkpoint is
+`14afa005bca5ec857efc139311721e66bce07064`.
+
+### Product contract
+
+The physical eight-character claim remains a single-purpose bearer claim. It
+is never an API credential. After redemption, ordinary users see **Use AI
+now** as the primary action, **Connect my Agent** as a secondary action, and
+**Developer API key** as an advanced control.
+
+Phase A delivers the complete data model, key lifecycle, demo gateway, user
+experience, tests, documentation, and print tooling. Production provider
+traffic remains fail-closed until server credentials, an approved production
+origin, migrations, provider retention/billing controls, and live smoke tests
+are installed. OpenRouter compatibility is a technical interface choice, not
+a partnership claim.
+
+### Security and accounting invariants
+
+- Personal secrets use at least 256 bits of cryptographic randomness and an
+  unambiguous `ygf_` prefix.
+- Plaintext is returned once at creation or rotation. Persistence contains
+  only a versioned keyed digest, prefix, last four characters, owner, wallet,
+  scopes, limits, and lifecycle timestamps.
+- Key expiry is the earlier of 14 days from creation and wallet expiry.
+- Every request rechecks key state, wallet ownership/expiry, scope, model,
+  per-key rate/concurrency, wallet-wide concurrency, credits, and the
+  aggregate 250,000 micro-USD beta ceiling.
+- API keys cannot invoke claim, admin, batch, event, or other-user endpoints.
+- A server-controlled micro-USD-to-credit policy reserves before provider
+  work and commits actual cost; failure refunds. Idempotent retries and
+  concurrent duplicates never spend twice.
+- The provider endpoint and model allowlist are server-owned. Provider
+  redirects are rejected and responses remain bounded.
+- Raw prompts, generated content, full claims, full keys, raw IP addresses,
+  and complete provider payloads are not logged or used as analytics.
+- Public campaign QR, private redemption QR, API keys, and safe share links
+  are four separate namespaces.
+
+### Task 9: Add Agent key and usage data contracts
+
+**Files:**
+- Update: `supabase/migrations/202607260001_campaign.sql`
+- Create: `lib/agent/api-key.ts`
+- Create: `lib/agent/policy.ts`
+- Create: `lib/agent/types.ts`
+- Create: `lib/repositories/agent-gateway-repository.ts`
+- Create: `tests/unit/agent-api-key.test.ts`
+- Create: `tests/unit/agent-policy.test.ts`
+- Create: `tests/integration/agent-migration.test.ts`
+
+- [ ] Add `agent_api_keys`, `agent_requests`, and bounded aggregate usage
+  fields/indexes with forced RLS and explicit grants.
+- [ ] Add atomic create/list/revoke/rotate authorization and gateway admission
+  contracts. Key creation binds the authenticated user to that user's wallet.
+- [ ] Add atomic reservation and terminal settlement using request
+  idempotency, actual provider micro-USD cost, configurable conversion, and
+  the existing wallet-wide provider cap.
+- [ ] Prove no serialized row, event, fixture snapshot, or error contains
+  plaintext key material.
+
+### Task 10: Implement personal key management APIs
+
+**Files:**
+- Create: `app/api/keys/route.ts`
+- Create: `app/api/keys/[id]/route.ts`
+- Create: `app/api/keys/[id]/rotate/route.ts`
+- Create: `lib/agent/key-service.ts`
+- Create: `tests/integration/agent-key-api.test.ts`
+
+- [ ] `POST /api/keys` creates one key and returns plaintext once.
+- [ ] `GET /api/keys` returns only safe descriptors, usage, expiry, and
+  remaining credits.
+- [ ] `DELETE /api/keys/[id]` revokes only the authenticated user's key.
+- [ ] Rotation atomically revokes the old key and returns one new secret.
+- [ ] All mutations require same-origin authenticated browser requests,
+  bounded JSON, and wallet eligibility.
+
+### Task 11: Implement the OpenAI-compatible Agent gateway
+
+**Files:**
+- Create: `app/v1/models/route.ts`
+- Create: `app/v1/chat/completions/route.ts`
+- Create: `lib/agent/authenticate.ts`
+- Create: `lib/agent/gateway.ts`
+- Create: `lib/agent/openai-contract.ts`
+- Create: `tests/integration/agent-gateway.test.ts`
+
+- [ ] `GET /v1/models` exposes only the server allowlist.
+- [ ] `POST /v1/chat/completions` accepts a bounded, non-streaming MVP subset
+  of the OpenAI-compatible contract.
+- [ ] Valid keys can complete one demo request; invalid, expired, revoked, and
+  rotated keys receive generic authentication errors.
+- [ ] Reject models outside the allowlist and browser/URL credentials.
+- [ ] Enforce per-key RPM and concurrency plus wallet-wide concurrency and
+  provider-cost ceilings.
+- [ ] Reserve estimated credits/cost before the provider call, commit actual
+  usage on success, and refund on every failure path.
+- [ ] Duplicate and concurrent idempotency requests return one terminal result
+  and one charge.
+
+### Task 12: Build the ordinary-user and Agent setup experiences
+
+**Files:**
+- Update: `app/redeem/success/page.tsx`
+- Update: `app/wallet/page.tsx`
+- Create: `app/connect/agent/page.tsx`
+- Create: `components/agent/agent-setup.tsx`
+- Create: `tests/unit/agent-setup.test.tsx`
+- Update: `tests/e2e/happy-path.spec.ts`
+
+- [ ] Preserve the 30-second ordinary path with **Use AI now** as the dominant
+  action and no model/API vocabulary.
+- [ ] Add create, copy-once, revoke, rotate, balance, usage, and expiry states.
+- [ ] Add copy actions for Base URL, `.env`, JSON config, and a local test
+  command without placing the key in a URL, analytics, or server log.
+- [ ] Add a demo connection test and clear warnings against GitHub, public
+  chat, and frontend-code exposure.
+
+### Task 13: Add explicit, secret-free digital check-in cards
+
+**Files:**
+- Create: `app/share/page.tsx`
+- Create: `components/share/share-card-builder.tsx`
+- Create: `lib/share/card.ts`
+- Create: `tests/unit/share-card.test.tsx`
+- Create: `tests/e2e/share-card.spec.ts`
+
+- [ ] Generate and download a user-triggered share image containing the YGF
+  bowl visual, public campaign identity, 3,000 unlocked credits, and the first
+  task type.
+- [ ] Never include a claim, private QR, API key, email, user ID, or exact
+  remaining balance.
+- [ ] Do not auto-post. Sharing or downloading requires an explicit user
+  action.
+
+### Task 14: Produce the collectible physical Agent Pass system
+
+**Files:**
+- Create: `scripts/render-agent-pass-assets.mts`
+- Create: `scripts/render-private-agent-pass-batch.mts`
+- Create: `public/campaign/agent-pass/`
+- Create: `output/agent-pass/`
+- Update: `tests/integration/campaign-assets.test.ts`
+- Create: `tests/integration/agent-pass-assets.test.ts`
+
+- [ ] Produce Study, Coding, Career, and Pick My Bowl fronts at 85.6×54 mm,
+  plus a shared no-secret back template.
+- [ ] Keep public fronts photo-forward, collectible, free of private claims,
+  private QR, API keys, and USC marks; retain the non-endorsement notice.
+- [ ] Generate private per-row overlays only under ignored `private/`, using
+  the existing CSV as source of truth. Text and QR must carry the same claim.
+- [ ] Keep private output `0600`, no-overwrite, and secret-free stdout.
+- [ ] Produce SVG/PDF, Letter/A4 imposition sheets, decoder tests, PDF raster
+  previews, and manual visual inspection evidence.
+
+### Task 15: Complete analytics, documentation, and release proof
+
+**Files:**
+- Update: `lib/analytics/metrics.ts`
+- Update: `app/admin/dashboard/page.tsx`
+- Update: `.env.example`
+- Update: `README.md`
+- Update: `docs/architecture.md`
+- Update: `docs/release-readiness.md`
+- Update: `docs/operations/launch-checklist.md`
+- Create: `docs/security/agent-gateway-review.md`
+
+- [ ] Add issued, redeemed, first-use, key-created, first-Agent-call, seven-day
+  return, per-card provider cost, model distribution, error/anomaly, and
+  share-card generation metrics without raw prompts, keys, claims, or IPs.
+- [ ] Document demo, production-disabled, provider-enabled, deployed, and
+  physically proofed states separately.
+- [ ] Run unit/integration, lint, typecheck, production build, desktop/mobile
+  E2E, axe, deterministic asset verification, decoder checks, secret scan,
+  horizontal-access review, and independent code/visual/release QA.
+- [ ] Commit, push, and verify the final GitHub branch SHA.
+
+### Phase 2 acceptance
+
+The enhancement is locally complete only when all original Tasks 1–8 gates
+remain green and the following are proven:
+
+1. A redeemed user can create a personal key and see plaintext once.
+2. Persistence and serialization contain no plaintext key.
+3. A valid key completes one demo OpenAI-compatible request.
+4. Invalid, expired, revoked, and rotated keys are rejected.
+5. Multiple keys cannot bypass the wallet-wide provider cap.
+6. Models outside the allowlist are rejected.
+7. Provider failure refunds the reservation.
+8. Concurrent/repeated idempotency does not double-charge.
+9. The ordinary user path never requires API knowledge.
+10. Share output contains no claim, private QR, API key, email, or exact
+    remaining balance.
+11. Front/back dimensions are correct and each private QR matches its paired
+    human-readable claim.
+12. Desktop/mobile E2E, axe, lint, typecheck, unit/integration, production
+    build, asset decoder, and release checks pass.
+13. The final review finds no key leakage, quota bypass, horizontal access,
+    unsafe log, RLS/service-role, or provider-proxy blocker.

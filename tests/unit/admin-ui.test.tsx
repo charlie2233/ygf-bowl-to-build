@@ -52,13 +52,27 @@ describe("admin campaign UI", () => {
         activeWalletCount={12}
         metrics={{
           activated: 36,
+          agentActivated: 4,
+          agentActivationRate: 4 / 5,
+          agentAnomalyCount: 1,
+          agentErrorRate: 0.1,
+          averageProviderCostPerRedeemedCardMicroUsd: 1870.545,
           connected: 7,
           distributed: 300,
+          firstAiUseRate: 36 / 66,
+          keyCreationRate: 5 / 66,
+          keyCreators: 5,
+          modelUsage: [{ calls: 4, model: "fast" }],
           providerCostMicroUsd: 123_456,
           providerCostUsd: 0.123456,
           redeemed: 66,
+          redemptionRate: 66 / 300,
           remainingCredits: 75_000,
           returned: 20,
+          sevenDayReturnRate: 18 / 66,
+          sevenDayReturned: 18,
+          shareCardCreators: 12,
+          shareCardRate: 12 / 66,
           sourceAttribution: [],
           taskErrorRate: 0.125,
         }}
@@ -70,12 +84,14 @@ describe("admin campaign UI", () => {
         'dl[aria-label="Campaign metric summary"]',
       ),
     ).toBeTruthy();
-    expect(document.body.querySelectorAll("dt")).toHaveLength(9);
+    expect(document.body.querySelectorAll("dt")).toHaveLength(16);
     expect(document.body.textContent).toContain("Codes distributed");
     expect(document.body.textContent).toContain(
       "Build Credits remaining",
     );
     expect(document.body.textContent).toContain("Task error rate");
+    expect(document.body.textContent).toContain("Agent first success");
+    expect(document.body.textContent).toContain("7-day revisit");
     expect(document.body.textContent).toContain("12.5%");
   });
 });

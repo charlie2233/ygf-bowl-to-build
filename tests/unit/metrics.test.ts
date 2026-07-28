@@ -173,4 +173,66 @@ describe("campaign analytics metrics", () => {
     expect(metrics.returned).toBe(1);
     expect(metrics.taskErrorRate).toBe(0);
   });
+
+  it("computes the privacy-safe Agent, share, model, and seven-day funnel", () => {
+    const metrics = computeMetrics(
+      [
+        event("distribution", "batch_distributed", {
+          metadata: { count: 10 },
+          source: "admin",
+        }),
+        event("redeem", "code_redeemed", {
+          createdAt: "2026-07-20T12:00:00.000Z",
+          metadata: { outcome: "success" },
+          source: "receipt-qr",
+          userId: "user-1",
+        }),
+        event("key", "agent_key_created", {
+          metadata: { outcome: "success" },
+          source: "agent",
+          userId: "user-1",
+        }),
+        event("agent-success", "agent_call_completed", {
+          createdAt: "2026-07-22T12:00:00.000Z",
+          metadata: {
+            credits: 10,
+            model: "fast",
+            outcome: "success",
+          },
+          source: "agent",
+          userId: "user-1",
+        }),
+        event("agent-throttled", "agent_call_failed", {
+          metadata: { model: "fast", outcome: "throttled" },
+          source: "agent",
+          userId: "user-1",
+        }),
+        event("share", "share_card_generated", {
+          metadata: { outcome: "success", taskType: "study" },
+          source: "share",
+          userId: "user-1",
+        }),
+      ],
+      { providerCostMicroUsd: 1_000 },
+    );
+
+    expect(metrics).toMatchObject({
+      activated: 1,
+      agentActivated: 1,
+      agentActivationRate: 1,
+      agentAnomalyCount: 1,
+      agentErrorRate: 0.5,
+      averageProviderCostPerRedeemedCardMicroUsd: 1_000,
+      firstAiUseRate: 1,
+      keyCreationRate: 1,
+      keyCreators: 1,
+      modelUsage: [{ calls: 1, model: "fast" }],
+      redeemed: 1,
+      redemptionRate: 0.1,
+      sevenDayReturnRate: 1,
+      sevenDayReturned: 1,
+      shareCardCreators: 1,
+      shareCardRate: 1,
+    });
+  });
 });

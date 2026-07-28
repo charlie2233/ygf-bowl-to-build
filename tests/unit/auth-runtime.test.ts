@@ -37,7 +37,7 @@ describe("authentication runtime", () => {
     ).toThrow("SUPABASE_SECRET_KEY");
   });
 
-  it("refuses weak production secrets and permits demo-only fallbacks", () => {
+  it("keeps local fallbacks only for non-fingerprint demo secrets", () => {
     expect(() =>
       serverSecret(
         "YGF_CLAIM_COOKIE_SECRET",
@@ -52,13 +52,28 @@ describe("authentication runtime", () => {
         "development",
       ),
     ).toContain("development-only");
-    expect(
-      serverSecret(
-        "YGF_TASK_FINGERPRINT_SECRET",
-        { YGF_DEMO_MODE: "true" },
-        "development",
-      ),
-    ).toContain("development-only");
+    for (const name of [
+      "YGF_TASK_FINGERPRINT_SECRET",
+      "YGF_AGENT_REQUEST_FINGERPRINT_SECRET",
+    ] as const) {
+      expect(() =>
+        serverSecret(
+          name,
+          { YGF_DEMO_MODE: "true" },
+          "development",
+        ),
+      ).toThrow(`Missing or weak server configuration: ${name}`);
+      expect(() =>
+        serverSecret(
+          name,
+          {
+            YGF_DEMO_MODE: "true",
+            [name]: "too-short",
+          },
+          "development",
+        ),
+      ).toThrow(`Missing or weak server configuration: ${name}`);
+    }
   });
 });
 

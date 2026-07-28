@@ -60,8 +60,12 @@ export default defineConfig({
     command: "pnpm dev --hostname 127.0.0.1 --port 3217",
     env: {
       NEXT_PUBLIC_APP_URL: BASE_URL,
+      YGF_AGENT_REQUEST_FINGERPRINT_SECRET:
+        "playwright-agent-request-fingerprint-secret-32-bytes",
       YGF_DEMO_MODE: "true",
       YGF_PUBLIC_ORIGIN: BASE_URL,
+      YGF_TASK_FINGERPRINT_SECRET:
+        "playwright-task-fingerprint-secret-at-least-32-bytes",
     },
     reuseExistingServer: false,
     timeout: 120_000,

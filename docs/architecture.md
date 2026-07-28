@@ -156,7 +156,11 @@ Build Credits are a promotional consumer balance, not money:
 
 - redemption grants exactly 3,000 credits;
 - expiry is exactly 14 days after redemption;
-- every task reserves exactly 120 credits;
+- every ready-made web task reserves exactly 120 credits;
+- Agent calls reserve the allowlisted model cost ceiling and settle actual
+  provider cost through the configured integer micro-USD-to-credit ratio;
+  failed or invalid provider attempts refund Credits but conservatively commit
+  the reserved provider-cost ceiling;
 - commit consumes the reservation and refund restores it;
 - credits are non-cash and never converted from provider prices.
 
@@ -185,13 +189,20 @@ of five states:
   minute.
 
 Reusing an idempotency key with different task, model, cost ceiling, or request
-fingerprint is a conflict. A stale running lease may be reclaimed, while an
-unexpired lease may not. After the external provider returns,
+fingerprint is a conflict. A stale pre-reservation running lease may be
+reclaimed, while an unexpired lease may not. Once spend is reserved, a stale
+lease is conservatively failed: its 120 Credits return to the wallet and its
+full provider ceiling moves from reserved to committed. Each same-user
+admission first drains up to eight such stale reservations with
+`FOR UPDATE SKIP LOCKED`; if another stale reserved execution remains, the
+current admission is throttled so a retry can drain the next bounded batch
+before any new spend. After the external provider returns,
 `terminalize_campaign_task_execution` accepts only the matching execution
 owner and matching reservation. In one database transaction it commits the
-actual bounded provider cost or refunds the reservation, inserts the immutable
-task session, and stores the terminal execution result plus balance snapshot
-for 15-minute replay. The legacy standalone commit/refund RPCs reject
+actual bounded provider cost on success, or refunds Credits while committing
+the reserved provider ceiling on a post-admission failure, inserts the
+immutable task session, and stores the terminal execution result plus balance
+snapshot for 15-minute replay. The legacy standalone commit/refund RPCs reject
 reservations owned by a task execution, so a caller cannot split this terminal
 transition back into partial writes.
 
@@ -200,14 +211,87 @@ the database execution identifier as an upstream idempotency key when
 supported. Cross-instance retries are therefore safe at the database execution,
 wallet, ledger, session, and replay boundaries. No database transaction can
 include an external provider: a process failure after a provider accepts a
-request but before terminalization may cause another provider attempt after
-the lease expires unless that provider honors the idempotency key. Live
-concurrency, provider-idempotency, and failure-injection smoke against the
-chosen Supabase project and provider remain deployment gates.
+request but before terminalization is therefore charged conservatively rather
+than redispatched. The request-time sweep only runs when that wallet sends
+later traffic, so a scheduled bounded global cleanup for wallets with no later
+traffic remains a production gate. Live concurrency, provider-idempotency,
+global-cleanup, and failure-injection smoke against the chosen Supabase project
+and provider remain deployment gates.
 
 Demo mode intentionally uses a bounded in-memory limiter/result cache behind
 the same `runTask` contract. Production always selects the Supabase execution
 RPCs; it does not treat the process-local cache as distributed authority.
+
+## Personal Agent key and gateway boundary
+
+The eight-character physical claim and the `ygf_` personal API key are
+different bearer-credential namespaces. Claims only grant a wallet through
+`/redeem`; they are never accepted by `/v1`. Personal keys use 32 random bytes,
+are returned only by creation/rotation, and are represented in storage by a
+versioned HMAC-SHA-256 digest plus an eight-character safe prefix and last four.
+The digest key is independent from claim, abuse-signal, task-fingerprint, and
+Agent-request-fingerprint secrets.
+
+The browser key-management routes derive the authenticated user from the
+session and require same-origin bounded mutations. They never accept a user or
+wallet ID from the request body. Create/list/revoke/rotate RPCs are
+`service_role`-only and bind each key to the authoritative wallet. A key
+expires at the earlier of its 14-day maximum and wallet expiry; revocation and
+rotation take row locks, and ownership is rechecked by user and key ID.
+Plaintext cannot be listed or recovered.
+
+`GET /v1/models` and the non-streaming MVP subset of
+`POST /v1/chat/completions` accept only an Authorization bearer header.
+Every query string is rejected. Chat requires a stable `Idempotency-Key`
+header; a personal key or claim-shaped value is rejected, and all accepted
+retry values become a domain-separated HMAC digest before a repository,
+provider, or analytics path. The request parser allows only
+bounded string messages, a small set of scalar OpenAI-compatible fields, and
+friendly model IDs from the server catalog. It rejects tool calls, images,
+streaming, arbitrary provider IDs, oversized bodies, control characters, and
+unknown keys.
+
+Production admission is wallet-first and atomic:
+
+1. authenticate the HMAC digest and recheck key/wallet state and scope;
+2. lock the wallet before the key so all keys share one ordering;
+3. atomically admit every valid-key HTTP request (models, malformed chat, and
+   valid chat) to a bounded per-key minute counter, then enforce concurrency,
+   wallet-wide concurrency,
+   remaining credits, per-key cost, and the wallet-wide 250,000 micro-USD cap;
+4. reserve the model ceiling in credits and provider micro-US dollars;
+5. call the provider without holding a database transaction;
+6. terminalize only with the request owner token, committing actual bounded
+   cost or refunding the full reservation, and overwrite
+   `response.ygf.remaining_credits` with the locked post-settlement wallet
+   balance before persistence.
+
+Idempotency is unique by wallet plus key, not by individual API key. Multiple
+keys therefore cannot spend the same idempotency key twice or bypass the
+wallet cap. A reused key with another fingerprint/model/ceiling is a conflict.
+Concurrent duplicates see the running owner and cannot call the provider.
+Expired leases refund on the next wallet admission. Completed response content
+is returned from the persisted terminal row, after canonical JSON validation,
+so the first response and exact replay share the same authoritative balance.
+It is replayable for 15 minutes and then lazily replaced with a generic
+tombstone; the idempotency and accounting proof remains.
+
+Keys are limited to three active rows and ten creates/replacements per wallet
+per rolling 24 hours. The RPM counter is a single row per key, so over-limit
+traffic creates neither request/event rows nor provider calls.
+
+Raw messages are used only to compute an HMAC request fingerprint and make the
+provider request. They are not stored in Agent tables or analytics. Analytics
+uses fixed event names with friendly model, bounded credit count, outcome,
+user ID, and timestamp only. Full keys, claims, request bodies, provider
+payloads, email, and raw network identifiers are excluded.
+
+The provider endpoint, redirect policy, API credential, model/provider mapping,
+cost ceiling, timeout, and response bounds are server-owned. Demo mode returns
+a deterministic connection response. In production the Agent provider path
+fails closed until `YGF_AGENT_GATEWAY_ENABLED=true` and a server provider key
+are both present. OpenAI compatibility and possible use of OpenRouter are
+technical choices; no provider partnership is asserted.
 
 ## Admin batch boundary
 
@@ -265,7 +349,8 @@ deployment gate.
 ## Privacy and retention
 
 The database has no plaintext-claim column, request-text column, raw network
-identifier, provider credential, or partner access token. Abuse signals are
+identifier, plaintext Agent API key, provider credential, or external access
+token. Abuse signals are
 HMAC-derived with a server-only secret, version, purpose, and five-minute time
 bucket. Empty or oversized values and secrets shorter than 32 bytes are
 rejected. Persisted signals have an explicit expiry and can be deleted by a

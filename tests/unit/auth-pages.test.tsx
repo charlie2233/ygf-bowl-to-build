@@ -23,6 +23,7 @@ vi.mock("@/lib/repositories", () => ({
 }));
 
 import { GET as authCallback } from "@/app/auth/callback/route";
+import AgentConnectPage from "@/app/connect/agent/page";
 import AuthPage from "@/app/auth/page";
 import RedeemSuccessPage from "@/app/redeem/success/page";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
@@ -171,5 +172,22 @@ describe("authentication pages", () => {
     expect(html).toContain("Your Build Credits are ready");
     expect(getWallet).toHaveBeenCalledWith({ userId: "user-1" });
     expect(navigationMocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("keeps Agent setup behind an authenticated, active wallet", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
+    await expect(AgentConnectPage()).rejects.toThrow(
+      "REDIRECT:/auth?next=/connect/agent",
+    );
+
+    vi.clearAllMocks();
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({ id: "user-1" });
+    getWallet.mockResolvedValue(ACTIVE_WALLET);
+    const html = renderToStaticMarkup(await AgentConnectPage());
+
+    expect(html).toContain("Connect your own Agent");
+    expect(html).toContain("Use YGF AI instead");
+    expect(html).toContain("Developer API key");
+    expect(getWallet).toHaveBeenCalledWith({ userId: "user-1" });
   });
 });

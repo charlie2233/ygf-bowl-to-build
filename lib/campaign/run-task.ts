@@ -460,12 +460,23 @@ export async function runTask(
   async function execute(
     execution?: TaskExecutionResult,
   ): Promise<RunTaskResult> {
+    if (
+      (execution && !dependencies.repository.reserveTaskSpend) ||
+      (!execution && !dependencies.repository.settleFailedSpend)
+    ) {
+      throw new Error("TASK_UNAVAILABLE");
+    }
     const reserved = compactSpendResult(
-      await dependencies.repository.reserveSpend({
-        idempotencyKey: untrusted.idempotencyKey,
-        providerCostMicroUsd: model.maxCostMicroUsd,
-        userId: untrusted.userId,
-      }),
+      execution
+        ? await dependencies.repository.reserveTaskSpend!({
+            executionId: execution.executionId!,
+            ownerToken: execution.ownerToken!,
+          })
+        : await dependencies.repository.reserveSpend({
+            idempotencyKey: untrusted.idempotencyKey,
+            providerCostMicroUsd: model.maxCostMicroUsd,
+            userId: untrusted.userId,
+          }),
     );
 
     if (execution) {
@@ -485,7 +496,8 @@ export async function runTask(
               errorCode: "PROVIDER_UNAVAILABLE",
               inputUnits: 0,
               outputUnits: 0,
-              providerCostMicroUsd: 0,
+              providerCostMicroUsd:
+                existingSession.providerCostMicroUsd,
               reservationId: reserved.reservationId,
               resultPayload: { error: "PROVIDER_UNAVAILABLE" },
               state: "failed",
@@ -564,16 +576,17 @@ export async function runTask(
             errorCode: "PROVIDER_UNAVAILABLE",
             inputUnits: 0,
             outputUnits: 0,
-            providerCostMicroUsd: 0,
+            providerCostMicroUsd: model.maxCostMicroUsd,
             reservationId: reserved.reservationId,
             resultPayload: { error: "PROVIDER_UNAVAILABLE" },
             state: "failed",
             taskTitle: `${task.title} attempt`,
           })
         : await (async () => {
-            const refunded = compactSpendResult(
-              await dependencies.repository.refundSpend({
+            const settled = compactSpendResult(
+              await dependencies.repository.settleFailedSpend!({
                 idempotencyKey: `${untrusted.idempotencyKey}:refund`,
+                providerCostMicroUsd: model.maxCostMicroUsd,
                 reservationId: reserved.reservationId,
                 userId: untrusted.userId,
               }),
@@ -583,7 +596,7 @@ export async function runTask(
                 inputUnits: 0,
                 model: model.providerId,
                 outputUnits: 0,
-                providerCostMicroUsd: 0,
+              providerCostMicroUsd: model.maxCostMicroUsd,
                 reservationId: reserved.reservationId,
                 status: "failed",
                 taskType,
@@ -591,7 +604,7 @@ export async function runTask(
                 userId: untrusted.userId,
               });
             return {
-              remainingCredits: refunded.remainingCredits,
+              remainingCredits: settled.remainingCredits,
               sessionId: session.id,
             };
           })();

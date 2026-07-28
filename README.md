@@ -7,10 +7,13 @@ YGF Bowl-to-Build turns a qualifying meal into one simple AI balance:
 3. The guest scans or enters the claim, confirms once, and receives 3,000
    non-cash Build Credits for 14 days.
 4. Study, Coding, Career, and Pick My Bowl each spend 120 credits per run.
+5. As an optional advanced path, the guest can create a personal, limited
+   `ygf_…` API key and connect an OpenAI-compatible Agent. Agent calls reserve
+   and settle variable credits from the same wallet.
 
-The default experience is task-first. An optional advanced control offers a
-small server allowlist of friendly model choices; guests never configure a
-provider key or provider billing.
+The default experience is task-first: **Use AI now** is dominant, **Connect my
+Agent** is secondary, and **Developer API key** is advanced. A physical claim
+is never an API key. Provider credentials stay on the server.
 
 ## What is in this repository
 
@@ -18,8 +21,11 @@ provider key or provider billing.
 - Supabase Auth/Postgres production adapter, RLS, and atomic ledger RPCs
 - deterministic local demo mode with the receipt code `BOWL7K2A`
 - OpenRouter-compatible provider adapter plus deterministic demo provider
+- personal one-time-display API keys and an OpenAI-compatible `/v1` demo
+  gateway with wallet-wide limits, revocation, rotation, and idempotency
 - manager-only batch, revocation, funnel, inventory, and cost operations
-- public campaign SVGs, print PDFs, and a private claim-row renderer
+- safe user-triggered check-in cards plus four collectible Agent Pass fronts,
+  shared backs, print PDFs, and private claim renderers
 - campaign, legal, privacy, staff, recovery, soft-test, and launch documents
 - Vitest, Playwright, QR-decoder, schema-contract, and accessibility checks
 
@@ -48,16 +54,22 @@ file.
 ## Mode 1: deterministic local demo
 
 Demo mode needs no external account and is the fastest complete product tour.
-It is intentionally refused when `NODE_ENV=production`.
+It still requires explicit, independent task and Agent request fingerprint
+secrets of at least 32 bytes. It is intentionally refused when
+`NODE_ENV=production`.
 
 ```sh
+export YGF_TASK_FINGERPRINT_SECRET="$(openssl rand -hex 32)"
+export YGF_AGENT_REQUEST_FINGERPRINT_SECRET="$(openssl rand -hex 32)"
 YGF_DEMO_MODE=true pnpm dev
 ```
 
 Open `http://127.0.0.1:3000`, claim `BOWL7K2A`, and use the four workflows.
 Demo authentication represents one local user and the demo provider returns
 deterministic structured output through the same application contract as the
-live provider.
+live provider. Visit `/connect/agent` to create a process-local personal key,
+copy an OpenAI-compatible configuration, and run the bounded demo connection
+test.
 
 The in-memory state lasts only for the development server process. It is not a
 deployment, data-migration, concurrency, or external-provider proof.
@@ -71,7 +83,9 @@ Create a development Supabase project, then provide:
 - `SUPABASE_SECRET_KEY`
 - independent 32-byte-or-longer values for
   `YGF_CLAIM_COOKIE_SECRET`, `YGF_ABUSE_SIGNAL_SECRET`, and
-  `YGF_TASK_FINGERPRINT_SECRET`
+  `YGF_TASK_FINGERPRINT_SECRET`, plus the independent Agent secrets
+  `YGF_AGENT_API_KEY_DIGEST_SECRET` and
+  `YGF_AGENT_REQUEST_FINGERPRINT_SECRET`
 - `NEXT_PUBLIC_APP_URL` and `YGF_PUBLIC_ORIGIN`
 - a server-only `YGF_PROVIDER_API_KEY` or `OPENROUTER_API_KEY`
 - optionally `YGF_PROVIDER_BASE_URL` for a reviewed HTTPS-compatible gateway
@@ -93,12 +107,17 @@ external state and is not completed merely by applying this repository.
 
 Production uses the same Supabase and provider variables as Mode 2, with an
 approved HTTPS public origin. `YGF_DEMO_MODE=true` fails closed in production.
+The public Agent provider path also fails closed unless
+`YGF_AGENT_GATEWAY_ENABLED=true`; leave it false until the provider, domain,
+retention, billing, and concurrency checks below are complete.
 Deploy the application only after:
 
 - applying the migration to the intended production project;
 - verifying RLS and server-only service-role access with separate user/admin
   accounts;
 - configuring auth callback origins and provider credentials;
+- setting both independent Agent HMAC secrets and explicitly enabling the
+  gateway only after one real provider request, refund, and cost-cap smoke;
 - setting provider usage and billing alerts;
 - rendering public QRs with the real production origin;
 - completing the manager, photo, print, training, and soft-test gates in
@@ -115,6 +134,61 @@ pnpm start
 Do not place server secrets in `NEXT_PUBLIC_*` variables. Do not expose the
 Supabase secret/service-role key, provider keys, or admin allowlist to client
 components.
+
+## Personal Agent API
+
+The gateway exposes a deliberately small, non-streaming OpenAI-compatible
+surface:
+
+- `GET /v1/models`
+- `POST /v1/chat/completions`
+- `POST /api/keys`, `GET /api/keys`
+- `DELETE /api/keys/[id]`
+- `POST /api/keys/[id]/rotate`
+
+A created secret is shown once. Postgres stores only a versioned HMAC digest,
+the safe prefix/last four, owner/wallet binding, scopes, limits, and lifecycle
+timestamps. Keys expire at the earlier of 14 days or wallet expiry. Every call
+rechecks key state, ownership, wallet expiry, the server model allowlist,
+per-key RPM/concurrency, wallet concurrency, remaining credits, and the
+wallet-wide $0.25 beta provider-cost ceiling. Provider failures refund user
+Credits but conservatively commit the reserved provider ceiling, so a possibly
+billed upstream attempt cannot evade the wallet cap; wallet-scoped idempotency
+prevents multiple keys from charging the same request twice.
+
+```env
+OPENAI_BASE_URL=https://<approved-production-origin>/v1
+OPENAI_API_KEY=ygf_<personal-secret>
+```
+
+`POST /v1/chat/completions` requires a stable `Idempotency-Key` header for safe
+transport retries. The server stores only a domain-separated HMAC digest of
+that value; never use a personal key or eight-character claim as the header.
+`/v1` rejects every query string. In production, create/rotate/models/chat
+remain unavailable until `YGF_AGENT_GATEWAY_ENABLED=true`; existing keys can
+still be listed or revoked.
+
+For SDK calls, generate one opaque retry ID before the request and reuse it
+only if that same request is retried (do not configure one constant default
+header for all calls):
+
+```ts
+const retryId = crypto.randomUUID();
+await client.chat.completions.create(
+  { model: "fast", messages },
+  { headers: { "Idempotency-Key": retryId } },
+);
+```
+
+This is intentionally not drop-in for clients that cannot add request headers;
+a real SDK/header/retry smoke remains a production gate.
+
+Never put a personal key in a URL, QR code, public chat, GitHub repository,
+analytics event, browser bundle, or frontend source. A redemption claim and an
+API key are separate bearer credentials. This repository uses an
+OpenAI-compatible interface and may use OpenRouter as a server-side provider;
+it does not claim an OpenRouter partnership. OAuth/PKCE is only a possible
+future account-owned integration.
 
 ## Private claim inventory
 
@@ -147,6 +221,37 @@ then activate the pending batch, secure it, and reconcile every unused row.
 
 Public poster QRs are different: they contain no claim and open
 `/offer?utm_source=<asset>`.
+
+## Collectible Agent Pass artwork
+
+Render and verify the public, credential-free four-theme system:
+
+```sh
+node scripts/render-agent-pass-assets.mts
+node scripts/render-agent-pass-assets.mts --verify-only
+```
+
+Outputs include 85.6×54 mm Study, Coding, Career, and Pick My Bowl fronts, a
+shared no-secret back, Letter/A4 imposition sheets, SVGs, PDFs, and raster
+previews under `output/agent-pass/`. The selected food image came from the
+user-provided `南加大图片.zip`; its brand/public-print rights are not inferred
+and remain a launch gate recorded in `docs/design/media-ledger.md`.
+
+After an administrator has downloaded the one-time CSV into ignored
+`private/`, generate protected per-row fronts/backs with:
+
+```sh
+chmod 600 private/<admin-download>.csv
+node scripts/render-private-agent-pass-batch.mts \
+  --input private/<admin-download>.csv \
+  --out private/<agent-pass-batch>.html
+```
+
+The renderer accepts only direct ignored `private/` paths, requires restrictive
+permissions, refuses overwrite, and prints no claim to stdout. Each protected
+row pairs one human-readable claim with a QR for
+`/redeem#code=<same-claim>`. The public back and public campaign QR never carry
+a claim.
 
 ## Campaign artwork
 
@@ -190,6 +295,9 @@ test, or approve launch. Those gates are tracked in
 
 - Build Credits are promotional, non-cash units; provider dollars remain in a
   separate server ledger.
+- Web presets spend exactly 120 credits. Agent requests instead convert
+  server-verified provider micro-US dollars to credits (default 84 micro-USD
+  per credit), reserve the model ceiling, and settle actual cost.
 - Claim values travel in a URL fragment, are removed from visible history
   before submission, and are persisted only as hashes.
 - Input is bounded to 12,000 text characters. Submitted prompt text is not
@@ -198,7 +306,8 @@ test, or approve launch. Those gates are tracked in
 - Pick My Bowl is general guidance only. Staff must confirm live price,
   availability, ingredients, nutrition, and allergens.
 - Partner connection is promoted only after a completed task and is not live
-  OAuth until approved credentials and terms exist.
+  OAuth until approved credentials and terms exist; no provider partnership is
+  asserted.
 - The campaign is not sponsored, endorsed by, or administered by the
   University of Southern California.
 

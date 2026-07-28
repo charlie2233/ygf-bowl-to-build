@@ -14,8 +14,8 @@ export function PartnerCta({
       <div>
         <strong>Keep building with OpenRouter</strong>
         <span>
-          Explore an optional partner account for more models and
-          higher limits.
+          Explore a separate external account for more models and
+          higher limits. No YGF–OpenRouter partnership is claimed.
         </span>
       </div>
       <a href="/connect/openrouter">Connect account</a>

@@ -205,6 +205,34 @@ describe("SupabaseTaskWorkflowRepository", () => {
     expect(rpc).toHaveBeenCalledTimes(1);
   });
 
+  it("reserves execution-owned spend through the service RPC without caller-selected user or cost", async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [spendRow],
+      error: null,
+    });
+    createServiceClientMock.mockReturnValue({ rpc } as never);
+    const repository = new SupabaseTaskWorkflowRepository();
+
+    await expect(
+      repository.reserveTaskSpend({
+        executionId: "execution-1",
+        ownerToken: "owner-token-1",
+      }),
+    ).resolves.toEqual({
+      remainingCredits: 2_880,
+      reservationId: "reservation-1",
+    });
+    expect(rpc).toHaveBeenCalledWith("reserve_campaign_task_spend", {
+      p_execution_id: "execution-1",
+      p_owner_token: "owner-token-1",
+    });
+    expect(rpc.mock.calls[0]?.[1]).not.toHaveProperty("p_user_id");
+    expect(rpc.mock.calls[0]?.[1]).not.toHaveProperty(
+      "p_provider_cost_micro_usd",
+    );
+    expect(createAuthClientMock).not.toHaveBeenCalled();
+  });
+
   it("maps terminal rows with expired payloads without treating them as owners", async () => {
     createServiceClientMock.mockReturnValue({
       rpc: vi.fn().mockResolvedValue({

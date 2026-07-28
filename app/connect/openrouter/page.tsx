@@ -9,7 +9,7 @@ import { getTaskWorkflowRepository } from "@/lib/repositories/task-workflow-repo
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Continue with OpenRouter",
+  title: "Continue on OpenRouter",
 };
 
 export default async function OpenRouterConnectPage() {
@@ -33,8 +33,9 @@ export default async function OpenRouterConnectPage() {
         <h1>Keep building with OpenRouter</h1>
         <p>
           You’ve completed a Bowl-to-Build task. OpenRouter is an
-          optional partner destination for exploring more models and
-          managing a separate provider account.
+          optional external destination for exploring more models and
+          managing a separate provider account. YGF does not claim a
+          partnership with OpenRouter.
         </p>
         <p>
           Your YGF Build Credits do not transfer, and we do not send

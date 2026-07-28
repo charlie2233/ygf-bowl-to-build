@@ -4,22 +4,33 @@ import {
   createTaskHandler,
 } from "@/app/api/tasks/route";
 import { createHistoryHandler } from "@/app/api/history/route";
+import type { RunTaskInput } from "@/lib/campaign/run-task";
+
+const TASK_ENVIRONMENT = {
+  YGF_DEMO_MODE: "true",
+  YGF_TASK_FINGERPRINT_SECRET:
+    "task-api-test-fingerprint-secret-at-least-32-bytes",
+};
 
 describe("task API boundary", () => {
   it("derives identity server-side and returns a privacy-safe task DTO", async () => {
-    const runTask = vi.fn(async () => ({
-      friendlyModel: "Balanced guide",
-      output: {
-        sections: [{ heading: "Key ideas", items: ["Useful"] }],
-        title: "Your study guide",
-      },
-      providerCostMicroUsd: 2_400,
-      providerRequestId: "provider-request-secret",
-      remainingCredits: 2_880,
-      sessionId: "session-1",
-      status: "completed" as const,
-    }));
+    const runTask = vi.fn(async (input: RunTaskInput) => {
+      void input;
+      return {
+        friendlyModel: "Balanced guide",
+        output: {
+          sections: [{ heading: "Key ideas", items: ["Useful"] }],
+          title: "Your study guide",
+        },
+        providerCostMicroUsd: 2_400,
+        providerRequestId: "provider-request-secret",
+        remainingCredits: 2_880,
+        sessionId: "session-1",
+        status: "completed" as const,
+      };
+    });
     const handler = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
       getUser: async () => ({ id: "server-user" }),
       runTask,
     });
@@ -47,6 +58,13 @@ describe("task API boundary", () => {
     expect(runTask).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "server-user" }),
     );
+    const executionInput = runTask.mock.calls[0]?.[0];
+    expect(executionInput?.idempotencyKey).toMatch(
+      /^idem_[0-9a-f]{64}$/u,
+    );
+    expect(executionInput?.idempotencyKey).not.toContain(
+      "task-request-1",
+    );
     expect(body).not.toHaveProperty("providerCostMicroUsd");
     expect(body).not.toHaveProperty("providerRequestId");
     expect(body).not.toHaveProperty("userId");
@@ -55,6 +73,7 @@ describe("task API boundary", () => {
   it("rejects caller-selected identity, provider ids, extra fields, and invalid input", async () => {
     const runTask = vi.fn();
     const handler = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
       getUser: async () => ({ id: "server-user" }),
       runTask,
     });
@@ -101,6 +120,7 @@ describe("task API boundary", () => {
 
   it("requires authentication and safely maps domain/provider errors", async () => {
     const unauthenticated = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
       getUser: async () => null,
       runTask: vi.fn(),
     });
@@ -117,6 +137,7 @@ describe("task API boundary", () => {
     ).toBe(401);
 
     const unavailable = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
       getUser: async () => ({ id: "server-user" }),
       runTask: vi.fn(async () => {
         throw new Error(
@@ -147,6 +168,7 @@ describe("task API boundary", () => {
   it("bounds chunked or missing-length JSON before parsing it", async () => {
     const runTask = vi.fn();
     const handler = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
       getUser: async () => ({ id: "server-user" }),
       runTask,
     });
@@ -181,6 +203,7 @@ describe("task API boundary", () => {
       status: "completed" as const,
     }));
     const handler = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
       getUser: async () => ({ id: "server-user" }),
       runTask,
     });
@@ -209,7 +232,11 @@ describe("task API boundary", () => {
   it("rejects cross-origin task mutations before authentication or provider work", async () => {
     const getUser = vi.fn(async () => ({ id: "server-user" }));
     const runTask = vi.fn();
-    const handler = createTaskHandler({ getUser, runTask });
+    const handler = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
+      getUser,
+      runTask,
+    });
     const response = await handler(
       new Request("https://ygf.example/api/tasks", {
         body: JSON.stringify({
@@ -230,6 +257,47 @@ describe("task API boundary", () => {
     expect(getUser).not.toHaveBeenCalled();
     expect(runTask).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["missing", { YGF_DEMO_MODE: "true" }],
+    [
+      "weak",
+      {
+        YGF_DEMO_MODE: "true",
+        YGF_TASK_FINGERPRINT_SECRET: "too-short",
+      },
+    ],
+  ])(
+    "maps %s task fingerprint configuration to 503 before task work",
+    async (_label, environment) => {
+      const runTask = vi.fn();
+      const handler = createTaskHandler({
+        environment,
+        getUser: async () => ({ id: "server-user" }),
+        runTask,
+      });
+      const response = await handler(
+        new Request("https://ygf.example/api/tasks", {
+          body: JSON.stringify({
+            idempotencyKey: "task-secret-config-check",
+            input: "text",
+            taskType: "study",
+          }),
+          headers: {
+            "content-type": "application/json",
+            origin: "https://ygf.example",
+          },
+          method: "POST",
+        }),
+      );
+
+      expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toEqual({
+        error: "TASK_UNAVAILABLE",
+      });
+      expect(runTask).not.toHaveBeenCalled();
+    },
+  );
 
   it("lists only the authenticated user's safe history metadata and saved output", async () => {
     const repository = {

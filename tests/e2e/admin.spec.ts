@@ -16,6 +16,21 @@ test("demo administrator can inspect campaign metrics and code operations", asyn
     page.getByText("Build Credits remaining", { exact: true }),
   ).toBeVisible();
   await expect(
+    page.getByText("API key creators · rate", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Agent first success · rate", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Check-in creators · rate", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Agent model usage" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: "fast 1" }),
+  ).toBeVisible();
+  await expect(
     page.locator('meta[name="robots"]'),
   ).toHaveAttribute("content", /noindex/);
   await expectNoHorizontalOverflow(page, "/admin/dashboard");

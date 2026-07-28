@@ -10,6 +10,8 @@ export function SiteHeader() {
   const isWorkspace =
     pathname === "/wallet" ||
     pathname === "/history" ||
+    pathname === "/share" ||
+    pathname.startsWith("/connect/") ||
     pathname.startsWith("/task/");
 
   return (
@@ -32,6 +34,15 @@ export function SiteHeader() {
                 href="/wallet"
               >
                 Wallet
+              </Link>
+              <Link
+                aria-current={
+                  pathname.startsWith("/connect/") ? "page" : undefined
+                }
+                className="site-nav__link"
+                href="/connect/agent"
+              >
+                Agent
               </Link>
               <Link
                 aria-current={pathname === "/history" ? "page" : undefined}
@@ -70,6 +81,14 @@ export function SiteHeader() {
                   href="/wallet"
                 >
                   Wallet
+                </Link>
+                <Link
+                  aria-current={
+                    pathname.startsWith("/connect/") ? "page" : undefined
+                  }
+                  href="/connect/agent"
+                >
+                  Agent
                 </Link>
                 <Link
                   aria-current={pathname === "/history" ? "page" : undefined}

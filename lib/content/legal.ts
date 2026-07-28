@@ -53,6 +53,16 @@ export const publicFaq: readonly PublicFaqItem[] = [
       "Use Build Credits for study help, coding help, career tasks, and smarter bowl picks.",
   },
   {
+    question: "Do I need an API key?",
+    answer:
+      "No. The ready-made YGF AI tools are the main experience. Creating a personal API key is an optional advanced feature for software that accepts an OpenAI-compatible API.",
+  },
+  {
+    question: "Is my receipt code an API key?",
+    answer:
+      "No. A receipt code can only claim promotional credits. Never paste it into an Agent. Any optional developer key is created separately after redemption and can be revoked.",
+  },
+  {
     question: "Can I rely on every AI output?",
     answer:
       "AI outputs may be inaccurate—review before relying on them.",
@@ -83,8 +93,10 @@ export const promotionalTerms: readonly LegalSection[] = [
     bullets: [
       "One redemption per person/account.",
       "Build Credits are non-transferable and have no cash value.",
-      "Build Credits are limited to eligible AI tasks.",
+      "Build Credits are limited to eligible YGF AI tools and allowlisted Agent API requests.",
       "Credits expire 14 days after redemption.",
+      "Optional personal API keys share the wallet’s limits and expiry and may be revoked, rotated, or rate-limited.",
+      "Keep personal API keys private. Do not place them in URLs, public repositories, public chats, analytics, or frontend code.",
     ],
   },
   {
@@ -107,6 +119,8 @@ export const privacySections: readonly LegalSection[] = [
     body: [
       "YGF may process your email/account identifier, redemption activity, and prompts you submit to provide this promotional AI service.",
       "History stores task type, generated title, an optional user-saved result, usage, and timestamps.",
+      "If you create a developer key, YGF stores a keyed digest, a short prefix and last four characters, ownership, expiry, revocation, and usage/accounting records. YGF does not store the full plaintext key.",
+      "Agent request accounting stores a keyed request fingerprint, selected allowlisted model, status, credits, provider cost, and timestamps—not the raw prompt.",
     ],
   },
   {
@@ -119,8 +133,8 @@ export const privacySections: readonly LegalSection[] = [
     title: "Sharing",
     body: [
       "Supabase processes authentication, account identifiers, and campaign database records on YGF’s behalf.",
-      "To generate a result, YGF sends the prompt you submit and the minimum task context needed to an AI service provider. The provider processes that request to return an output.",
-      "If you connect a partner account, the partner’s terms and privacy notice also apply.",
+      "To generate a website or Agent result, YGF sends the prompt you submit and the minimum request context needed to an AI service provider. The provider processes that request to return an output. Provider credentials remain on YGF’s server.",
+      "If you choose a separate external service, that service’s terms and privacy notice apply. YGF does not claim a partnership with OpenRouter.",
       "The privacy and staff issue-report forms send the email and request text you enter to Formspree. Formspree may also process technical request data under its own privacy terms while delivering the message to YGF.",
     ],
   },
@@ -131,6 +145,8 @@ export const privacySections: readonly LegalSection[] = [
       "Event metadata has a 90-day retain_until default.",
       "Wallet credits expire after 14 days, but that is not the same as record deletion.",
       "Prompt payloads are not retained by YGF by default. Saved outputs persist when explicitly saved.",
+      "Successful Agent responses may remain in short-lived process memory for up to 15 minutes only to return safe idempotent retries; the raw Agent prompt is not retained.",
+      "Personal API key plaintext is returned only when a key is created or rotated. Only its keyed digest and non-secret display metadata persist.",
       "The current beta has no fixed deletion deadline or self-service deletion for account, redemption, ledger, history, saved-output, or privacy/contact records.",
       "A manager-approved, technically enforced retention/deletion schedule is a launch gate before accepting live redemptions.",
       "Long-lived dietary or allergy histories are avoided unless they are truly needed.",

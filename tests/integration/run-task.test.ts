@@ -36,11 +36,13 @@ class SharedExecutionRepository
   legacyCommitCalls = 0;
   legacyRefundCalls = 0;
   legacySessionCalls = 0;
+  taskReserveCalls = 0;
   terminalizeCalls = 0;
   #execution:
     | {
         fingerprint: string;
         id: string;
+        idempotencyKey: string;
         modelId: string;
         ownerToken: string;
         result?: TaskExecutionResult;
@@ -85,6 +87,7 @@ class SharedExecutionRepository
       this.#execution = {
         fingerprint: input.requestFingerprint,
         id: "execution-1",
+        idempotencyKey: input.idempotencyKey,
         modelId: input.modelId,
         ownerToken: input.ownerToken,
         state: "running",
@@ -140,8 +143,9 @@ class SharedExecutionRepository
             reservationId: input.reservationId,
             userId: this.#execution.userId,
           })
-        : await this.base.refundSpend({
+        : await this.base.settleFailedSpend({
             idempotencyKey: `${input.executionId}:refund`,
+            providerCostMicroUsd: input.providerCostMicroUsd,
             reservationId: input.reservationId,
             userId: this.#execution.userId,
           });
@@ -179,6 +183,28 @@ class SharedExecutionRepository
     input: Parameters<MemoryCampaignRepository["reserveSpend"]>[0],
   ) {
     return this.base.reserveSpend(input);
+  }
+
+  reserveTaskSpend({
+    executionId,
+    ownerToken,
+  }: {
+    executionId: string;
+    ownerToken: string;
+  }) {
+    if (
+      !this.#execution ||
+      this.#execution.id !== executionId ||
+      this.#execution.ownerToken !== ownerToken
+    ) {
+      throw new Error("OWNER_MISMATCH");
+    }
+    this.taskReserveCalls += 1;
+    return this.base.reserveSpend({
+      idempotencyKey: this.#execution.idempotencyKey,
+      providerCostMicroUsd: 12_000,
+      userId: this.#execution.userId,
+    });
   }
 
   commitSpend(
@@ -345,6 +371,7 @@ describe("runTask", () => {
       {
         remainingBalance: 3_000,
         reservedBalance: 0,
+        providerCommittedMicroUsd: 12_000,
       },
     );
     const history = await repository.listHistory({
@@ -353,10 +380,94 @@ describe("runTask", () => {
     expect(history[0]).toMatchObject({
       inputUnits: 0,
       outputUnits: 0,
-      providerCostMicroUsd: 0,
+      providerCostMicroUsd: 12_000,
       status: "failed",
     });
     expect(JSON.stringify(history)).not.toContain("upstream payload");
+  });
+
+  it("settles a failed spend once with refunded Credits and committed provider cost", async () => {
+    const { repository } = await setup();
+    const reserved = await repository.reserveSpend({
+      idempotencyKey: "failed-spend-reserve",
+      providerCostMicroUsd: 12_000,
+      userId: "demo-user",
+    });
+    const input = {
+      idempotencyKey: "failed-spend-terminal",
+      providerCostMicroUsd: 12_000,
+      reservationId: reserved.reservation.id,
+      userId: "demo-user",
+    };
+    await expect(
+      repository.settleFailedSpend({
+        ...input,
+        providerCostMicroUsd: 0,
+      }),
+    ).rejects.toMatchObject({ code: "SPEND_STATE_INVALID" });
+    await expect(
+      repository.settleFailedSpend({
+        ...input,
+        providerCostMicroUsd: 11_999,
+      }),
+    ).rejects.toMatchObject({ code: "SPEND_STATE_INVALID" });
+    const first = await repository.settleFailedSpend(input);
+    const replay = await repository.settleFailedSpend(input);
+
+    expect(replay).toEqual(first);
+    expect(first).toMatchObject({
+      reservation: {
+        providerCommittedMicroUsd: 12_000,
+        state: "refunded",
+      },
+      wallet: {
+        providerCommittedMicroUsd: 12_000,
+        providerReservedMicroUsd: 0,
+        remainingBalance: 3_000,
+        reservedBalance: 0,
+      },
+    });
+  });
+
+  it("eventually reaches the shared provider hard cap after failed attempts", async () => {
+    const { dependencies, repository, run } = await setup({
+      async run() {
+        throw new Error("provider failed after admission");
+      },
+    });
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      await expect(
+        runTask(
+          {
+            idempotencyKey: `failed-cap-${attempt}`,
+            input: validInputs.study,
+            model: "reasoning",
+            taskType: "study",
+            userId: "demo-user",
+          },
+          dependencies,
+        ),
+      ).resolves.toMatchObject({ status: "failed" });
+    }
+    await expect(
+      runTask(
+        {
+          idempotencyKey: "failed-cap-blocked",
+          input: validInputs.study,
+          model: "reasoning",
+          taskType: "study",
+          userId: "demo-user",
+        },
+        dependencies,
+      ),
+    ).rejects.toThrow("PROVIDER_COST_LIMIT_EXCEEDED");
+    expect(run).toHaveBeenCalledTimes(12);
+    await expect(repository.getWallet({ userId: "demo-user" })).resolves.toMatchObject({
+      providerCommittedMicroUsd: 240_000,
+      providerReservedMicroUsd: 0,
+      remainingBalance: 3_000,
+      reservedBalance: 0,
+    });
   });
 
   it("returns the first result for an exact duplicate without calling the provider twice", async () => {
@@ -562,6 +673,7 @@ describe("runTask", () => {
       createHash("sha256").update(request.input).digest("hex"),
     );
     expect(shared.terminalizeCalls).toBe(1);
+    expect(shared.taskReserveCalls).toBe(1);
     expect(shared.legacyCommitCalls).toBe(0);
     expect(shared.legacyRefundCalls).toBe(0);
     expect(shared.legacySessionCalls).toBe(0);

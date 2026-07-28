@@ -61,6 +61,10 @@ export const CAMPAIGN_EVENT_NAMES = [
   "task_failed",
   "partner_cta_viewed",
   "partner_connected",
+  "agent_key_created",
+  "agent_call_completed",
+  "agent_call_failed",
+  "share_card_generated",
 ] as const;
 
 export type CampaignEventName =
@@ -76,6 +80,8 @@ export const CAMPAIGN_EVENT_SOURCES = [
   "creator",
   "wallet",
   "task",
+  "agent",
+  "share",
   "admin",
   "staff",
 ] as const;
@@ -106,6 +112,7 @@ export type CampaignConnectionState =
 
 export interface CampaignEventMetadata {
   taskType?: TaskType;
+  model?: "balanced" | "fast" | "coding" | "reasoning";
   outcome?: CampaignEventOutcome;
   count?: number;
   credits?: number;

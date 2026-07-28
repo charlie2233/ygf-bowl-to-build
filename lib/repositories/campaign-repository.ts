@@ -56,6 +56,14 @@ export interface RefundSpendInput {
   idempotencyKey: string;
 }
 
+/**
+ * Terminalizes a provider attempt that failed after admission. Credits are
+ * returned, while the bounded upstream-cost estimate remains committed.
+ */
+export interface SettleFailedSpendInput extends RefundSpendInput {
+  providerCostMicroUsd: number;
+}
+
 export interface SpendResult {
   reservation: SpendReservation;
   wallet: CreditWallet;
@@ -127,6 +135,9 @@ export interface CampaignRepository {
   reserveSpend(input: ReserveSpendInput): Promise<SpendResult>;
   commitSpend(input: CommitSpendInput): Promise<SpendResult>;
   refundSpend(input: RefundSpendInput): Promise<SpendResult>;
+  settleFailedSpend(
+    input: SettleFailedSpendInput,
+  ): Promise<SpendResult>;
   recordSession(input: RecordSessionInput): Promise<TaskSession>;
   listHistory(input: ListHistoryInput): Promise<readonly TaskSession[]>;
   recordEvent(input: RecordEventInput): Promise<CampaignEvent>;

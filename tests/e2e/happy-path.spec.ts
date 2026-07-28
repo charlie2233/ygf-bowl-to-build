@@ -22,7 +22,7 @@ test("redeemed wallet is reusable, accessible, and responsive", async ({
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("2,880", { exact: true }),
+    page.getByText("2,870", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText("4% of 3,000 credits used"),
@@ -45,7 +45,7 @@ for (const taskRoute of TASK_ROUTES) {
     await expect(
       page.getByRole("button", { name: "Generate" }),
     ).toBeVisible();
-    await expect(page.getByText("2,880 credits")).toBeVisible();
+    await expect(page.getByText("2,870 credits")).toBeVisible();
     await expectNoHorizontalOverflow(page, taskRoute.path);
     await expectNoAccessibilityViolations(page, taskRoute.path);
   });
@@ -89,4 +89,47 @@ test("completed-task partner page is reusable, accessible, and responsive", asyn
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, "/connect/openrouter");
   await expectNoAccessibilityViolations(page, "/connect/openrouter");
+});
+
+test("Agent setup is reusable, accessible, and responsive", async ({
+  page,
+}) => {
+  await page.goto("/connect/agent");
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Connect your own Agent",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      level: 2,
+      name: "Developer API key",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("2,870", { exact: true }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page, "/connect/agent");
+  await expectNoAccessibilityViolations(page, "/connect/agent");
+});
+
+test("safe check-in card is reusable, accessible, and responsive", async ({
+  page,
+}) => {
+  await page.goto("/share");
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Create your check-in card",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Download SVG card" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Nothing is posted automatically."),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page, "/share");
+  await expectNoAccessibilityViolations(page, "/share");
 });

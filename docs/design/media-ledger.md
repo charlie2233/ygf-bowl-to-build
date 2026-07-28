@@ -3,6 +3,60 @@
 This ledger records provenance and launch-readiness status without asserting
 licenses or permissions that have not been supplied.
 
+## Agent Pass user-provided photo
+
+### `public/media/ygf-user-photo.png`
+
+- Source: user-provided archive `南加大图片.zip`, original
+  `IMG_2140.JPG`. The selected frame shows a real ingredient display and was
+  chosen after inspecting the supplied contact sheet at
+  `/private/tmp/ygf-photos.VaFF6r/contact-sheet-ff.png`.
+- Processing: resized from 5712 × 4284 to 1600 × 1200, converted to an
+  8-bit sRGB non-interlaced PNG, and exported without EXIF, IPTC, XMP, GPS,
+  device, timestamp, comment, text, profile, physical-resolution, or other
+  ancillary metadata chunks.
+- Visual inspection: the food display is legible at card scale and contains
+  no embedded copy, QR code, API credential, university logo, or other
+  visible brand mark.
+- Rights status: **user-provided; pending brand-rights confirmation**. Receipt
+  of the archive is not treated as a license or a representation that the
+  photo is rights-cleared.
+- Launch gate: the brand owner must confirm permission for public campaign
+  and physical-print use before release. If confirmation is not obtained,
+  replace the photo and regenerate and re-proof every Agent Pass output.
+
+## Agent Pass production inspection
+
+- Public SVG review: all four fronts and the shared empty back were inspected
+  at card scale. The supplied food remains the dominant front visual; Chinese
+  and English labels render; red, gold, and cream hierarchy is intact; and no
+  front contains a redemption target, human claim, API key, or university
+  mark.
+- Imposition review:
+  `output/agent-pass/previews/fronts-letter-preview.png`,
+  `backs-letter-preview.png`, `fronts-a4-preview.png`, and
+  `backs-a4-preview.png` were inspected for card order, 2 × 4 placement, cut
+  marks, clipping, shared-back alignment, and the 10 mm gutters that keep trim
+  marks outside neighboring artwork.
+- PDF review: all nine PDFs were parsed successfully. Individual cards report
+  242.646 × 153.071 points (85.6 × 54 mm), Letter sheets report 612 × 792
+  points, and A4 sheets report 595.276 × 841.890 points. Each PDF keeps the
+  photo and shape layer at 300 dpi while emitting campaign copy as native
+  Type 1/Type 0 PDF text; `pdffonts` and `pdftotext` confirmed both Latin and
+  Chinese text. Independent `pdftoppm` rasterization of Letter front/back
+  sheets matched the renderer previews without black boxes or missing glyphs.
+- Protected-back review: the fixture-only private back was visually inspected
+  outside the repository. Its code and QR were also decoder-tested against
+  the same `/redeem` fragment. Shared and private backs retain the visible
+  scratch/open, scan, and start-using sequence plus
+  `刮开后请勿拍照分享`. The private Letter grid mirrors the public 10 mm
+  registration geometry and trim marks. No real claim batch or plaintext
+  credential was created in the repository.
+- Remaining gate: these checks are local screen/raster evidence, not a
+  physical print proof or brand approval. Print at 100 percent, scan every
+  proof under store lighting, verify front/back registration, and obtain
+  rights confirmation before distribution.
+
 ## Runtime hero
 
 ### `public/media/malatang-hero.png`

@@ -19,6 +19,9 @@ const TASK_TYPES = new Set<TaskType>([
   "career",
   "pick-my-bowl",
 ]);
+const AGENT_MODELS = new Set<
+  NonNullable<CampaignEventMetadata["model"]>
+>(["balanced", "fast", "coding", "reasoning"]);
 const OUTCOMES = new Set<CampaignEventOutcome>([
   "success",
   "failure",
@@ -65,6 +68,10 @@ const ALLOWED_KEYS_BY_EVENT: Readonly<
   ]),
   partner_cta_viewed: new Set(["connectionState"]),
   partner_connected: new Set(["connectionState"]),
+  agent_key_created: new Set(["outcome"]),
+  agent_call_completed: new Set(["outcome", "credits", "model"]),
+  agent_call_failed: new Set(["outcome", "model"]),
+  share_card_generated: new Set(["outcome", "taskType"]),
 };
 const SENSITIVE_KEY =
   /(code|claim|promo|prompt|input|ip|device|email|secret|token|address)/i;
@@ -177,6 +184,9 @@ export function validateCampaignEventInput(
     switch (key as keyof CampaignEventMetadata) {
       case "taskType":
         metadata.taskType = validateEnum(value, TASK_TYPES);
+        break;
+      case "model":
+        metadata.model = validateEnum(value, AGENT_MODELS);
         break;
       case "outcome":
         metadata.outcome = validateEnum(value, OUTCOMES);

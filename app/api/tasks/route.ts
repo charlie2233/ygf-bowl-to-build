@@ -20,6 +20,7 @@ import {
 import { getTaskProvider } from "@/lib/providers";
 import { resolveModel } from "@/lib/providers/model-catalog";
 import { getTaskWorkflowRepository } from "@/lib/repositories/task-workflow-repository";
+import { fingerprintClientIdempotencyKey } from "@/lib/agent/idempotency";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +113,9 @@ function validIdempotencyKey(value: unknown): value is string {
   );
 }
 
-function parseTaskBody(value: unknown): Omit<RunTaskInput, "userId"> {
+function parseTaskBody(
+  value: unknown,
+): Omit<RunTaskInput, "userId"> {
   if (
     !isPlainRecord(value) ||
     Object.keys(value).some((key) => !TASK_BODY_KEYS.has(key)) ||
@@ -215,8 +218,30 @@ export function createTaskHandler({
       return taskResponse({ error: "TASK_REQUEST_INVALID" }, 400);
     }
 
+    let idempotencyKey: string;
     try {
-      const result = await runTask({ ...parsed, userId: user.id });
+      idempotencyKey = fingerprintClientIdempotencyKey({
+        domain: "ygf-browser-task-idempotency:v1",
+        environment,
+        secretName: "YGF_TASK_FINGERPRINT_SECRET",
+        value: parsed.idempotencyKey,
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "CLIENT_IDEMPOTENCY_KEY_INVALID"
+      ) {
+        return taskResponse({ error: "TASK_REQUEST_INVALID" }, 400);
+      }
+      return taskResponse({ error: "TASK_UNAVAILABLE" }, 503);
+    }
+
+    try {
+      const result = await runTask({
+        ...parsed,
+        idempotencyKey,
+        userId: user.id,
+      });
       return taskResponse(
         browserTaskResult(result),
         result.status === "completed" ? 200 : 503,

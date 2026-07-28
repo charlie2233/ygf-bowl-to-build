@@ -25,16 +25,42 @@ function percentage(rate: number): string {
   }).format(rate);
 }
 
+function funnel(count: number, rate: number): string {
+  return `${wholeNumber(count)} · ${percentage(rate)}`;
+}
+
 export function MetricSummary({
   activeWalletCount,
   metrics,
 }: MetricSummaryProps) {
   const values = [
     ["Codes distributed", wholeNumber(metrics.distributed)],
-    ["Distinct users redeemed", wholeNumber(metrics.redeemed)],
-    ["First-task activated", wholeNumber(metrics.activated)],
+    [
+      "Redeemed · rate",
+      funnel(metrics.redeemed, metrics.redemptionRate),
+    ],
+    [
+      "First AI use · rate",
+      funnel(metrics.activated, metrics.firstAiUseRate),
+    ],
     ["Returned users", wholeNumber(metrics.returned)],
-    ["Partner connected", wholeNumber(metrics.connected)],
+    [
+      "7-day revisit · rate",
+      funnel(metrics.sevenDayReturned, metrics.sevenDayReturnRate),
+    ],
+    [
+      "API key creators · rate",
+      funnel(metrics.keyCreators, metrics.keyCreationRate),
+    ],
+    [
+      "Agent first success · rate",
+      funnel(metrics.agentActivated, metrics.agentActivationRate),
+    ],
+    [
+      "Check-in creators · rate",
+      funnel(metrics.shareCardCreators, metrics.shareCardRate),
+    ],
+    ["External handoff connected", wholeNumber(metrics.connected)],
     ["Active wallets", wholeNumber(activeWalletCount)],
     [
       "Build Credits remaining",
@@ -44,7 +70,15 @@ export function MetricSummary({
       "Provider cost",
       providerDollars(metrics.providerCostMicroUsd),
     ],
+    [
+      "Average cost per redeemed card",
+      providerDollars(
+        metrics.averageProviderCostPerRedeemedCardMicroUsd,
+      ),
+    ],
     ["Task error rate", percentage(metrics.taskErrorRate)],
+    ["Agent error rate", percentage(metrics.agentErrorRate)],
+    ["Agent anomalies", wholeNumber(metrics.agentAnomalyCount)],
   ] as const;
 
   return (

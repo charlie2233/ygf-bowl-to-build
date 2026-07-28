@@ -1,6 +1,7 @@
 import { hashCode } from "@/lib/campaign/code";
 import {
   BUILD_CREDIT_GRANT,
+  PROVIDER_COST_CAP_MICRO_USD,
   TASK_CREDIT_COST,
   createCreditWallet,
   refundCredits,
@@ -32,6 +33,7 @@ import type {
   ReserveSpendInput,
   RevokedCode,
   RevokeCodeInput,
+  SettleFailedSpendInput,
   SpendResult,
   ValidateCodeInput,
   ValidateCodeResult,
@@ -63,6 +65,18 @@ interface IdempotentResult<T> {
 export interface MemoryCampaignRepositoryOptions {
   demoMode?: boolean;
   now?: () => Date;
+}
+
+export interface MemoryAgentReserveInput {
+  creditCeiling: number;
+  providerCostCeilingMicroUsd: number;
+  userId: string;
+}
+
+export interface MemoryAgentTerminalInput
+  extends MemoryAgentReserveInput {
+  creditsCharged: number;
+  providerCostMicroUsd: number;
 }
 
 function cloneWallet(wallet: CreditWallet): CreditWallet {
@@ -139,6 +153,10 @@ export class MemoryCampaignRepository implements CampaignRepository {
     IdempotentResult<SpendResult>
   >();
   readonly #refundResults = new Map<
+    string,
+    IdempotentResult<SpendResult>
+  >();
+  readonly #failedSpendResults = new Map<
     string,
     IdempotentResult<SpendResult>
   >();
@@ -293,6 +311,98 @@ export class MemoryCampaignRepository implements CampaignRepository {
   async getWallet({ userId }: GetWalletInput): Promise<CreditWallet> {
     validateUserId(userId);
     return cloneWallet(this.requireWallet(userId));
+  }
+
+  /**
+   * Demo-only variable-cost accounting for the Agent gateway. Production uses
+   * the wallet-first Postgres RPCs in the Agent repository.
+   */
+  async reserveAgentUsage(
+    input: MemoryAgentReserveInput,
+  ): Promise<CreditWallet> {
+    validateUserId(input.userId);
+    validateProviderCost(input.providerCostCeilingMicroUsd);
+    if (
+      !Number.isSafeInteger(input.creditCeiling) ||
+      input.creditCeiling < 1 ||
+      input.creditCeiling > BUILD_CREDIT_GRANT
+    ) {
+      domainError("INVALID_CREDIT_AMOUNT");
+    }
+
+    const wallet = this.requireWallet(input.userId);
+    if (
+      new Date(wallet.expiresAt).getTime() <=
+      this.currentTime().getTime()
+    ) {
+      domainError("WALLET_EXPIRED");
+    }
+    if (wallet.remainingBalance < input.creditCeiling) {
+      domainError("INSUFFICIENT_CREDITS");
+    }
+    const totalProviderCost =
+      wallet.providerCommittedMicroUsd +
+      wallet.providerReservedMicroUsd +
+      input.providerCostCeilingMicroUsd;
+    if (
+      !Number.isSafeInteger(totalProviderCost) ||
+      totalProviderCost > PROVIDER_COST_CAP_MICRO_USD
+    ) {
+      domainError("PROVIDER_COST_LIMIT_EXCEEDED");
+    }
+
+    wallet.remainingBalance -= input.creditCeiling;
+    wallet.reservedBalance += input.creditCeiling;
+    wallet.providerReservedMicroUsd +=
+      input.providerCostCeilingMicroUsd;
+    return cloneWallet(wallet);
+  }
+
+  async terminalizeAgentUsage(
+    input: MemoryAgentTerminalInput,
+  ): Promise<CreditWallet> {
+    validateUserId(input.userId);
+    validateProviderCost(input.providerCostCeilingMicroUsd);
+    validateProviderCost(input.providerCostMicroUsd);
+    if (
+      !Number.isSafeInteger(input.creditCeiling) ||
+      input.creditCeiling < 1 ||
+      input.creditCeiling > BUILD_CREDIT_GRANT ||
+      !Number.isSafeInteger(input.creditsCharged) ||
+      input.creditsCharged < 0 ||
+      input.creditsCharged > input.creditCeiling ||
+      input.providerCostMicroUsd >
+        input.providerCostCeilingMicroUsd
+    ) {
+      domainError("INVALID_CREDIT_AMOUNT");
+    }
+
+    const wallet = this.requireWallet(input.userId);
+    if (
+      wallet.reservedBalance < input.creditCeiling ||
+      wallet.providerReservedMicroUsd <
+        input.providerCostCeilingMicroUsd
+    ) {
+      domainError("SPEND_STATE_INVALID");
+    }
+    const committedProviderCost =
+      wallet.providerCommittedMicroUsd +
+      input.providerCostMicroUsd;
+    if (
+      !Number.isSafeInteger(committedProviderCost) ||
+      committedProviderCost > PROVIDER_COST_CAP_MICRO_USD
+    ) {
+      domainError("PROVIDER_COST_LIMIT_EXCEEDED");
+    }
+
+    wallet.remainingBalance +=
+      input.creditCeiling - input.creditsCharged;
+    wallet.reservedBalance -= input.creditCeiling;
+    wallet.providerReservedMicroUsd -=
+      input.providerCostCeilingMicroUsd;
+    wallet.providerCommittedMicroUsd =
+      committedProviderCost;
+    return cloneWallet(wallet);
   }
 
   async reserveSpend(input: ReserveSpendInput): Promise<SpendResult> {
@@ -473,6 +583,70 @@ export class MemoryCampaignRepository implements CampaignRepository {
     return result;
   }
 
+  async settleFailedSpend(
+    input: SettleFailedSpendInput,
+  ): Promise<SpendResult> {
+    validateUserId(input.userId);
+    validateIdempotencyKey(input.idempotencyKey);
+    validateProviderCost(input.providerCostMicroUsd);
+    const idempotencyMapKey = `${input.userId}:${input.idempotencyKey}`;
+    const fingerprint =
+      `${input.reservationId}:${input.providerCostMicroUsd}`;
+    const prior = this.#failedSpendResults.get(idempotencyMapKey);
+    if (prior) {
+      if (prior.fingerprint !== fingerprint) {
+        return domainError("IDEMPOTENCY_CONFLICT");
+      }
+      return cloneSpendResult(prior.result);
+    }
+
+    const reservation = this.requireReservation(
+      input.userId,
+      input.reservationId,
+    );
+    if (reservation.state !== "reserved") {
+      return domainError("SPEND_STATE_INVALID");
+    }
+    if (
+      input.providerCostMicroUsd !==
+      reservation.providerReservedMicroUsd
+    ) {
+      return domainError("SPEND_STATE_INVALID");
+    }
+    const wallet = this.requireWallet(input.userId);
+    if (
+      wallet.reservedBalance < reservation.credits ||
+      wallet.providerReservedMicroUsd <
+        reservation.providerReservedMicroUsd
+    ) {
+      return domainError("CREDIT_BALANCE_INVALID");
+    }
+    const refund = refundCredits({
+      remaining: wallet.remainingBalance,
+      amount: reservation.credits,
+      maximum: BUILD_CREDIT_GRANT,
+    });
+    wallet.remainingBalance = refund.remaining;
+    wallet.reservedBalance -= reservation.credits;
+    wallet.providerReservedMicroUsd -=
+      reservation.providerReservedMicroUsd;
+    wallet.providerCommittedMicroUsd += input.providerCostMicroUsd;
+    reservation.state = "refunded";
+    reservation.providerCommittedMicroUsd =
+      input.providerCostMicroUsd;
+    reservation.updatedAt = this.currentTime().toISOString();
+
+    const result = {
+      reservation: cloneReservation(reservation),
+      wallet: cloneWallet(wallet),
+    };
+    this.#failedSpendResults.set(idempotencyMapKey, {
+      fingerprint,
+      result: cloneSpendResult(result),
+    });
+    return result;
+  }
+
   async recordSession(input: RecordSessionInput): Promise<TaskSession> {
     validateUserId(input.userId);
     const reservation = this.requireReservation(
@@ -502,6 +676,9 @@ export class MemoryCampaignRepository implements CampaignRepository {
       !Number.isSafeInteger(input.providerCostMicroUsd) ||
       input.providerCostMicroUsd < 0 ||
       (input.status === "completed" &&
+        input.providerCostMicroUsd !==
+          reservation.providerCommittedMicroUsd) ||
+      (input.status === "failed" &&
         input.providerCostMicroUsd !==
           reservation.providerCommittedMicroUsd) ||
       !validSavedOutput

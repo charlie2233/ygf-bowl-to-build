@@ -118,9 +118,9 @@ fragment was removed before submission, and the rendered balance changed from
    task, so 3,000 minus one successful task must be 2,880.
 2. The final task and wallet pages retain the shared workspace navigation so
    Wallet, History, Help, and sign-out remain consistently reachable.
-3. Partner language says “optional partner account” and explicitly states
-   that YGF credits and prompts do not transfer. It does not imply that OAuth
-   or an account connection is already live.
+3. External-destination language explicitly states that YGF credits and
+   prompts do not transfer and that no YGF–OpenRouter partnership is claimed.
+   It does not imply that OAuth or an account connection is already live.
 4. Mobile retains the complete result instead of hiding content behind an
    arbitrary “show more” control; reading order and touch targets remain
    accessible.

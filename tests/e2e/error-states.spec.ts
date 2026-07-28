@@ -113,6 +113,7 @@ test("claim form explains missing consent, missing code, and an unavailable code
   ).toBeVisible();
   const consentError = page.getByTestId("terms-consent-error");
   await expect(consentError).toBeVisible();
+  await expect(consentError).toBeInViewport();
   await expect(consentError).toHaveCSS("position", "fixed");
   await expect(page).toHaveURL(/\/redeem$/);
   await expect(

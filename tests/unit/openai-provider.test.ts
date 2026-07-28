@@ -163,3 +163,46 @@ describe("OpenAI-only production provider selection", () => {
     );
   });
 });
+
+describe("local demo provider selection", () => {
+  it("keeps the local demo deterministic by default", () => {
+    const provider = getTaskProvider({
+      OPENAI_API_KEY: "server-openai-secret",
+      YGF_DEMO_MODE: "true",
+    });
+
+    expect(provider.name).toBe("demo");
+  });
+
+  it("uses OpenAI only when the local live-provider switch is explicit", () => {
+    const provider = getTaskProvider({
+      OPENAI_API_KEY: "server-openai-secret",
+      YGF_DEMO_MODE: "true",
+      YGF_DEMO_PROVIDER: "openai",
+    });
+
+    expect(provider.name).toBe("openai");
+    expect(JSON.stringify(provider)).not.toContain(
+      "server-openai-secret",
+    );
+  });
+
+  it("fails closed when the local live-provider key is missing", () => {
+    expect(() =>
+      getTaskProvider({
+        YGF_DEMO_MODE: "true",
+        YGF_DEMO_PROVIDER: "openai",
+      }),
+    ).toThrow("OPENAI_API_KEY");
+  });
+
+  it("rejects unknown local provider modes", () => {
+    expect(() =>
+      getTaskProvider({
+        OPENAI_API_KEY: "server-openai-secret",
+        YGF_DEMO_MODE: "true",
+        YGF_DEMO_PROVIDER: "other",
+      }),
+    ).toThrow("YGF_DEMO_PROVIDER");
+  });
+});

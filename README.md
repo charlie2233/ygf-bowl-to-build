@@ -74,6 +74,34 @@ live provider. Visit `/connect/agent` to create a process-local personal key,
 copy an OpenAI-compatible configuration, and run the bounded demo connection
 test.
 
+For a local phone acceptance test that keeps the in-memory demo wallet but
+uses the real OpenAI provider, install `OPENAI_API_KEY` in the ignored
+`.env.local` file and start with:
+
+```sh
+YGF_DEMO_MODE=true YGF_DEMO_PROVIDER=openai pnpm dev
+```
+
+The switch is explicit so ordinary demo and automated-test runs never create
+provider charges unexpectedly. It applies only to the four browser task
+workflows; the local Agent gateway remains deterministic. Demo mode remains
+disabled in production.
+
+To scan from a phone on the same trusted Wi-Fi, replace `<mac-lan-ip>` and
+bind the development server explicitly:
+
+```sh
+YGF_DEMO_MODE=true \
+YGF_DEMO_PROVIDER=openai \
+YGF_PUBLIC_ORIGIN=http://<mac-lan-ip>:3100 \
+NEXT_PUBLIC_APP_URL=http://<mac-lan-ip>:3100 \
+pnpm exec next dev -H 0.0.0.0 -p 3100
+```
+
+This is short-lived HTTP acceptance only. Do not enter sensitive prompts, and
+stop the LAN server after testing because demo devices share one process-local
+wallet.
+
 The in-memory state lasts only for the development server process. It is not a
 deployment, data-migration, concurrency, or external-provider proof.
 

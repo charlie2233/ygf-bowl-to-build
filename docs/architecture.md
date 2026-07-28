@@ -36,11 +36,19 @@ the dominant ordinary-user action, while **02 Connect my Agent** links to the
 existing identity-gated `/connect/agent` flow. It does not bypass redemption,
 wallet ownership, identity upgrade, or key policy.
 
-Campaign depth uses browser-native Web Animations API, CSS 3D transforms, and
-intersection observation. Fine-pointer parallax is decorative, never changes
-content or navigation, is skipped on touch devices, and is disabled when
-`prefers-reduced-motion: reduce` is active. No animation library or remote
-runtime script is required.
+Campaign depth uses locally installed `gsap` and `@gsap/react`. The client-only
+motion component registers ScrollTrigger in the browser, scopes every selector
+to the campaign home, and reverts timelines, triggers, and pointer listeners on
+unmount. Fine-pointer parallax uses bounded transform-only updates, never
+changes content or navigation, and is skipped on touch devices. The
+`prefers-reduced-motion: reduce` path creates no timelines, triggers, or
+parallax and leaves every section immediately visible.
+
+The GSAP runtime is bundled with the application from the locked npm
+dependencies; no CDN or remote motion script is loaded. GSAP's runtime uses
+its separate Standard No Charge license rather than the MIT license of the
+local integration guidance. Recheck that runtime license if the product's use
+changes, especially toward a competing visual animation builder.
 
 ## Scan-first anonymous identity
 

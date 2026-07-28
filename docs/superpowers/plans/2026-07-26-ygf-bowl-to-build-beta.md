@@ -868,11 +868,34 @@ Agent gateway work.
 - [x] Add a persistent accessible selector for English, Simplified Chinese,
   Spanish, French, and Russian, with a matching document language.
 - [x] Add dependency-free Web Animations API entrances, intersection reveals,
-  and CSS 3D fine-pointer depth.
+  and CSS 3D fine-pointer depth as the initial motion layer (superseded by the
+  GSAP follow-up below).
 - [x] Disable decorative parallax for touch/coarse pointers and honor
   `prefers-reduced-motion`.
 - [x] Add typed localization-contract tests plus desktop/mobile Playwright
   coverage for language persistence, overflow, and reduced motion.
-- [ ] Re-run the Playwright matrix in an environment permitted to bind the
-  isolated localhost test server; the current managed sandbox returns
-  `listen EPERM` before the application starts.
+- [x] Re-run the Playwright matrix with localhost binding available: all 61
+  tests pass across desktop Chromium and iPhone WebKit.
+
+## July 28, 2026 follow-up — locally bundled GSAP motion
+
+This follow-up changes only the presentation layer. It keeps the ordinary-user
+redemption path first and does not alter wallet, task, Agent, or provider
+accounting contracts.
+
+- [x] Install locked `gsap` and `@gsap/react` dependencies through pnpm; load
+  no remote runtime or CDN script.
+- [x] Replace the Web Animations API and intersection observer with scoped
+  `useGSAP` timelines, ScrollTrigger reveals, and automatic cleanup.
+- [x] Keep step 01 ahead of step 02 in the hero sequence and leave both links
+  immediately actionable.
+- [x] Use transform-only `quickTo` pointer depth on fine-pointer desktop
+  devices; use restrained mobile entrances without horizontal movement.
+- [x] Create no decorative timelines, triggers, or pointer depth under
+  `prefers-reduced-motion: reduce`.
+- [x] Rebuild locale-dependent ScrollTrigger targets, refresh layout, and
+  release detached nodes after language changes without replaying the stable
+  hero sequence.
+- [x] Run unit, integration, lint, typecheck, build, desktop Chromium, and
+  iPhone WebKit verification: 401 Vitest assertions and 61 Playwright checks
+  pass, with the production build completing successfully.

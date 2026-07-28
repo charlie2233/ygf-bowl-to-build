@@ -55,6 +55,19 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 
 - [ ] Production deployment is reachable over HTTPS and canonical links use
   the approved public origin.
+- [ ] The release SHA retains the reviewed `pnpm-workspace.yaml` overrides
+  `next>postcss=8.5.18` and `next>sharp=0.35.3`, and a frozen production
+  install, `pnpm audit --prod`, and `pnpm build` are recorded for that SHA.
+  The audit must report 0 known vulnerabilities.
+- [ ] Treat both dependency overrides as tested security exceptions outside
+  Next.js 16.2.12's declared ranges, not as upstream compatibility proof.
+  Verify an optimized image request on the deployment platform before launch.
+- [ ] Any Next.js upgrade reopens the dependency gate: inspect the new declared
+  PostCSS/Sharp ranges and current advisories, remove an override when the
+  upstream release safely supports the patched version, regenerate the
+  lockfile, and rerun audit, lint, typecheck, the complete Vitest and
+  Playwright matrices, production build, and image-optimization smoke before
+  deploying the upgrade.
 - [ ] Database migrations and row-level access controls are applied in the
   production project, then verified with non-admin and admin accounts.
 - [ ] For migration `202607270004_agent_request_admission.sql`, keep

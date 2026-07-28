@@ -1,162 +1,416 @@
 "use client";
 
-import { useEffect } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type { RefObject } from "react";
 
 import type { CampaignLocale } from "@/lib/i18n/campaign";
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
-function safelyAnimate(
-  element: Element | null,
-  keyframes: Keyframe[],
-  options: KeyframeAnimationOptions,
-) {
-  if (!(element instanceof HTMLElement) || !element.animate) {
-    return null;
-  }
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(useGSAP);
 
-  return element.animate(keyframes, options);
+  if (typeof window.matchMedia === "function") {
+    gsap.registerPlugin(ScrollTrigger);
+  }
 }
 
-export function CampaignMotionExperience({
+type MotionConditions = Readonly<{
+  canHover: boolean;
+  isDesktop: boolean;
+  isMobile: boolean;
+  reduceMotion: boolean;
+}>;
+
+function getRevealChildren(element: HTMLElement) {
+  if (element.matches(".use-cases")) {
+    return element.querySelectorAll<HTMLElement>(".use-cases h2, .use-case");
+  }
+
+  if (element.matches(".how-it-works__lead")) {
+    return element.querySelectorAll<HTMLElement>(
+      ":scope > div:first-child, .how-it-works__photo",
+    );
+  }
+
+  if (element.matches(".campaign-steps")) {
+    return element.querySelectorAll<HTMLElement>(".campaign-step");
+  }
+
+  if (element.matches(".busy-week__inner")) {
+    return element.querySelectorAll<HTMLElement>(
+      ":scope > div, .busy-week__illustration",
+    );
+  }
+
+  return element.querySelectorAll<HTMLElement>(".section-heading");
+}
+
+export function useCampaignMotionExperience({
   locale,
+  scopeRef,
 }: Readonly<{
   locale: CampaignLocale;
+  scopeRef: RefObject<HTMLDivElement | null>;
 }>) {
-  useEffect(() => {
-    const root = document.documentElement;
-    const hero = document.querySelector<HTMLElement>("[data-motion-hero]");
-    const heroCopy = document.querySelector("[data-motion-hero-copy]");
-    const phone = document.querySelector("[data-motion-phone]");
-    const revealElements = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-motion-reveal]"),
-    );
-    const reduceMotion = window.matchMedia(reducedMotionQuery).matches;
+  useGSAP(
+    (_context, contextSafe) => {
+      const scope = scopeRef.current;
 
-    root.dataset.campaignMotion = reduceMotion ? "reduced" : "enhanced";
+      if (!scope) {
+        return;
+      }
 
-    if (reduceMotion) {
-      revealElements.forEach((element) => {
-        element.dataset.motionState = "visible";
-      });
-      return;
-    }
+      const documentRoot = document.documentElement;
+      const hero = scope.querySelector<HTMLElement>("[data-motion-hero]");
+      const heroImage = scope.querySelector<HTMLElement>(
+        ".marketing-hero__image",
+      );
+      const heroHeadlineLines = scope.querySelectorAll<HTMLElement>(
+        "[data-motion-hero-copy] h1 span",
+      );
+      const heroSubhead = scope.querySelector<HTMLElement>(
+        ".marketing-hero__subhead",
+      );
+      const heroActions = scope.querySelectorAll<HTMLElement>(
+        ".marketing-hero__actions a",
+      );
+      const heroDisclaimer = scope.querySelector<HTMLElement>(
+        ".marketing-hero__disclaimer",
+      );
+      const phone = scope.querySelector<HTMLElement>("[data-motion-phone]");
+      const phoneSections = scope.querySelectorAll<HTMLElement>(
+        ".campaign-phone__receipt, .campaign-phone__wallet",
+      );
+      const compositorTargets = [heroImage, phone].filter(
+        (element): element is HTMLElement => element !== null,
+      );
+      const matchMedia = gsap.matchMedia();
+      documentRoot.dataset.campaignMotionEngine = "gsap";
+      scope.dataset.motionEngine = "gsap";
 
-    const animations = [
-      safelyAnimate(
-        heroCopy,
-        [
-          { opacity: 0, transform: "translate3d(0, 24px, 0)" },
-          { opacity: 1, transform: "translate3d(0, 0, 0)" },
-        ],
+      matchMedia.add(
         {
-          duration: 680,
-          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "backwards",
+          canHover: "(hover: hover) and (pointer: fine)",
+          isDesktop: "(min-width: 821px)",
+          isMobile: "(max-width: 820px)",
+          reduceMotion: reducedMotionQuery,
         },
-      ),
-      safelyAnimate(
-        phone,
-        [
-          {
-            opacity: 0,
-            transform:
-              "perspective(1000px) rotateZ(8deg) rotateX(8deg) rotateY(-8deg) translate3d(20px, 18px, 0) scale(0.94)",
-          },
-          {
-            opacity: 1,
-            transform:
-              "perspective(1000px) rotateZ(8deg) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0) scale(1)",
-          },
-        ],
-        {
-          delay: 120,
-          duration: 820,
-          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-          fill: "backwards",
-        },
-      ),
-    ].filter((animation): animation is Animation => animation !== null);
+        (mediaContext) => {
+          const {
+            canHover,
+            isDesktop,
+            isMobile,
+            reduceMotion,
+          } = mediaContext.conditions as MotionConditions;
 
-    revealElements.forEach((element) => {
-      element.dataset.motionState = "pending";
-    });
+          documentRoot.dataset.campaignMotion = reduceMotion
+            ? "reduced"
+            : "enhanced";
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
+          if (reduceMotion) {
+            gsap.set(
+              [
+                heroImage,
+                ...heroHeadlineLines,
+                heroSubhead,
+                ...heroActions,
+                heroDisclaimer,
+                phone,
+                ...phoneSections,
+              ].filter(Boolean),
+              {
+                clearProps: "all",
+              },
+            );
             return;
           }
 
-          const element = entry.target as HTMLElement;
-          element.dataset.motionState = "visible";
-          observer.unobserve(element);
-        });
-      },
-      {
-        rootMargin: "0px 0px -8% 0px",
-        threshold: 0.12,
-      },
-    );
+          gsap.set(compositorTargets, {
+            willChange: "transform",
+          });
+          gsap.set(heroImage, {
+            scale: 1.07,
+          });
+          gsap.set(heroHeadlineLines, {
+            y: isMobile ? 22 : 34,
+          });
+          gsap.set(heroSubhead, {
+            y: 18,
+          });
+          gsap.set(heroActions, {
+            y: 16,
+          });
+          gsap.set(heroDisclaimer, {
+            y: 12,
+          });
+          gsap.set(phone, {
+            rotationX: isDesktop ? 7 : 0,
+            rotationY: isDesktop ? -7 : 0,
+            rotationZ: isDesktop ? 11 : 5,
+            scale: 0.94,
+            transformPerspective: 1000,
+            y: 20,
+          });
+          gsap.set(phoneSections, {
+            y: 12,
+          });
 
-    revealElements.forEach((element) => observer.observe(element));
+          const heroTimeline = gsap.timeline({
+            defaults: {
+              duration: isMobile ? 0.55 : 0.72,
+              ease: "power3.out",
+            },
+          });
 
-    let animationFrame = 0;
+          heroTimeline
+            .addLabel("intro", 0)
+            .to(
+              heroImage,
+              {
+                duration: 1.4,
+                scale: 1.035,
+              },
+              "intro",
+            )
+            .to(
+              heroHeadlineLines,
+              {
+                stagger: 0.08,
+                y: 0,
+              },
+              "intro+=0.05",
+            )
+            .to(
+              heroSubhead,
+              {
+                y: 0,
+              },
+              "intro+=0.19",
+            )
+            .to(
+              heroActions,
+              {
+                stagger: 0.08,
+                y: 0,
+              },
+              "intro+=0.3",
+            )
+            .to(
+              heroDisclaimer,
+              {
+                y: 0,
+              },
+              "intro+=0.42",
+            )
+            .to(
+              phone,
+              {
+                duration: isMobile ? 0.68 : 0.86,
+                rotationX: 0,
+                rotationY: 0,
+                rotationZ: isDesktop ? 8 : 5,
+                scale: 1,
+                transformPerspective: 1000,
+                y: 0,
+              },
+              "intro+=0.1",
+            )
+            .to(
+              phoneSections,
+              {
+                stagger: 0.1,
+                y: 0,
+              },
+              "intro+=0.33",
+            )
+            .set(
+              compositorTargets,
+              {
+                clearProps: "willChange",
+              },
+              "intro+=1.4",
+            );
 
-    const setHeroMotion = (clientX: number, clientY: number) => {
-      if (!hero) {
+          if (
+            !canHover ||
+            !isDesktop ||
+            !hero ||
+            !heroImage ||
+            !phone ||
+            !contextSafe
+          ) {
+            return;
+          }
+
+          const moveImageX = gsap.quickTo(heroImage, "x", {
+            duration: 0.55,
+            ease: "power3.out",
+          });
+          const moveImageY = gsap.quickTo(heroImage, "y", {
+            duration: 0.55,
+            ease: "power3.out",
+          });
+          const rotatePhoneX = gsap.quickTo(phone, "rotationX", {
+            duration: 0.5,
+            ease: "power3.out",
+          });
+          const rotatePhoneY = gsap.quickTo(phone, "rotationY", {
+            duration: 0.5,
+            ease: "power3.out",
+          });
+
+          const handlePointerMove = contextSafe((event: PointerEvent) => {
+            const bounds = hero.getBoundingClientRect();
+            const x = gsap.utils.clamp(
+              -1,
+              1,
+              ((event.clientX - bounds.left) / bounds.width - 0.5) * 2,
+            );
+            const y = gsap.utils.clamp(
+              -1,
+              1,
+              ((event.clientY - bounds.top) / bounds.height - 0.5) * 2,
+            );
+
+            moveImageX(x * -10);
+            moveImageY(y * -7);
+            rotatePhoneX(y * -3.5);
+            rotatePhoneY(x * 4.5);
+          });
+
+          const resetPointerMotion = contextSafe(() => {
+            moveImageX(0);
+            moveImageY(0);
+            rotatePhoneX(0);
+            rotatePhoneY(0);
+          });
+
+          hero.addEventListener("pointermove", handlePointerMove);
+          hero.addEventListener("pointerleave", resetPointerMotion);
+
+          return () => {
+            hero.removeEventListener("pointermove", handlePointerMove);
+            hero.removeEventListener("pointerleave", resetPointerMotion);
+          };
+        },
+        scope,
+      );
+
+      return () => {
+        matchMedia.revert();
+        delete documentRoot.dataset.campaignMotion;
+        delete documentRoot.dataset.campaignMotionEngine;
+        delete scope.dataset.motionEngine;
+      };
+    },
+    {
+      scope: scopeRef,
+    },
+  );
+
+  useGSAP(
+    () => {
+      const scope = scopeRef.current;
+
+      if (!scope) {
         return;
       }
 
-      const bounds = hero.getBoundingClientRect();
-      const x = Math.max(
-        -1,
-        Math.min(1, ((clientX - bounds.left) / bounds.width - 0.5) * 2),
+      const revealElements = gsap.utils.toArray<HTMLElement>(
+        "[data-motion-reveal]",
+        scope,
       );
-      const y = Math.max(
-        -1,
-        Math.min(1, ((clientY - bounds.top) / bounds.height - 0.5) * 2),
+      const matchMedia = gsap.matchMedia();
+      let refreshFrame = 0;
+
+      delete scope.dataset.motionReady;
+
+      matchMedia.add(
+        {
+          isDesktop: "(min-width: 821px)",
+          isMobile: "(max-width: 820px)",
+          reduceMotion: reducedMotionQuery,
+        },
+        (mediaContext) => {
+          const { isMobile, reduceMotion } =
+            mediaContext.conditions as MotionConditions;
+          const revealChildren = revealElements.flatMap((element) =>
+            Array.from(getRevealChildren(element)),
+          );
+
+          if (reduceMotion) {
+            gsap.set([...revealElements, ...revealChildren], {
+              clearProps: "all",
+            });
+          } else {
+            revealElements.forEach((element) => {
+              const children = Array.from(getRevealChildren(element));
+
+              gsap.set(element, {
+                y: isMobile ? 18 : 30,
+              });
+              gsap.set(children, {
+                y: isMobile ? 10 : 18,
+              });
+
+              const revealTimeline = gsap.timeline({
+                scrollTrigger: {
+                  invalidateOnRefresh: true,
+                  markers: false,
+                  once: true,
+                  start: "clamp(top 86%)",
+                  trigger: element,
+                },
+              });
+
+              revealTimeline.to(element, {
+                duration: isMobile ? 0.5 : 0.68,
+                ease: "power3.out",
+                y: 0,
+              });
+
+              if (children.length > 0) {
+                revealTimeline.to(
+                  children,
+                  {
+                    duration: isMobile ? 0.42 : 0.56,
+                    ease: "power2.out",
+                    stagger: isMobile ? 0.04 : 0.07,
+                    y: 0,
+                  },
+                  "<0.08",
+                );
+              }
+            });
+          }
+
+          refreshFrame = window.requestAnimationFrame(() => {
+            ScrollTrigger.refresh();
+            scope.dataset.motionReady = "true";
+          });
+
+          return () => {
+            window.cancelAnimationFrame(refreshFrame);
+            delete scope.dataset.motionReady;
+          };
+        },
+        scope,
       );
 
-      hero.style.setProperty("--hero-shift-x", `${x * -10}px`);
-      hero.style.setProperty("--hero-shift-y", `${y * -7}px`);
-      hero.style.setProperty("--phone-tilt-x", `${y * -3.5}deg`);
-      hero.style.setProperty("--phone-tilt-y", `${x * 4.5}deg`);
-    };
+      return () => {
+        window.cancelAnimationFrame(refreshFrame);
+        matchMedia.revert();
+        delete scope.dataset.motionReady;
+      };
+    },
+    {
+      dependencies: [locale],
+      revertOnUpdate: true,
+      scope: scopeRef,
+    },
+  );
 
-    const handlePointerMove = (event: PointerEvent) => {
-      window.cancelAnimationFrame(animationFrame);
-      animationFrame = window.requestAnimationFrame(() => {
-        setHeroMotion(event.clientX, event.clientY);
-      });
-    };
-
-    const resetHeroMotion = () => {
-      window.cancelAnimationFrame(animationFrame);
-      if (!hero) {
-        return;
-      }
-
-      hero.style.setProperty("--hero-shift-x", "0px");
-      hero.style.setProperty("--hero-shift-y", "0px");
-      hero.style.setProperty("--phone-tilt-x", "0deg");
-      hero.style.setProperty("--phone-tilt-y", "0deg");
-    };
-
-    if (hero && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      hero.addEventListener("pointermove", handlePointerMove);
-      hero.addEventListener("pointerleave", resetHeroMotion);
-    }
-
-    return () => {
-      animations.forEach((animation) => animation.cancel());
-      observer.disconnect();
-      window.cancelAnimationFrame(animationFrame);
-      hero?.removeEventListener("pointermove", handlePointerMove);
-      hero?.removeEventListener("pointerleave", resetHeroMotion);
-    };
-  }, [locale]);
-
-  return null;
 }

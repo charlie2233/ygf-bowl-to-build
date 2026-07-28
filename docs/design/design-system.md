@@ -30,9 +30,9 @@ CTA, then complete fine print. Avoid extra stacked microcopy.
   layout and typed content structure. The visible locale code and globe wrap
   a native language `select`; the document `lang` must follow the selection.
 - Use only subtle entrance, scroll-reveal, image-depth, and phone-tilt motion.
-  The native Web Animations API and CSS 3D implementation is dependency-free;
-  do not load GSAP, Three.js, Remotion, or remote scripts solely for decorative
-  movement.
+  The locally bundled GSAP layer uses scoped `useGSAP` timelines and
+  ScrollTrigger cleanup; do not add Three.js, Remotion, CDN scripts, pinned
+  scenes, or continuous loops solely for decorative movement.
 - Disable pointer parallax on coarse/touch pointers. Under
   `prefers-reduced-motion: reduce`, render every section immediately and remove
   decorative transforms.

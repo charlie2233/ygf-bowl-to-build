@@ -88,11 +88,12 @@ References:
 - `docs/design/concepts/wallet.png`
 - `docs/design/concepts/task-study-success.png`
 
-The latest local automated browser review on July 27, 2026 passed all 41
-tests: one shared demo setup, 20 desktop Chromium checks at 1536x1024, and 20
-iPhone 13/WebKit checks at 390x844. The suite covers responsive overflow and
-axe checks across public, authenticated core, terminal-error, and admin
-states. The in-app browser separately exercised home ->
+The latest local automated browser review on July 28, 2026 passed all 61
+tests: one shared demo setup, 30 desktop Chromium checks at 1536x1024, and 30
+iPhone 13/WebKit checks at 390x844. The suite covers responsive overflow, axe,
+five-language persistence, 360px French/Russian layout, GSAP initialization,
+and reduced motion across public, authenticated core, terminal-error, and
+admin states. The in-app browser separately exercised home ->
 receipt-fragment claim -> wallet -> Study -> useful result. The receipt
 fragment was removed before submission, and the rendered balance changed from
 3,000 to 2,880 with no browser warnings or errors.
@@ -107,11 +108,11 @@ fragment was removed before submission, and the rendered balance changed from
 | Container model | Open landing layout and bounded white workflow/result panels | Marketing stays open; wallet/task/admin use thin borders, 18px radii, restrained shadows, and stable wide containers | Matched |
 | Controls and icons | Clear rectangular actions and simple line metaphors | Semantic buttons/links, Lucide or code-native line icons, visible focus, and no model/provider jargon on the default path | Matched |
 | Language access | Not present in the accepted concept | Compact native selector adds English, Chinese, Spanish, French, and Russian; selection persists locally and updates document language | Intentional requested enhancement |
-| Motion and depth | Static concept frame | Dependency-free Web Animations API entrances, intersection reveals, and fine-pointer CSS 3D parallax; touch and reduced-motion paths remain static | Intentional requested enhancement |
+| Motion and depth | Static concept frame | Scoped GSAP hero timeline, ScrollTrigger section reveals, and bounded fine-pointer depth; touch receives restrained entrances and reduced-motion remains static | Intentional requested enhancement |
 | Redeem state | One obvious code field, receipt cue, short path to credits | QR fragment prefills and disappears; typed code remains available; one terms check plus one confirmation completes the demo claim | Matched with stronger privacy behavior |
 | Wallet state | One dominant balance and four task shortcuts | One 3,000-credit balance, exact expiry, correct progress math, four large launch cards, advanced selector collapsed | Matched |
 | Task success | Two-column desktop composer/result and stacked mobile result with Q/A rows | Desktop and mobile preserve the same hierarchy, actions, review note, 2,880 balance, structured Q/A flashcards, and post-success YGF Agent CTA | Matched |
-| Mobile behavior | One-column flow with readable controls and result cards | 390px view has no horizontal overflow; public header compacts, task composer precedes output, cards/actions wrap without clipping | Matched |
+| Mobile behavior | One-column flow with readable controls and result cards | 390px view has no horizontal overflow; the header compacts before long translations clip, 360px French/Russian remain bounded, task composer precedes output, and cards/actions wrap without clipping | Matched |
 
 ### Intentional product clarifications
 
@@ -133,9 +134,36 @@ fragment was removed before submission, and the rendered balance changed from
 6. The 2026-07-28 home enhancement keeps redemption as step 01 and promotes
    the already built first-party Agent setup as step 02. It adds no external
    partner claim and does not make API knowledge part of redemption.
-7. GSAP, Three.js, and Remotion were not installed in the locked checkout.
-   Equivalent presentation behavior uses browser-native APIs to avoid a new
-   remote runtime, bundle dependency, or mobile performance gate.
+7. The initial browser-native motion layer was superseded on 2026-07-28 by
+   locked `gsap` and `@gsap/react` dependencies. The runtime is bundled
+   locally with scoped cleanup and responsive/reduced-motion branches; no CDN,
+   remote motion runtime, Three.js, or Remotion dependency is used.
+
+### July 28 GSAP visual verification
+
+The accepted references remain
+`docs/design/concepts/landing-first-viewport.png` at 1536x1024 and
+`docs/design/concepts/landing-downstream.png` at 864x1821. Fresh local
+production-build renders were captured with Playwright Chromium at the same
+1536x1024 first-viewport size and at a true 390x844 CSS-pixel mobile viewport,
+plus a mobile full-page image. Rendering used non-secret placeholder Supabase
+configuration and did not claim live backend proof. All captures were
+inspected directly with `view_image`; neither viewport overflowed or emitted a
+page error, and the production images contain no Next.js development badge.
+
+- Copy, typography, warm palette, dominant bowl crop, phone placement, open
+  container model, and section order remain aligned with the references.
+- The requested language selector and numbered Agent step 02 are the only
+  material first-viewport information additions; claim remains step 01 and
+  visually dominant.
+- The first GSAP attempt initialized before the parent scope ref existed; the
+  motion controller now runs as a hook owned by that scope and is proven by
+  the browser runtime contract.
+- Long Russian navigation overflow was removed by compacting the mobile header
+  before 480px while retaining YGF, language selection, and Redeem.
+- Text opacity animation was removed after axe detected transient contrast
+  failures. Transform-only entrances preserve the GSAP choreography with full
+  contrast and immediate actionability.
 
 ### Above-the-fold copy diff
 

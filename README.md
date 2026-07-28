@@ -23,7 +23,8 @@ is never an API key. Provider credentials stay on the server.
 - five-language public home (English, Chinese, Spanish, French, and Russian)
   with a persistent, accessible language control
 - a numbered **01 Claim / 02 Connect my Agent** first-viewport path with
-  reduced-motion-safe Web Animations API and CSS 3D depth
+  scoped GSAP timelines, ScrollTrigger reveals, fine-pointer depth, and a
+  static reduced-motion path
 - Supabase Auth/Postgres production adapter, RLS, and atomic ledger RPCs
 - deterministic local demo mode with the receipt code `BOWL7K2A`
 - fixed-endpoint OpenAI Chat Completions adapter plus deterministic demo provider

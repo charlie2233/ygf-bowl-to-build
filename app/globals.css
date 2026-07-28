@@ -295,11 +295,7 @@ textarea {
 }
 
 .marketing-hero {
-  --hero-shift-x: 0px;
-  --hero-shift-y: 0px;
   --phone-rotate: 8deg;
-  --phone-tilt-x: 0deg;
-  --phone-tilt-y: 0deg;
   position: relative;
   isolation: isolate;
   min-height: clamp(38rem, 42vw, 42rem);
@@ -311,13 +307,8 @@ textarea {
   z-index: -2;
   object-fit: cover;
   object-position: center;
-  transform: translate3d(
-      var(--hero-shift-x),
-      var(--hero-shift-y),
-      0
-    )
-    scale(1.035);
-  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(1.035);
+  transform-origin: center;
 }
 
 .marketing-hero__inner {
@@ -415,33 +406,18 @@ textarea {
   background: #f8fafc;
   box-shadow: 0 26px 50px rgb(31 41 55 / 24%);
   color: #111827;
-  transform: perspective(1000px) rotateZ(var(--phone-rotate))
-    rotateX(var(--phone-tilt-x)) rotateY(var(--phone-tilt-y));
+  transform: perspective(1000px) rotateZ(var(--phone-rotate));
+  transform-origin: center;
   transform-style: preserve-3d;
-  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-html[data-campaign-motion="enhanced"] .marketing-hero__image,
-html[data-campaign-motion="enhanced"] .campaign-phone {
-  will-change: transform;
-}
-
-html[data-campaign-motion="enhanced"] [data-motion-reveal] {
-  transition:
-    opacity 640ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 640ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-html[data-campaign-motion="enhanced"]
-  [data-motion-reveal][data-motion-state="pending"] {
-  opacity: 0;
-  transform: translate3d(0, 28px, 0);
-}
-
-html[data-campaign-motion="enhanced"]
-  [data-motion-reveal][data-motion-state="visible"] {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
+@media (hover: hover) and (pointer: fine) and (min-width: 821px) {
+  html[data-campaign-motion-engine="gsap"][data-campaign-motion="enhanced"]
+    .marketing-hero__image,
+  html[data-campaign-motion-engine="gsap"][data-campaign-motion="enhanced"]
+    .campaign-phone {
+    will-change: transform;
+  }
 }
 
 .campaign-home[data-language="fr"] .marketing-hero h1,
@@ -2250,12 +2226,14 @@ html[data-campaign-motion="enhanced"]
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   .site-brand__campaign,
   .site-nav__link--faq {
     display: none;
   }
+}
 
+@media (max-width: 360px) {
   .language-selector {
     min-width: 3rem;
   }

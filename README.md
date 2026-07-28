@@ -95,12 +95,13 @@ YGF_DEMO_MODE=true \
 YGF_DEMO_PROVIDER=openai \
 YGF_PUBLIC_ORIGIN=http://<mac-lan-ip>:3100 \
 NEXT_PUBLIC_APP_URL=http://<mac-lan-ip>:3100 \
-pnpm exec next dev -H 0.0.0.0 -p 3100
+pnpm exec next dev -H <mac-lan-ip> -p 3100
 ```
 
 This is short-lived HTTP acceptance only. Do not enter sensitive prompts, and
 stop the LAN server after testing because demo devices share one process-local
-wallet.
+wallet. Binding the exact LAN IP also lets Next.js authorize that development
+origin without opening its internal assets to every local interface.
 
 The in-memory state lasts only for the development server process. It is not a
 deployment, data-migration, concurrency, or external-provider proof.

@@ -8,7 +8,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { useCampaignLanguage } from "@/components/campaign-language";
+import { copyText } from "@/lib/browser/copy-text";
 import type { TaskOutput } from "@/lib/providers/provider";
+import { workspaceCopy } from "@/lib/i18n/workspace";
 
 function outputAsText(output: TaskOutput) {
   return [
@@ -43,19 +46,21 @@ export function ResultPanel({
   onSave: () => Promise<void>;
   output: TaskOutput;
 }) {
-  const [copyState, setCopyState] = useState<"idle" | "copied">(
-    "idle",
-  );
+  const { locale } = useCampaignLanguage();
+  const resultCopy = workspaceCopy[locale].task.result;
+  const [copyState, setCopyState] = useState<
+    "idle" | "copied" | "error"
+  >("idle");
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  async function copy() {
+  async function copyResult() {
     try {
-      await navigator.clipboard.writeText(outputAsText(output));
+      await copyText(outputAsText(output));
       setCopyState("copied");
     } catch {
-      setCopyState("idle");
+      setCopyState("error");
     }
   }
 
@@ -80,36 +85,43 @@ export function ResultPanel({
         </span>
         <div>
           <h2 id="task-result-title">{output.title}</h2>
-          <p>Generated just now</p>
+          <p>{resultCopy.generatedNow}</p>
         </div>
         <div className="result-panel__actions">
-          <button onClick={copy} type="button">
-            {copyState === "copied" ? <Check /> : <Clipboard />}
-            {copyState === "copied" ? "Copied" : "Copy"}
+          <button aria-live="polite" onClick={copyResult} type="button">
+            {copyState === "copied" ? (
+              <Check aria-hidden="true" />
+            ) : (
+              <Clipboard aria-hidden="true" />
+            )}
+            {copyState === "copied"
+              ? resultCopy.copied
+              : copyState === "error"
+                ? resultCopy.copyError
+                : resultCopy.copy}
           </button>
           <button
             disabled={saveState === "saving" || saveState === "saved"}
             onClick={save}
             type="button"
           >
-            <Download />
+            <Download aria-hidden="true" />
             {saveState === "saving"
-              ? "Saving…"
+              ? resultCopy.saving
               : saveState === "saved"
-                ? "Saved to history"
-                : "Save"}
+                ? resultCopy.savedToHistory
+                : resultCopy.save}
           </button>
           <button onClick={onReset} type="button">
-            <RefreshCw />
-            Start another
+            <RefreshCw aria-hidden="true" />
+            {resultCopy.startAnother}
           </button>
         </div>
       </header>
 
       {saveState === "error" ? (
         <p className="result-panel__save-error" role="alert">
-          This result is no longer available to save. Copy it before
-          leaving this page.
+          {resultCopy.saveError}
         </p>
       ) : null}
 

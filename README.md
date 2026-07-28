@@ -20,8 +20,10 @@ is never an API key. Provider credentials stay on the server.
 ## What is in this repository
 
 - Next.js 16 App Router application and responsive campaign UI
-- five-language public home (English, Chinese, Spanish, French, and Russian)
-  with a persistent, accessible language control
+- five-language customer journey (English, Chinese, Spanish, French, and
+  Russian) across redemption, wallet, tasks, results, history, sharing, auth,
+  and customer-facing error states, with one persistent accessible language
+  control
 - a numbered **01 Claim / 02 Connect my Agent** first-viewport path with
   scoped GSAP timelines, ScrollTrigger reveals, fine-pointer depth, and a
   static reduced-motion path
@@ -106,7 +108,16 @@ pnpm exec next dev -H <mac-lan-ip> -p 3100
 This is short-lived HTTP acceptance only. Do not enter sensitive prompts, and
 stop the LAN server after testing because demo devices share one process-local
 wallet. Binding the exact LAN IP also lets Next.js authorize that development
-origin without opening its internal assets to every local interface.
+origin without opening its internal assets to every local interface. On this
+insecure phone-testing origin, request IDs still come from Web Crypto and copy
+buttons use a selection fallback when the secure Clipboard API is unavailable.
+
+The selected language persists across customer routes and reloads. Reviewed
+legal, privacy, creator, staff, and advanced Agent instructions remain in
+English; non-English users receive an explicit availability notice, and the
+English section is tagged for correct assistive-technology pronunciation.
+Administrative routes remain English-only without overwriting the customer's
+saved preference when they return to the campaign.
 
 The in-memory state lasts only for the development server process. It is not a
 deployment, data-migration, concurrency, or external-provider proof.

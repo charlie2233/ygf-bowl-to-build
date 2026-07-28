@@ -1,15 +1,20 @@
 "use client";
 
+import { ArrowLeft, Clock3, Laptop } from "lucide-react";
 import Link from "next/link";
 import {
   useEffect,
   useId,
+  useRef,
   useState,
+  useSyncExternalStore,
   type FormEvent,
 } from "react";
 
+import { useCampaignLanguage } from "@/components/campaign-language";
 import { createAuthBrowserClient } from "@/lib/auth/client";
 import { parseClaimFragment } from "@/lib/campaign/claim-url";
+import { redeemCopy, type RedeemErrorKey } from "@/lib/i18n/redeem";
 
 export interface RedeemFormSubmission {
   code: string;
@@ -23,6 +28,17 @@ export interface RedeemFormProps {
   submitClaim?: (submission: RedeemFormSubmission) => Promise<void>;
 }
 
+async function readOptionalJson<T extends object>(
+  response: Response,
+): Promise<Partial<T>> {
+  try {
+    const body: unknown = await response.json();
+    return body && typeof body === "object" ? (body as Partial<T>) : {};
+  } catch {
+    return {};
+  }
+}
+
 async function defaultConfirmPendingClaim() {
   const redemption = await fetch("/api/redeem", {
     body: JSON.stringify({}),
@@ -30,7 +46,7 @@ async function defaultConfirmPendingClaim() {
     method: "POST",
   });
   if (!redemption.ok) {
-    const body = (await redemption.json()) as { error?: string };
+    const body = await readOptionalJson<{ error?: string }>(redemption);
     const destination = redemptionErrorDestination(body.error);
     if (destination) {
       window.location.assign(destination);
@@ -59,11 +75,11 @@ async function defaultSubmitClaim(
     headers: { "content-type": "application/json" },
     method: "POST",
   });
-  const validationBody = (await validation.json()) as {
+  const validationBody = await readOptionalJson<{
     eligible?: boolean;
     next?: string;
     requiresAnonymousSession?: boolean;
-  };
+  }>(validation);
 
   if (validation.status === 429) {
     throw new Error("VALIDATION_THROTTLED");
@@ -103,25 +119,45 @@ export function redemptionErrorDestination(error: string | undefined) {
   }
 }
 
-function userFacingError(error: unknown) {
+function userFacingErrorKey(error: unknown): RedeemErrorKey {
   if (error instanceof Error) {
     if (error.message === "CODE_INVALID") {
-      return "That code is invalid or unavailable. Check it and try again.";
+      return "codeUnavailable";
     }
     if (error.message === "VALIDATION_THROTTLED") {
-      return "Too many checks were made. Wait a few minutes, then try again.";
+      return "validationThrottled";
     }
     if (
       error.message === "SERVICE_UNAVAILABLE" ||
       error.message === "REDEMPTION_UNAVAILABLE"
     ) {
-      return "Claims are temporarily unavailable. Your saved claim is safe—try again shortly.";
+      return "serviceUnavailable";
     }
     if (error.message === "ANONYMOUS_AUTH_UNAVAILABLE") {
-      return "Quick guest access is unavailable. Your secured claim is still ready; use account sign-in instead.";
+      return "anonymousUnavailable";
     }
   }
-  return "We couldn’t complete the claim. Please try again.";
+  return "generic";
+}
+
+function normalizedCardCode(value: string) {
+  return value.replace(/[\s-]/gu, "").toUpperCase();
+}
+
+function isValidCardCode(value: string) {
+  return /^[A-Z0-9]{8}$/u.test(normalizedCardCode(value));
+}
+
+function subscribeToHydration() {
+  return () => undefined;
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getServerHydratedSnapshot() {
+  return false;
 }
 
 export function RedeemForm({
@@ -130,86 +166,137 @@ export function RedeemForm({
   pendingClaimReady = false,
   submitClaim,
 }: RedeemFormProps) {
+  const { locale } = useCampaignLanguage();
+  const copy = redeemCopy[locale].form;
   const codeId = useId();
+  const codeHintId = useId();
+  const errorId = useId();
+  const scannedStatusId = useId();
   const termsId = useId();
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  const submissionInFlightRef = useRef(false);
+  const termsInputRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorField, setErrorField] = useState<
+    "code" | "terms" | null
+  >(null);
+  const [errorKey, setErrorKey] = useState<RedeemErrorKey | null>(
+    null,
+  );
   const [showManualAuthFallback, setShowManualAuthFallback] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wasScanned, setWasScanned] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeToHydration,
+    getHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
 
   useEffect(() => {
     let active = true;
 
-    function consumeClaimFragment() {
-      const fragment = window.location.hash;
-      if (!fragment) {
+    function consumeClaimFromUrl() {
+      const url = new URL(window.location.href);
+      const fragment = url.hash;
+      const legacyQueryCode = url.searchParams.get("code");
+      const hasSensitiveQuery =
+        url.searchParams.has("code") ||
+        url.searchParams.has("termsAccepted");
+
+      url.searchParams.delete("code");
+      url.searchParams.delete("termsAccepted");
+      if (fragment || hasSensitiveQuery) {
+        const safeSearch = url.searchParams.toString();
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${url.pathname}${safeSearch ? `?${safeSearch}` : ""}`,
+        );
+      }
+
+      if (!fragment && !legacyQueryCode) {
         return;
       }
-      window.history.replaceState(
-        window.history.state,
-        "",
-        `${window.location.pathname}${window.location.search}`,
-      );
 
       try {
-        const parsedCode = parseClaimFragment(fragment);
+        const parsedCode = fragment
+          ? parseClaimFragment(fragment)
+          : normalizedCardCode(legacyQueryCode ?? "");
+        if (!isValidCardCode(parsedCode)) {
+          throw new Error("CLAIM_URL_INVALID");
+        }
         queueMicrotask(() => {
           if (active) {
             setCode(parsedCode);
+            setErrorField(null);
+            setErrorKey(null);
+            setWasScanned(true);
           }
         });
       } catch {
         queueMicrotask(() => {
           if (active) {
-            setError(
-              "That receipt QR is not valid. Enter the printed code instead.",
-            );
+            setErrorField("code");
+            setErrorKey("qrInvalid");
+            setWasScanned(false);
+            codeInputRef.current?.focus();
           }
         });
       }
     }
 
-    consumeClaimFragment();
-    window.addEventListener("hashchange", consumeClaimFragment);
+    consumeClaimFromUrl();
+    window.addEventListener("hashchange", consumeClaimFromUrl);
 
     return () => {
       active = false;
-      window.removeEventListener("hashchange", consumeClaimFragment);
+      window.removeEventListener("hashchange", consumeClaimFromUrl);
     };
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    if (submissionInFlightRef.current) {
+      return;
+    }
+    setErrorField(null);
+    setErrorKey(null);
     setShowManualAuthFallback(false);
 
     if (pendingClaimReady) {
+      submissionInFlightRef.current = true;
       setIsSubmitting(true);
       try {
         await confirmPendingClaim();
       } catch (submissionError) {
-        setError(userFacingError(submissionError));
+        setErrorKey(userFacingErrorKey(submissionError));
       } finally {
+        submissionInFlightRef.current = false;
         setIsSubmitting(false);
       }
       return;
     }
 
-    if (!termsAccepted) {
-      setError("Agree to the promotional terms and privacy notice.");
+    if (!isValidCardCode(code)) {
+      setErrorField("code");
+      setErrorKey("codeInvalid");
+      codeInputRef.current?.focus();
       return;
     }
-    if (!code) {
-      setError("Enter the 8-character receipt code.");
+    if (!termsAccepted) {
+      setErrorField("terms");
+      setErrorKey("termsRequired");
+      termsInputRef.current?.focus();
       return;
     }
 
+    submissionInFlightRef.current = true;
     setIsSubmitting(true);
     try {
       const submission = {
-        code,
+        code: normalizedCardCode(code),
         termsAccepted: true as const,
       };
       if (submitClaim) {
@@ -222,12 +309,18 @@ export function RedeemForm({
         );
       }
     } catch (submissionError) {
+      const nextErrorKey = userFacingErrorKey(submissionError);
       setShowManualAuthFallback(
         submissionError instanceof Error &&
           submissionError.message === "ANONYMOUS_AUTH_UNAVAILABLE",
       );
-      setError(userFacingError(submissionError));
+      setErrorKey(nextErrorKey);
+      if (nextErrorKey === "codeUnavailable") {
+        setErrorField("code");
+        codeInputRef.current?.focus();
+      }
     } finally {
+      submissionInFlightRef.current = false;
       setIsSubmitting(false);
     }
   }
@@ -236,78 +329,200 @@ export function RedeemForm({
     <form className="redeem-form" noValidate onSubmit={handleSubmit}>
       {pendingClaimReady ? (
         <div className="redeem-form__pending" role="status">
-          <span>Receipt claim secured</span>
-          <strong>Ready to add your Build Credits</strong>
-          <small>
-            Your code stayed in a short-lived secure cookie during sign-in.
-          </small>
+          <span>{copy.pendingEyebrow}</span>
+          <strong>{copy.pendingTitle}</strong>
+          <small>{copy.pendingDescription}</small>
         </div>
       ) : (
         <div className="redeem-form__field">
-          <label htmlFor={codeId}>Receipt code</label>
+          <label htmlFor={codeId}>{copy.codeLabel}</label>
           <input
-            aria-label="Receipt code"
+            aria-describedby={[
+              codeHintId,
+              wasScanned ? scannedStatusId : null,
+              errorField === "code" && errorKey ? errorId : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-invalid={
+              errorField === "code" && errorKey ? true : undefined
+            }
+            aria-label={copy.codeLabel}
             autoCapitalize="characters"
             autoComplete="off"
+            disabled={!mounted}
             id={codeId}
             inputMode="text"
             maxLength={16}
             name="code"
-            onChange={(event) => setCode(event.target.value.toUpperCase())}
+            onChange={(event) => {
+              setCode(event.target.value.toUpperCase());
+              setWasScanned(false);
+              if (errorField === "code") {
+                setErrorField(null);
+                setErrorKey(null);
+              }
+            }}
             placeholder="BOWL7K2A"
+            readOnly={isSubmitting}
+            ref={codeInputRef}
             spellCheck={false}
             value={code}
           />
+          <small className="redeem-form__hint" id={codeHintId}>
+            {copy.codeHint}
+          </small>
         </div>
+      )}
+
+      {wasScanned && !pendingClaimReady ? (
+        <p
+          className="redeem-form__scanned"
+          id={scannedStatusId}
+          role="status"
+        >
+          {copy.scannedStatus}
+        </p>
+      ) : null}
+
+      {pendingClaimReady ? null : (
+        <label className="redeem-form__consent" htmlFor={termsId}>
+          <input
+            aria-describedby={
+              errorField === "terms" && errorKey ? errorId : undefined
+            }
+            aria-invalid={
+              errorField === "terms" && errorKey ? true : undefined
+            }
+            checked={termsAccepted}
+            disabled={!mounted || isSubmitting}
+            id={termsId}
+            name="termsAccepted"
+            onChange={(event) => {
+              setTermsAccepted(event.target.checked);
+              if (errorField === "terms") {
+                setErrorField(null);
+                setErrorKey(null);
+              }
+            }}
+            ref={termsInputRef}
+            type="checkbox"
+          />
+          <span>
+            {copy.consentPrefix}{" "}
+            <Link
+              href="/terms"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {copy.termsLabel}
+            </Link>{" "}
+            {copy.consentAnd}{" "}
+            <Link
+              href="/privacy"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {copy.privacyLabel}
+            </Link>
+            .{" "}
+            <small className="redeem-form__new-tab">
+              ({copy.opensInNewTab})
+            </small>
+          </span>
+        </label>
       )}
 
       <button
         className="button button--primary button--medium redeem-form__submit"
-        disabled={isSubmitting}
+        disabled={!mounted || isSubmitting}
         type="submit"
       >
         {isSubmitting
           ? pendingClaimReady
-            ? "Adding credits…"
-            : "Checking…"
+            ? copy.pendingSubmitting
+            : copy.submitting
           : pendingClaimReady
-            ? "Confirm and add credits"
-            : "Continue"}
+            ? copy.pendingSubmit
+            : copy.submit}
       </button>
 
-      <p aria-live="polite" className="redeem-form__message">
-        {error ??
-          (pendingClaimReady
-            ? "One confirmation finishes your claim."
-            : "Invalid, used, or expired codes will show an error here.")}
-      </p>
+      {errorKey ? (
+        <p
+          className="redeem-form__message redeem-form__message--error"
+          id={errorId}
+          role="alert"
+        >
+          {copy.errors[errorKey]}
+        </p>
+      ) : null}
       {showManualAuthFallback ? (
         <p className="redeem-form__fallback">
           <Link href="/auth?next=/redeem&error=anonymous">
-            Use account sign-in instead
+            {copy.fallbackSignIn}
           </Link>
         </p>
       ) : null}
 
       <p className="redeem-form__rule">
-        One redemption per person. Credits expire 14 days after redemption.
+        {pendingClaimReady ? copy.pendingHint : copy.rule}
       </p>
-
-      {pendingClaimReady ? null : (
-        <label className="redeem-form__consent" htmlFor={termsId}>
-          <input
-            checked={termsAccepted}
-            id={termsId}
-            name="termsAccepted"
-            onChange={(event) => setTermsAccepted(event.target.checked)}
-            type="checkbox"
-          />
-          <span>
-            I agree to the <Link href="/terms">promotional terms</Link> and{" "}
-            <Link href="/privacy">privacy notice</Link>.
-          </span>
-        </label>
-      )}
     </form>
+  );
+}
+
+export function RedeemPageContent({
+  pendingClaimReady = false,
+}: Readonly<{ pendingClaimReady?: boolean }>) {
+  const { locale } = useCampaignLanguage();
+  const copy = redeemCopy[locale];
+
+  return (
+    <section className="redeem-page">
+      <div className="redeem-page__inner container">
+        <Link className="redeem-page__back" href="/offer">
+          <ArrowLeft aria-hidden="true" />
+          {copy.backToOffer}
+        </Link>
+
+        <div className="redeem-page__grid">
+          <div className="redeem-card">
+            <h1>{copy.title}</h1>
+            <p>{copy.intro}</p>
+            <RedeemForm pendingClaimReady={pendingClaimReady} />
+          </div>
+
+          <aside className="redeem-page__aside">
+            <div
+              aria-label={copy.preview.ariaLabel}
+              className="redeem-receipt"
+              role="img"
+            >
+              <strong>{copy.preview.title}</strong>
+              <span>{copy.preview.privateSide}</span>
+              <dl>
+                <div>
+                  <dt>{copy.preview.reward}</dt>
+                  <dd>3,000 Credits</dd>
+                </div>
+                <div>
+                  <dt>{copy.preview.cardCode}</dt>
+                  <dd>A7K3B9Q2</dd>
+                </div>
+              </dl>
+              <small>
+                <Clock3 aria-hidden="true" />
+                {copy.preview.example}
+              </small>
+            </div>
+            <div className="redeem-next">
+              <Laptop aria-hidden="true" />
+              <h2>{copy.next.title}</h2>
+              <p>{copy.next.description}</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
   );
 }

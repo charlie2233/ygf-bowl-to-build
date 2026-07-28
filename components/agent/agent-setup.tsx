@@ -18,6 +18,8 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { copyText } from "@/lib/browser/copy-text";
+import { browserRandomUuid } from "@/lib/browser/uuid";
 
 interface AgentKeyDescriptor {
   createdAt: string;
@@ -140,25 +142,6 @@ function formatProviderSpend(microUsd: number) {
 
 function keyLabel(key: AgentKeyDescriptor) {
   return `${key.prefix}••••••••${key.last4}`;
-}
-
-async function copyText(value: string) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
-  }
-  const field = document.createElement("textarea");
-  field.value = value;
-  field.setAttribute("readonly", "");
-  field.style.position = "fixed";
-  field.style.opacity = "0";
-  document.body.append(field);
-  field.select();
-  const copied = document.execCommand("copy");
-  field.remove();
-  if (!copied) {
-    throw new Error("COPY_FAILED");
-  }
 }
 
 async function fetchKeyList() {
@@ -429,7 +412,7 @@ export function AgentSetup({
             accept: "application/json",
             authorization: `Bearer ${revealed.apiKey}`,
             "content-type": "application/json",
-            "idempotency-key": crypto.randomUUID(),
+            "idempotency-key": browserRandomUuid(),
           },
           method: "POST",
         },

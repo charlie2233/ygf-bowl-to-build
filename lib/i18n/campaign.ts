@@ -1,8 +1,13 @@
 import type { PublicFaqItem } from "@/lib/content/legal";
+import {
+  supportedLanguageOptions,
+  supportedLocales,
+  type SupportedLocale,
+} from "@/lib/i18n/locales";
 
-export const campaignLocales = ["en", "zh", "es", "fr", "ru"] as const;
+export const campaignLocales = supportedLocales;
 
-export type CampaignLocale = (typeof campaignLocales)[number];
+export type CampaignLocale = SupportedLocale;
 
 type UseCaseCopy = Readonly<{
   description: string;
@@ -39,6 +44,8 @@ export type CampaignHomeCopy = Readonly<{
     claimCredits: string;
     connectAgent: string;
     disclaimer: string;
+    guidance: string;
+    imageAlt: string;
     phoneAriaLabel: string;
     receipt: Readonly<{
       exampleOnly: string;
@@ -69,19 +76,7 @@ export type CampaignHomeCopy = Readonly<{
   }>;
 }>;
 
-export const campaignLanguageOptions: ReadonlyArray<
-  Readonly<{
-    code: string;
-    label: string;
-    locale: CampaignLocale;
-  }>
-> = [
-  { code: "EN", label: "English", locale: "en" },
-  { code: "中", label: "中文", locale: "zh" },
-  { code: "ES", label: "Español", locale: "es" },
-  { code: "FR", label: "Français", locale: "fr" },
-  { code: "RU", label: "Русский", locale: "ru" },
-];
+export const campaignLanguageOptions = supportedLanguageOptions;
 
 export const campaignHomeCopy: Record<
   CampaignLocale,
@@ -100,26 +95,29 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Buy a bowl.",
       titleLineTwo: "Build with AI.",
       subhead:
-        "A qualifying YGF purchase unlocks limited Build Credits for study help, coding help, career tasks, and smarter bowl picks.",
-      claimCredits: "Claim Build Credits",
-      connectAgent: "Connect my Agent",
+        "Spend $16+ at YGF, get an AI card at checkout, then scan or enter its private code to unlock 3,000 AI Credits for 14 days.",
+      guidance:
+        "New here? Start with 01. Agent setup is optional after redemption.",
+      claimCredits: "Scan or enter my code",
+      connectAgent: "Connect Agent (optional)",
       disclaimer:
         "For the USC community. Not affiliated with or endorsed by USC.",
+      imageAlt: "Overhead view of a YGF malatang bowl",
       phoneAriaLabel:
-        "Illustration of a receipt QR and printed code that can be scanned or entered; example only, not live",
+        "Illustration of an AI card with a private QR and printed code; example only, not live",
       receipt: {
-        qualifyingPurchase: "Qualifying purchase",
-        total: "Total",
-        status: "Status",
-        ready: "Ready",
-        illustrativeCode: "Illustrative receipt code",
-        scanOrEnter: "Scan receipt QR or enter code",
-        exampleOnly: "Example only — not a live claim code.",
-        expires: "Expires 14 days after redemption",
+        qualifyingPurchase: "Your AI card",
+        total: "Purchase",
+        status: "Credits",
+        ready: "3,000",
+        illustrativeCode: "DEMO — use your own card",
+        scanOrEnter: "Private QR or 8-character code",
+        exampleOnly: "Example only. This code cannot be redeemed.",
+        expires: "Credits last 14 days",
       },
     },
     useCases: {
-      heading: "One pass. Four useful ways to build.",
+      heading: "What can 3,000 AI Credits help with?",
       items: [
         {
           title: "Study",
@@ -140,22 +138,22 @@ export const campaignHomeCopy: Record<
       ],
     },
     howItWorks: {
-      heading: "From checkout to build mode.",
+      heading: "Three simple steps.",
       description:
-        "Spend $16+ in one transaction. Get your code at checkout. Credits expire 14 days after redemption.",
+        "Spend $16+ in one transaction. Receive an AI card at checkout. Redeem it for 3,000 AI Credits that last 14 days.",
       photoAlt: "Assorted YGF ingredients ready to choose at the counter",
       steps: [
         {
-          title: "Buy a bowl",
-          description: "Spend $16+ in one transaction.",
+          title: "Get your AI card",
+          description: "Spend $16+ and receive it at checkout.",
         },
         {
-          title: "Claim your code",
-          description: "Get your code at checkout.",
+          title: "Scan or enter the code",
+          description: "Use the private QR or 8-character card code.",
         },
         {
-          title: "Use Build Credits",
-          description: "Redeem your code and start building.",
+          title: "Pick an AI tool",
+          description: "Choose Study, Coding, Career, or Pick My Bowl.",
         },
       ],
       busyHeading: "Built for a busy week.",
@@ -210,25 +208,27 @@ export const campaignHomeCopy: Record<
       titleLineOne: "吃一碗。",
       titleLineTwo: "用 AI 开始创造。",
       subhead:
-        "在 YGF 完成符合条件的消费，即可获得限量 Build Credits，用于学习、编程、求职和下一碗推荐。",
-      claimCredits: "领取 Build Credits",
-      connectAgent: "连接我的 Agent",
+        "在 YGF 单笔消费满 $16，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 AI Credits，有效 14 天。",
+      guidance: "第一次使用？从 01 开始。Agent 连接是兑换后的可选功能。",
+      claimCredits: "扫码或输入兑换码",
+      connectAgent: "连接 Agent（可选）",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
+      imageAlt: "俯拍的 YGF 麻辣烫碗",
       phoneAriaLabel:
-        "可扫码或输入纸质兑换码的收据示意图；仅作示例，并非真实兑换码",
+        "带私人二维码和纸质兑换码的 AI 算力卡示意图；仅作示例，并非真实兑换码",
       receipt: {
-        qualifyingPurchase: "符合条件的消费",
-        total: "消费金额",
-        status: "状态",
-        ready: "可领取",
-        illustrativeCode: "兑换码示意",
-        scanOrEnter: "扫描收据二维码或输入兑换码",
-        exampleOnly: "仅作示例，并非真实兑换码。",
-        expires: "兑换后 14 天到期",
+        qualifyingPurchase: "你的 AI 算力卡",
+        total: "消费门槛",
+        status: "Credits",
+        ready: "3,000",
+        illustrativeCode: "演示码 — 请使用自己的卡",
+        scanOrEnter: "私人二维码或 8 位兑换码",
+        exampleOnly: "仅作示例，无法兑换。",
+        expires: "Credits 有效 14 天",
       },
     },
     useCases: {
-      heading: "一张 Pass，四种实用方式。",
+      heading: "3,000 AI Credits 可以帮你做什么？",
       items: [
         {
           title: "学习",
@@ -249,22 +249,22 @@ export const campaignHomeCopy: Record<
       ],
     },
     howItWorks: {
-      heading: "从结账到开始创造。",
+      heading: "简单三步即可开始。",
       description:
-        "单笔消费满 $16。结账时领取兑换码。Credits 在兑换后 14 天到期。",
+        "单笔消费满 $16，结账时领取 AI 算力卡。兑换后获得 3,000 AI Credits，有效 14 天。",
       photoAlt: "YGF 柜台中可自由选择的丰富食材",
       steps: [
         {
-          title: "买一碗",
-          description: "单笔消费满 $16。",
+          title: "领取 AI 算力卡",
+          description: "单笔消费满 $16，结账时领取。",
         },
         {
-          title: "领取兑换码",
-          description: "在结账时领取兑换码。",
+          title: "扫码或输入兑换码",
+          description: "使用卡片上的私人二维码或 8 位兑换码。",
         },
         {
-          title: "使用 Credits",
-          description: "兑换后立即开始使用 AI。",
+          title: "选择 AI 工具",
+          description: "选择学习、编程、求职或下一碗。",
         },
       ],
       busyHeading: "为忙碌的一周而生。",
@@ -318,26 +318,29 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Compra un bowl.",
       titleLineTwo: "Crea con IA.",
       subhead:
-        "Una compra válida en YGF desbloquea Build Credits limitados para estudiar, programar, buscar empleo y elegir mejor tu próximo bowl.",
-      claimCredits: "Obtener Build Credits",
-      connectAgent: "Conectar mi Agent",
+        "Gasta $16+ en YGF, recibe una tarjeta de IA en caja y escanea o escribe su código privado para desbloquear 3,000 AI Credits durante 14 días.",
+      guidance:
+        "¿Es tu primera vez? Empieza por 01. Conectar un Agent es opcional después del canje.",
+      claimCredits: "Escanear o escribir código",
+      connectAgent: "Agent (opcional)",
       disclaimer:
         "Para la comunidad de USC. No está afiliado ni respaldado por USC.",
+      imageAlt: "Vista cenital de un bowl de malatang de YGF",
       phoneAriaLabel:
-        "Ilustración de un recibo con QR y código impreso; es solo un ejemplo y no sirve para canjear",
+        "Ilustración de una tarjeta de IA con QR privado y código impreso; es solo un ejemplo",
       receipt: {
-        qualifyingPurchase: "Compra válida",
-        total: "Total",
-        status: "Estado",
-        ready: "Listo",
-        illustrativeCode: "Código ilustrativo",
-        scanOrEnter: "Escanea el QR o escribe el código",
-        exampleOnly: "Solo un ejemplo; no es un código real.",
-        expires: "Vence 14 días después del canje",
+        qualifyingPurchase: "Tu tarjeta de IA",
+        total: "Compra",
+        status: "Credits",
+        ready: "3,000",
+        illustrativeCode: "DEMO — usa tu propia tarjeta",
+        scanOrEnter: "QR privado o código de 8 caracteres",
+        exampleOnly: "Solo un ejemplo. Este código no se puede canjear.",
+        expires: "Credits válidos por 14 días",
       },
     },
     useCases: {
-      heading: "Un pase. Cuatro formas útiles de crear.",
+      heading: "¿En qué ayudan 3,000 AI Credits?",
       items: [
         {
           title: "Estudio",
@@ -358,22 +361,22 @@ export const campaignHomeCopy: Record<
       ],
     },
     howItWorks: {
-      heading: "De la caja al modo creación.",
+      heading: "Tres pasos sencillos.",
       description:
-        "Gasta $16+ en una transacción. Recibe tu código en caja. Los Credits vencen 14 días después del canje.",
+        "Gasta $16+ en una transacción y recibe una tarjeta de IA en caja. Canjéala por 3,000 AI Credits válidos durante 14 días.",
       photoAlt: "Ingredientes variados de YGF listos para elegir en el mostrador",
       steps: [
         {
-          title: "Compra un bowl",
-          description: "Gasta $16+ en una transacción.",
+          title: "Recibe tu tarjeta de IA",
+          description: "Gasta $16+ y recíbela en caja.",
         },
         {
-          title: "Recibe tu código",
-          description: "Obtén tu código en caja.",
+          title: "Escanea o escribe el código",
+          description: "Usa el QR privado o el código de 8 caracteres.",
         },
         {
-          title: "Usa tus Credits",
-          description: "Canjea el código y empieza a crear.",
+          title: "Elige una herramienta de IA",
+          description: "Estudio, Programación, Carrera o Elige mi bowl.",
         },
       ],
       busyHeading: "Hecho para una semana ocupada.",
@@ -428,26 +431,29 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Prenez un bowl.",
       titleLineTwo: "Créez avec l’IA.",
       subhead:
-        "Un achat YGF admissible débloque des Build Credits limités pour étudier, coder, préparer votre carrière et mieux choisir votre prochain bowl.",
-      claimCredits: "Obtenir des Build Credits",
-      connectAgent: "Connecter mon Agent",
+        "Dépensez 16 $ ou plus chez YGF, recevez une carte IA en caisse, puis scannez ou saisissez son code privé pour débloquer 3,000 AI Credits pendant 14 jours.",
+      guidance:
+        "Première visite ? Commencez par 01. La connexion d’un Agent est facultative après l’activation.",
+      claimCredits: "Scanner ou saisir le code",
+      connectAgent: "Agent (facultatif)",
       disclaimer:
         "Pour la communauté USC. Sans affiliation ni approbation de l’USC.",
+      imageAlt: "Vue de dessus d’un bowl malatang YGF",
       phoneAriaLabel:
-        "Illustration d’un reçu avec QR et code imprimé ; exemple uniquement, non utilisable",
+        "Illustration d’une carte IA avec QR privé et code imprimé ; exemple uniquement",
       receipt: {
-        qualifyingPurchase: "Achat admissible",
-        total: "Total",
-        status: "Statut",
-        ready: "Prêt",
-        illustrativeCode: "Code illustratif",
-        scanOrEnter: "Scannez le QR ou saisissez le code",
-        exampleOnly: "Exemple uniquement — code non valide.",
-        expires: "Expire 14 jours après l’activation",
+        qualifyingPurchase: "Votre carte IA",
+        total: "Achat",
+        status: "Credits",
+        ready: "3,000",
+        illustrativeCode: "DÉMO — utilisez votre carte",
+        scanOrEnter: "QR privé ou code à 8 caractères",
+        exampleOnly: "Exemple uniquement. Ce code ne peut pas être activé.",
+        expires: "Credits valables 14 jours",
       },
     },
     useCases: {
-      heading: "Un pass. Quatre façons utiles de créer.",
+      heading: "Que faire avec 3,000 AI Credits ?",
       items: [
         {
           title: "Études",
@@ -468,22 +474,22 @@ export const campaignHomeCopy: Record<
       ],
     },
     howItWorks: {
-      heading: "De la caisse au mode création.",
+      heading: "Trois étapes simples.",
       description:
-        "Dépensez 16 $ ou plus en une transaction. Recevez votre code en caisse. Les Credits expirent 14 jours après l’activation.",
+        "Dépensez 16 $ ou plus en une transaction et recevez une carte IA en caisse. Activez 3,000 AI Credits valables 14 jours.",
       photoAlt: "Ingrédients YGF variés à choisir au comptoir",
       steps: [
         {
-          title: "Prenez un bowl",
-          description: "Dépensez 16 $ ou plus en une transaction.",
+          title: "Recevez votre carte IA",
+          description: "Dépensez 16 $ ou plus et recevez-la en caisse.",
         },
         {
-          title: "Recevez le code",
-          description: "Obtenez votre code en caisse.",
+          title: "Scannez ou saisissez le code",
+          description: "Utilisez le QR privé ou le code à 8 caractères.",
         },
         {
-          title: "Utilisez les Credits",
-          description: "Activez le code et commencez à créer.",
+          title: "Choisissez un outil IA",
+          description: "Études, Code, Carrière ou Choisir mon bowl.",
         },
       ],
       busyHeading: "Pensé pour les semaines chargées.",
@@ -538,26 +544,29 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Купите боул.",
       titleLineTwo: "Создавайте с ИИ.",
       subhead:
-        "Подходящая покупка в YGF открывает ограниченные Build Credits для учёбы, программирования, карьеры и выбора следующего боула.",
-      claimCredits: "Получить Build Credits",
-      connectAgent: "Подключить мой Agent",
+        "Потратьте в YGF от $16, получите AI-карту на кассе и отсканируйте или введите её личный код, чтобы открыть 3,000 AI Credits на 14 дней.",
+      guidance:
+        "Впервые здесь? Начните с 01. Подключение Agent — необязательный шаг после активации.",
+      claimCredits: "Сканировать или ввести код",
+      connectAgent: "Agent (необязательно)",
       disclaimer:
         "Для сообщества USC. Не связано с USC и не одобрено университетом.",
+      imageAlt: "Вид сверху на боул малатан YGF",
       phoneAriaLabel:
-        "Иллюстрация чека с QR и печатным кодом; только пример, не для активации",
+        "Иллюстрация AI-карты с личным QR и печатным кодом; только пример",
       receipt: {
-        qualifyingPurchase: "Подходящая покупка",
-        total: "Сумма",
-        status: "Статус",
-        ready: "Готово",
-        illustrativeCode: "Пример кода",
-        scanOrEnter: "Сканируйте QR или введите код",
-        exampleOnly: "Только пример — код недействителен.",
-        expires: "Истекает через 14 дней после активации",
+        qualifyingPurchase: "Ваша AI-карта",
+        total: "Покупка",
+        status: "Credits",
+        ready: "3,000",
+        illustrativeCode: "ДЕМО — используйте свою карту",
+        scanOrEnter: "Личный QR или 8-значный код",
+        exampleOnly: "Только пример. Этот код нельзя активировать.",
+        expires: "Credits действуют 14 дней",
       },
     },
     useCases: {
-      heading: "Один pass. Четыре полезных сценария.",
+      heading: "Чем помогут 3,000 AI Credits?",
       items: [
         {
           title: "Учёба",
@@ -578,22 +587,22 @@ export const campaignHomeCopy: Record<
       ],
     },
     howItWorks: {
-      heading: "От кассы к режиму создания.",
+      heading: "Три простых шага.",
       description:
-        "Потратьте от $16 за одну покупку. Получите код на кассе. Credits действуют 14 дней после активации.",
+        "Потратьте от $16 за одну покупку и получите AI-карту на кассе. Активируйте 3,000 AI Credits на 14 дней.",
       photoAlt: "Разнообразные ингредиенты YGF для выбора у стойки",
       steps: [
         {
-          title: "Купите боул",
-          description: "Потратьте от $16 за одну покупку.",
+          title: "Получите AI-карту",
+          description: "Потратьте от $16 и заберите её на кассе.",
         },
         {
-          title: "Получите код",
-          description: "Заберите код на кассе.",
+          title: "Сканируйте или введите код",
+          description: "Используйте личный QR или 8-значный код.",
         },
         {
-          title: "Используйте Credits",
-          description: "Активируйте код и начинайте создавать.",
+          title: "Выберите AI-инструмент",
+          description: "Учёба, Код, Карьера или Выбрать мой боул.",
         },
       ],
       busyHeading: "Создано для насыщенной недели.",

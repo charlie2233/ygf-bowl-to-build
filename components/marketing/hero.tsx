@@ -32,7 +32,7 @@ export function Hero({
       data-motion-hero
     >
       <Image
-        alt="Generated overhead image of a malatang bowl"
+        alt={copy.imageAlt}
         className="marketing-hero__image"
         fill
         loading="eager"
@@ -51,13 +51,16 @@ export function Hero({
           <p className="marketing-hero__subhead">
             {copy.subhead}
           </p>
+          <p className="marketing-hero__guidance">{copy.guidance}</p>
           <div className="marketing-hero__actions">
             <ButtonLink
               className="marketing-hero__cta marketing-hero__cta--step"
               data-step="01"
               href="/redeem"
             >
-              {copy.claimCredits}
+              <span className="marketing-hero__step-number">01</span>
+              {" "}
+              <span>{copy.claimCredits}</span>
             </ButtonLink>
             <ButtonLink
               className="marketing-hero__cta marketing-hero__cta--step marketing-hero__cta--secondary"
@@ -65,7 +68,9 @@ export function Hero({
               href="/connect/agent"
               variant="secondary"
             >
-              {copy.connectAgent}
+              <span className="marketing-hero__step-number">02</span>
+              {" "}
+              <span>{copy.connectAgent}</span>
             </ButtonLink>
           </div>
           <p className="marketing-hero__disclaimer">{copy.disclaimer}</p>

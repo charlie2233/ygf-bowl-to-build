@@ -3,15 +3,24 @@
 import Link from "next/link";
 import { WalletCards } from "lucide-react";
 import {
+  useId,
   useRef,
   useState,
   type FormEvent,
 } from "react";
 
+import { useCampaignLanguage } from "@/components/campaign-language";
 import { PartnerCta } from "@/components/task/partner-cta";
 import { PresetList } from "@/components/task/preset-list";
 import { ResultPanel } from "@/components/task/result-panel";
+import { browserRandomUuid } from "@/lib/browser/uuid";
 import type { TaskDefinition } from "@/lib/content/tasks";
+import {
+  workspaceCopy,
+  workspaceIntlLocales,
+  type WorkspaceCopy,
+  type WorkspaceTaskErrorKey,
+} from "@/lib/i18n/workspace";
 import type { FriendlyModelChoice } from "@/lib/providers/model-catalog";
 import type { TaskOutput } from "@/lib/providers/provider";
 
@@ -77,29 +86,45 @@ async function defaultSaveTask(sessionId: string) {
   }
 }
 
-function taskError(error: unknown) {
+function taskErrorKey(error: unknown): WorkspaceTaskErrorKey {
   if (error instanceof Error) {
     switch (error.message) {
       case "INSUFFICIENT_CREDITS":
-        return "You need 120 Build Credits for this task.";
+        return "insufficientCredits";
       case "WALLET_EXPIRED":
-        return "These Build Credits have expired.";
+        return "walletExpired";
       case "PROVIDER_LIMIT_REACHED":
-        return "This beta wallet reached its provider spending limit.";
+        return "providerLimit";
       case "TASK_THROTTLED":
-        return "Too many requests were made. Wait a minute and try again.";
+        return "throttled";
       case "TASK_IN_PROGRESS":
-        return "This task is still running. Wait a moment, then retry—the same request will not spend twice.";
+        return "inProgress";
       case "RESULT_REPLAY_EXPIRED":
-        return "This completed retry is too old to replay. Start another task; the provider was not called again.";
+        return "replayExpired";
       case "TASK_IDEMPOTENCY_CONFLICT":
-        return "This retry no longer matches the original request. Start another task.";
+        return "retryConflict";
       case "PROVIDER_UNAVAILABLE":
       case "TASK_UNAVAILABLE":
-        return "AI is temporarily unavailable. Your 120 credits were not consumed if the provider failed.";
+        return "providerUnavailable";
     }
   }
-  return "We couldn’t generate this result. Try again shortly.";
+  return "generic";
+}
+
+function localizedModelLabel(
+  choice: FriendlyModelChoice,
+  options: WorkspaceCopy["task"]["model"]["options"],
+) {
+  switch (choice.id) {
+    case "best":
+    case "balanced":
+    case "fast":
+    case "coding":
+    case "reasoning":
+      return options[choice.id];
+    default:
+      return choice.label;
+  }
 }
 
 export function TaskShell({
@@ -119,8 +144,16 @@ export function TaskShell({
   ) => Promise<BrowserTaskSuccess>;
   task: TaskDefinition;
 }) {
+  const { locale } = useCampaignLanguage();
+  const copy = workspaceCopy[locale].task;
+  const taskCopy = copy.tasks[task.type];
+  const intlLocale = workspaceIntlLocales[locale];
+  const inputErrorId = useId();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [credits, setCredits] = useState(initialCredits);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<
+    WorkspaceTaskErrorKey | "blankInput" | null
+  >(null);
   const [input, setInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [model, setModel] = useState(
@@ -143,7 +176,8 @@ export function TaskShell({
     event.preventDefault();
     const normalized = input.trim();
     if (!normalized) {
-      setError("Tell us what you’re working on.");
+      setErrorKey("blankInput");
+      inputRef.current?.focus();
       return;
     }
     const fingerprint = JSON.stringify({
@@ -154,10 +188,10 @@ export function TaskShell({
     const idempotencyKey =
       retryRef.current?.fingerprint === fingerprint
         ? retryRef.current.idempotencyKey
-        : crypto.randomUUID();
+        : browserRandomUuid();
     retryRef.current = { fingerprint, idempotencyKey };
 
-    setError(null);
+    setErrorKey(null);
     setIsSubmitting(true);
     try {
       const response = await submitTask({
@@ -176,14 +210,14 @@ export function TaskShell({
       ) {
         setCredits(submissionError.remainingCredits);
       }
-      setError(taskError(submissionError));
+      setErrorKey(taskErrorKey(submissionError));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   function startAnother() {
-    setError(null);
+    setErrorKey(null);
     setInput("");
     setResult(null);
     setSelectedPreset(undefined);
@@ -193,17 +227,19 @@ export function TaskShell({
   return (
     <section className="task-workspace">
       <div className="task-workspace__topline">
-        <Link href="/wallet">‹ Wallet</Link>
+        <Link href="/wallet">‹ {copy.backToWallet}</Link>
         <span>
           <WalletCards aria-hidden="true" />
-          <strong>{credits.toLocaleString("en-US")} credits</strong>
+          <strong>
+            {copy.credits(credits.toLocaleString(intlLocale))}
+          </strong>
         </span>
       </div>
 
       <div className="task-workspace__grid">
         <form className="task-composer" onSubmit={handleSubmit}>
-          <h1>{task.title}</h1>
-          <p>What would you like help with?</p>
+          <h1>{taskCopy.title}</h1>
+          <p>{copy.helpPrompt}</p>
           <PresetList
             onSelect={(prompt, id) => {
               setInput(prompt);
@@ -214,27 +250,38 @@ export function TaskShell({
             task={task}
           />
 
-          <label htmlFor="task-input">{task.inputLabel}</label>
+          <label htmlFor="task-input">{taskCopy.inputLabel}</label>
           <textarea
+            aria-describedby={
+              errorKey === "blankInput" ? inputErrorId : undefined
+            }
+            aria-invalid={errorKey === "blankInput" ? true : undefined}
             id="task-input"
             maxLength={12_000}
             name="input"
             onChange={(event) => {
               setInput(event.target.value);
+              if (errorKey === "blankInput") {
+                setErrorKey(null);
+              }
               setSelectedPreset(undefined);
               retryRef.current = null;
             }}
-            placeholder={task.example}
+            placeholder={taskCopy.example}
+            ref={inputRef}
             value={input}
           />
           <span className="task-composer__count">
-            {input.length.toLocaleString("en-US")}/12,000
+            {copy.characterCount(
+              input.length.toLocaleString(intlLocale),
+              (12_000).toLocaleString(intlLocale),
+            )}
           </span>
 
           <details className="task-model-choice">
-            <summary>Advanced: choose a model</summary>
+            <summary>{copy.model.summary}</summary>
             <label htmlFor="task-model">
-              Model preference
+              {copy.model.preference}
               <select
                 id="task-model"
                 onChange={(event) => {
@@ -245,15 +292,12 @@ export function TaskShell({
               >
                 {modelChoices.map((choice) => (
                   <option key={choice.id} value={choice.id}>
-                    {choice.label}
+                    {localizedModelLabel(choice, copy.model.options)}
                   </option>
                 ))}
               </select>
             </label>
-            <p>
-              Every beta choice spends the same 120 Build Credits.
-              Only server-allowlisted models are available.
-            </p>
+            <p>{copy.model.costNote}</p>
           </details>
 
           <button
@@ -261,14 +305,22 @@ export function TaskShell({
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? "Generating…" : "Generate"}
+            {isSubmitting ? copy.generating : copy.generate}
           </button>
-          <p className="task-composer__review">{task.reviewNote}</p>
-          {task.safetyNote ? (
-            <p className="task-composer__safety">{task.safetyNote}</p>
+          <p className="task-composer__review">{taskCopy.reviewNote}</p>
+          {taskCopy.safetyNote ? (
+            <p className="task-composer__safety">{taskCopy.safetyNote}</p>
           ) : null}
-          <p aria-live="polite" className="task-composer__error">
-            {error}
+          <p
+            aria-live="polite"
+            className="task-composer__error"
+            id={inputErrorId}
+          >
+            {errorKey
+              ? errorKey === "blankInput"
+                ? copy.blankInput
+                : copy.errors[errorKey]
+              : null}
           </p>
         </form>
 
@@ -285,11 +337,8 @@ export function TaskShell({
           ) : (
             <section className="task-empty-state" aria-live="polite">
               <span aria-hidden="true">✦</span>
-              <h2>Your result will appear here</h2>
-              <p>
-                Choose a quick start or describe what you need. One
-                generation uses 120 Build Credits.
-              </p>
+              <h2>{copy.empty.title}</h2>
+              <p>{copy.empty.description}</p>
             </section>
           )}
         </div>

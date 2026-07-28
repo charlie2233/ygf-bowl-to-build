@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { useId, useState } from "react";
 
+import { useCampaignLanguage } from "@/components/campaign-language";
 import { Button } from "@/components/ui/button";
+import { customerPagesCopy } from "@/lib/i18n/customer-pages";
 import {
   createShareCardSvg,
   getShareCardTaskLabel,
@@ -12,6 +14,10 @@ import {
   SHARE_CARD_HERO_PATH,
   type ShareCardTaskType,
 } from "@/lib/share/card";
+
+type LocalizedShareCardCopy =
+  (typeof customerPagesCopy)["en"]["share"]["card"];
+type ShareCardStatus = "downloaded" | "error" | "preparingStatus" | null;
 
 function readBlobAsDataUrl(blob: Blob) {
   return new Promise<string>((resolve, reject) => {
@@ -31,7 +37,72 @@ function readBlobAsDataUrl(blob: Blob) {
   });
 }
 
+function escapeXml(value: string) {
+  return value.replace(
+    /[&<>"']/gu,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "'": "&apos;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+      })[character] ?? character,
+  );
+}
+
+function replaceSvgLiteral(
+  svg: string,
+  literal: string,
+  replacement: string,
+) {
+  if (!svg.includes(literal)) {
+    throw new Error("SHARE_CARD_COPY_MISSING");
+  }
+  return svg.split(literal).join(escapeXml(replacement));
+}
+
+function localizeShareCardSvg(
+  svg: string,
+  copy: LocalizedShareCardCopy,
+  firstTaskType?: ShareCardTaskType,
+) {
+  let localized = replaceSvgLiteral(
+    svg,
+    `${SHARE_CARD_COPY.campaign} public campaign check-in card.`,
+    copy.description,
+  );
+  if (firstTaskType) {
+    localized = replaceSvgLiteral(
+      localized,
+      `First build: ${getShareCardTaskLabel(firstTaskType)}`,
+      copy.firstBuild(copy.taskLabels[firstTaskType]),
+    );
+  }
+  localized = replaceSvgLiteral(
+    localized,
+    SHARE_CARD_COPY.milestone,
+    copy.milestone,
+  );
+  localized = replaceSvgLiteral(
+    localized,
+    SHARE_CARD_COPY.hashtag,
+    copy.hashtag,
+  );
+  localized = replaceSvgLiteral(
+    localized,
+    SHARE_CARD_COPY.uscDisclaimer,
+    copy.uscDisclaimer,
+  );
+  return replaceSvgLiteral(
+    localized,
+    SHARE_CARD_COPY.campaign,
+    copy.campaign,
+  );
+}
+
 async function createStandaloneShareCard(
+  copy: LocalizedShareCardCopy,
   firstTaskType?: ShareCardTaskType,
 ) {
   const response = await fetch(SHARE_CARD_HERO_PATH, {
@@ -43,7 +114,11 @@ async function createStandaloneShareCard(
   }
 
   const hero = await readBlobAsDataUrl(await response.blob());
-  const svg = createShareCardSvg({ firstTaskType });
+  const svg = localizeShareCardSvg(
+    createShareCardSvg({ firstTaskType }),
+    copy,
+    firstTaskType,
+  );
   const standaloneSvg = svg.replace(
     `href="${SHARE_CARD_HERO_PATH}"`,
     `href="${hero}"`,
@@ -83,18 +158,20 @@ export function ShareCardBuilder({
 }: {
   firstTaskType?: ShareCardTaskType;
 }) {
+  const { locale } = useCampaignLanguage();
+  const copy = customerPagesCopy[locale].share;
   const statusId = useId();
   const [isPreparing, setIsPreparing] = useState(false);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<ShareCardStatus>(null);
   const taskLabel = firstTaskType
-    ? getShareCardTaskLabel(firstTaskType)
+    ? copy.card.taskLabels[firstTaskType]
     : undefined;
   const previewLabel = [
-    SHARE_CARD_COPY.campaign,
-    SHARE_CARD_COPY.milestone,
-    taskLabel ? `First build: ${taskLabel}.` : undefined,
-    SHARE_CARD_COPY.hashtag,
-    SHARE_CARD_COPY.uscDisclaimer,
+    copy.card.campaign,
+    copy.card.milestone,
+    taskLabel ? `${copy.card.firstBuild(taskLabel)}.` : undefined,
+    copy.card.hashtag,
+    copy.card.uscDisclaimer,
   ]
     .filter(Boolean)
     .join(" ");
@@ -104,14 +181,17 @@ export function ShareCardBuilder({
       return;
     }
     setIsPreparing(true);
-    setStatus("Preparing your SVG card…");
+    setStatus("preparingStatus");
     try {
-      const svg = await createStandaloneShareCard(firstTaskType);
+      const svg = await createStandaloneShareCard(
+        copy.card,
+        firstTaskType,
+      );
       downloadSvg(svg);
       recordShareCardGeneration();
-      setStatus("Your SVG card downloaded.");
+      setStatus("downloaded");
     } catch {
-      setStatus("We couldn’t prepare the card. Please try again.");
+      setStatus("error");
     } finally {
       setIsPreparing(false);
     }
@@ -135,29 +215,27 @@ export function ShareCardBuilder({
         />
         <div className="share-card-preview__shade" />
         <div className="share-card-preview__campaign">
-          {SHARE_CARD_COPY.campaign}
+          {copy.card.campaign}
         </div>
         <div className="share-card-preview__copy">
-          <p>{SHARE_CARD_COPY.milestone}</p>
-          {taskLabel ? <p>First build: {taskLabel}</p> : null}
-          <strong>{SHARE_CARD_COPY.hashtag}</strong>
-          <small>{SHARE_CARD_COPY.uscDisclaimer}</small>
+          <p>{copy.card.milestone}</p>
+          {taskLabel ? <p>{copy.card.firstBuild(taskLabel)}</p> : null}
+          <strong>{copy.card.hashtag}</strong>
+          <small>{copy.card.uscDisclaimer}</small>
         </div>
       </div>
 
       <div className="share-builder__controls">
-        <p>
-          Your card uses only the public campaign milestone
-          {taskLabel ? " and your verified first completed task" : ""}.
-          Nothing is posted automatically.
-        </p>
+        <p>{copy.controls.description(Boolean(taskLabel))}</p>
 
         <Button
           aria-describedby={statusId}
           disabled={isPreparing}
           onClick={handleDownload}
         >
-          {isPreparing ? "Preparing SVG…" : "Download SVG card"}
+          {isPreparing
+            ? copy.controls.preparing
+            : copy.controls.download}
         </Button>
         <p
           aria-live="polite"
@@ -165,7 +243,7 @@ export function ShareCardBuilder({
           id={statusId}
           role="status"
         >
-          {status}
+          {status ? copy.controls[status] : ""}
         </p>
       </div>
     </div>

@@ -1,16 +1,26 @@
+"use client";
+
 import { WalletCards } from "lucide-react";
 
-import type { CreditWallet } from "@/lib/campaign/types";
+import { useCampaignLanguage } from "@/components/campaign-language";
+import type { BrowserWallet } from "@/lib/http/campaign-dto";
+import {
+  workspaceCopy,
+  workspaceIntlLocales,
+} from "@/lib/i18n/workspace";
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
   }).format(new Date(value));
 }
 
-export function WalletBalance({ wallet }: { wallet: CreditWallet }) {
+export function WalletBalance({ wallet }: { wallet: BrowserWallet }) {
+  const { locale } = useCampaignLanguage();
+  const copy = workspaceCopy[locale].wallet.balance;
+  const intlLocale = workspaceIntlLocales[locale];
   const usedCredits = Math.max(
     0,
     wallet.initialBalance -
@@ -21,10 +31,14 @@ export function WalletBalance({ wallet }: { wallet: CreditWallet }) {
     wallet.initialBalance === 0
       ? 0
       : Math.round((usedCredits / wallet.initialBalance) * 100);
+  const formattedInitialBalance = wallet.initialBalance.toLocaleString(
+    intlLocale,
+  );
+  const usedLabel = copy.used(usedPercent, formattedInitialBalance);
 
   return (
     <section
-      aria-label="Your AI balance"
+      aria-label={copy.ariaLabel}
       className="wallet-balance"
     >
       <div className="wallet-balance__summary">
@@ -32,13 +46,13 @@ export function WalletBalance({ wallet }: { wallet: CreditWallet }) {
           <WalletCards />
         </span>
         <div>
-          <strong>{wallet.remainingBalance.toLocaleString("en-US")}</strong>
-          <span>Build Credits remaining</span>
-          <small>Expires {formatDate(wallet.expiresAt)}</small>
+          <strong>{wallet.remainingBalance.toLocaleString(intlLocale)}</strong>
+          <span>{copy.remaining}</span>
+          <small>{copy.expires(formatDate(wallet.expiresAt, intlLocale))}</small>
         </div>
       </div>
       <div
-        aria-label={`${usedPercent}% of ${wallet.initialBalance.toLocaleString("en-US")} credits used`}
+        aria-label={usedLabel}
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={usedPercent}
@@ -48,10 +62,11 @@ export function WalletBalance({ wallet }: { wallet: CreditWallet }) {
         <span style={{ width: `${usedPercent}%` }} />
       </div>
       <p>
-        {usedPercent}% of{" "}
-        {wallet.initialBalance.toLocaleString("en-US")} credits used
+        {usedLabel}
         {wallet.reservedBalance > 0
-          ? ` · ${wallet.reservedBalance} reserved`
+          ? ` · ${copy.reserved(
+              wallet.reservedBalance.toLocaleString(intlLocale),
+            )}`
           : ""}
       </p>
     </section>

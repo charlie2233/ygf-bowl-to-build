@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { browserRandomUuid } from "@/lib/browser/uuid";
 
 const ADMIN_BATCH_SOURCES = [
   "receipt-insert",
@@ -42,7 +43,7 @@ const ROW_REFERENCE_PATTERN =
   /^YGF-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}-[0-9]{4}$/;
 
 function newRequestId(): string {
-  const requestId = globalThis.crypto.randomUUID().toLowerCase();
+  const requestId = browserRandomUuid();
   if (!UUID_PATTERN.test(requestId)) {
     throw new Error("REQUEST_ID_UNAVAILABLE");
   }

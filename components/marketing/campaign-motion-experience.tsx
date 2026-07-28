@@ -74,6 +74,9 @@ export function useCampaignMotionExperience({
       const heroSubhead = scope.querySelector<HTMLElement>(
         ".marketing-hero__subhead",
       );
+      const heroGuidance = scope.querySelector<HTMLElement>(
+        ".marketing-hero__guidance",
+      );
       const heroActions = scope.querySelectorAll<HTMLElement>(
         ".marketing-hero__actions a",
       );
@@ -116,6 +119,7 @@ export function useCampaignMotionExperience({
                 heroImage,
                 ...heroHeadlineLines,
                 heroSubhead,
+                heroGuidance,
                 ...heroActions,
                 heroDisclaimer,
                 phone,
@@ -139,6 +143,9 @@ export function useCampaignMotionExperience({
           });
           gsap.set(heroSubhead, {
             y: 18,
+          });
+          gsap.set(heroGuidance, {
+            y: 14,
           });
           gsap.set(heroActions, {
             y: 16,
@@ -189,6 +196,13 @@ export function useCampaignMotionExperience({
                 y: 0,
               },
               "intro+=0.19",
+            )
+            .to(
+              heroGuidance,
+              {
+                y: 0,
+              },
+              "intro+=0.25",
             )
             .to(
               heroActions,

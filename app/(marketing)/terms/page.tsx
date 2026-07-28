@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
-import { SiteFooter } from "@/components/site-footer";
+import {
+  EnglishOnlyContentNotice,
+  LocalizedSiteFooter,
+} from "@/components/marketing/english-only-content";
 import {
   promotionalFinePrint,
   promotionalTerms,
@@ -14,7 +17,8 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <>
-      <section className="campaign-page legal-page">
+      <EnglishOnlyContentNotice />
+      <section className="campaign-page legal-page" lang="en">
         <div className="campaign-page__intro container">
           <h1>Promotional terms</h1>
           <p className="campaign-page__lead">{promotionalFinePrint}</p>
@@ -33,7 +37,7 @@ export default function TermsPage() {
           ))}
         </div>
       </section>
-      <SiteFooter />
+      <LocalizedSiteFooter />
     </>
   );
 }

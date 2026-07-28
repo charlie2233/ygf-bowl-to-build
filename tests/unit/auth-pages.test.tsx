@@ -37,6 +37,7 @@ import AgentConnectPage from "@/app/connect/agent/page";
 import AuthPage from "@/app/auth/page";
 import RedeemSuccessPage from "@/app/redeem/success/page";
 import SharePage from "@/app/share/page";
+import WalletPage from "@/app/wallet/page";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
 import { createAuthServerClient } from "@/lib/auth/server";
 import { getAuthenticatedUser } from "@/lib/auth/user";
@@ -226,6 +227,32 @@ describe("authentication pages", () => {
     const html = renderToStaticMarkup(await RedeemSuccessPage());
 
     expect(html).toContain("Your Build Credits are ready");
+    expect(getWallet).toHaveBeenCalledWith({ userId: "user-1" });
+    expect(navigationMocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("keeps wallet data fetching on the server while rendering the customer workspace", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "user-1",
+      isAnonymous: false,
+    });
+    getWallet.mockResolvedValue(ACTIVE_WALLET);
+
+    const page = await WalletPage();
+    const clientBoundaryPayload = JSON.stringify(page);
+    const html = renderToStaticMarkup(page);
+
+    expect(html).toContain("What will you build first?");
+    expect(html).toContain("3,000");
+    expect(html).toContain('href="/task/study?model=best"');
+    expect(clientBoundaryPayload).not.toContain("wallet-1");
+    expect(clientBoundaryPayload).not.toContain("user-1");
+    expect(clientBoundaryPayload).not.toContain(
+      "providerCommittedMicroUsd",
+    );
+    expect(clientBoundaryPayload).not.toContain(
+      "providerReservedMicroUsd",
+    );
     expect(getWallet).toHaveBeenCalledWith({ userId: "user-1" });
     expect(navigationMocks.redirect).not.toHaveBeenCalled();
   });

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
 import { ContactForm } from "@/components/marketing/contact-form";
-import { SiteFooter } from "@/components/site-footer";
+import {
+  EnglishOnlyContentNotice,
+  LocalizedSiteFooter,
+} from "@/components/marketing/english-only-content";
 import {
   sensitiveDataWarning,
   staffSections,
@@ -19,7 +22,8 @@ export const metadata: Metadata = {
 export default function StaffPage() {
   return (
     <>
-      <section className="campaign-page legal-page">
+      <EnglishOnlyContentNotice />
+      <section className="campaign-page legal-page" lang="en">
         <div className="campaign-page__intro container">
           <h1>Staff help</h1>
           <p className="campaign-page__lead">
@@ -59,7 +63,7 @@ export default function StaffPage() {
           </section>
         </div>
       </section>
-      <SiteFooter />
+      <LocalizedSiteFooter />
     </>
   );
 }

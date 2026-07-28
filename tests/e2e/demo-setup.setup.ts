@@ -10,7 +10,9 @@ test("establishes the single demo claim and first useful result", async ({
 }) => {
   await page.goto("/redeem#code=BOWL7K2A");
 
-  await expect(page.getByLabel("Receipt code")).toHaveValue("BOWL7K2A");
+  await expect(page.getByLabel("8-character card code")).toHaveValue(
+    "BOWL7K2A",
+  );
   await expect
     .poll(() => new URL(page.url()).hash)
     .toBe("");
@@ -23,7 +25,9 @@ test("establishes the single demo claim and first useful result", async ({
   await page
     .getByRole("checkbox", { name: /promotional terms/i })
     .check();
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page
+    .getByRole("button", { name: "Unlock 3,000 credits" })
+    .click();
   await expect(page).toHaveURL(/\/redeem\/success$/);
   await expect(
     page.getByRole("heading", {
@@ -132,7 +136,7 @@ test("establishes the single demo claim and first useful result", async ({
 
   await page.goto("/share");
   await expect(page.getByText("First build: Study")).toBeVisible();
-  await expect(page.locator("select")).toHaveCount(0);
+  await expect(page.locator(".share-builder select")).toHaveCount(0);
   const downloadPromise = page.waitForEvent("download");
   const shareSignalPromise = page.waitForResponse(
     (response) =>

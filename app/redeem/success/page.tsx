@@ -1,8 +1,7 @@
-import { CheckCircle2 } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { RedeemSuccessView } from "@/components/workspace-views";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { isWalletExpired } from "@/lib/campaign/credits";
 import { CampaignDomainError } from "@/lib/campaign/types";
@@ -39,36 +38,5 @@ export default async function RedeemSuccessPage() {
     redirect("/expired");
   }
 
-  return (
-    <section className="redemption-state redemption-state--success">
-      <div>
-        <CheckCircle2 aria-hidden="true" />
-        <h1>Your Build Credits are ready</h1>
-        <p>
-          Your AI balance is active. Pick a useful task and get to a first
-          result.
-        </p>
-        <div className="redemption-state__actions">
-          <Link className="button button--primary button--medium" href="/wallet">
-            Use AI now
-          </Link>
-          <Link
-            className="button button--secondary button--medium"
-            href="/connect/agent"
-          >
-            Connect my Agent
-          </Link>
-        </div>
-        <Link
-          className="redemption-state__advanced"
-          href="/connect/agent#developer-api-key"
-        >
-          Developer API key
-        </Link>
-        <Link className="redemption-state__share" href="/share">
-          Generate a safe check-in card
-        </Link>
-      </div>
-    </section>
-  );
+  return <RedeemSuccessView />;
 }

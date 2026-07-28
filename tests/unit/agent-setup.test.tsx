@@ -133,6 +133,12 @@ describe("AgentSetup", () => {
   });
 
   it("reveals a new key once, copies configs, and runs a bounded connection check", async () => {
+    vi.stubGlobal("crypto", {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.fill(0xab);
+        return bytes;
+      },
+    });
     const writeText = vi.fn(async () => undefined);
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -247,6 +253,11 @@ describe("AgentSetup", () => {
       credentials: "omit",
       method: "POST",
     });
+    expect(
+      (connectionCall?.[1]?.headers as Record<string, string>)[
+        "idempotency-key"
+      ],
+    ).toBe("abababab-abab-4bab-abab-abababababab");
     expect(
       (connectionCall?.[1]?.headers as Record<string, string>)
         .authorization,

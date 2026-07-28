@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { ShareCardBuilder } from "@/components/share/share-card-builder";
+import { SharePageView } from "@/components/customer-page-views";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { isWalletExpired } from "@/lib/campaign/credits";
 import {
@@ -24,22 +24,7 @@ export function SharePageContent({
 }: {
   firstTaskType?: TaskType;
 }) {
-  return (
-    <section className="share-page">
-      <div className="container">
-        <header className="share-page__intro">
-          <p>YGF Bowl-to-Build</p>
-          <h1>Create your check-in card</h1>
-          <p>
-            Preview the public card, then download it as an SVG when
-            you’re ready. If you completed a task, its verified type is
-            added automatically.
-          </p>
-        </header>
-        <ShareCardBuilder firstTaskType={firstTaskType} />
-      </div>
-    </section>
-  );
+  return <SharePageView firstTaskType={firstTaskType} />;
 }
 
 export default async function SharePage() {

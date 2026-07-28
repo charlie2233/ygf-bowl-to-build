@@ -2,10 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 
+import { useCampaignLanguage } from "@/components/campaign-language";
 import { createAuthBrowserClient } from "@/lib/auth/client";
+import {
+  customerPagesCopy,
+  type AuthMessageKey,
+} from "@/lib/i18n/customer-pages";
 
 interface AuthPanelProps {
-  initialError?: string;
+  initialMessageKey?: AuthMessageKey;
   isAnonymous?: boolean;
   mode: "demo" | "supabase";
   nextPath: string;
@@ -18,23 +23,26 @@ function callbackUrl(nextPath: string) {
 }
 
 export function AuthPanel({
-  initialError,
+  initialMessageKey,
   isAnonymous = false,
   mode,
   nextPath,
 }: AuthPanelProps) {
+  const { locale } = useCampaignLanguage();
+  const copy = customerPagesCopy[locale].auth;
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState<string | null>(
-    initialError ?? null,
+  const [messageKey, setMessageKey] = useState<AuthMessageKey | null>(
+    initialMessageKey ?? null,
   );
   const [messageKind, setMessageKind] = useState<"error" | "status">(
-    initialError ? "error" : "status",
+    initialMessageKey ? "error" : "status",
   );
   const [busy, setBusy] = useState(false);
+  const message = messageKey ? copy.messages[messageKey] : null;
 
   async function signInWithProvider(provider: "apple" | "google") {
     setBusy(true);
-    setMessage(null);
+    setMessageKey(null);
     setMessageKind("status");
     const client = createAuthBrowserClient();
     const { error } = isAnonymous
@@ -47,7 +55,7 @@ export function AuthPanel({
           provider,
         });
     if (error) {
-      setMessage("Sign-in could not start. Please try another option.");
+      setMessageKey("providerError");
       setMessageKind("error");
       setBusy(false);
     }
@@ -56,7 +64,7 @@ export function AuthPanel({
   async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setMessage(null);
+    setMessageKey(null);
     setMessageKind("status");
     const client = createAuthBrowserClient();
     const { error } = await client.auth.signInWithOtp({
@@ -67,11 +75,7 @@ export function AuthPanel({
     });
     setBusy(false);
     setMessageKind(error ? "error" : "status");
-    setMessage(
-      error
-        ? "We couldn’t send the sign-in link. Check the email and try again."
-        : "Check your email for a secure sign-in link.",
-    );
+    setMessageKey(error ? "magicLinkError" : "magicLinkSent");
   }
 
   const messageElement = (
@@ -95,14 +99,11 @@ export function AuthPanel({
   if (mode === "demo") {
     return (
       <div className="auth-panel">
-        <h1>Continue to your Build Credits</h1>
-        <p>
-          Demo mode keeps the whole flow on this device—no account setup
-          required.
-        </p>
+        <h1>{copy.demo.title}</h1>
+        <p>{copy.demo.description}</p>
         {messageElement}
         <a className="button button--primary button--medium" href={nextPath}>
-          Continue in demo
+          {copy.demo.continue}
         </a>
       </div>
     );
@@ -111,15 +112,10 @@ export function AuthPanel({
   if (isAnonymous) {
     return (
       <div className="auth-panel">
-        <h1>Upgrade to connect an Agent</h1>
-        <p>
-          Your guest wallet already works for YGF web AI. Link a verified
-          identity only for personal Agent keys, recovery, and cross-device
-          access.
-        </p>
+        <h1>{copy.anonymous.title}</h1>
+        <p>{copy.anonymous.description}</p>
         <p className="auth-panel__warning">
-          Until you link an account, clearing this browser’s site data can
-          permanently remove access to this guest wallet.
+          {copy.anonymous.warning}
         </p>
         <div className="auth-panel__providers">
           <button
@@ -128,7 +124,7 @@ export function AuthPanel({
             onClick={() => void signInWithProvider("google")}
             type="button"
           >
-            Link Google
+            {copy.anonymous.google}
           </button>
           <button
             className="button button--secondary button--medium"
@@ -136,7 +132,7 @@ export function AuthPanel({
             onClick={() => void signInWithProvider("apple")}
             type="button"
           >
-            Link Apple
+            {copy.anonymous.apple}
           </button>
         </div>
         {messageElement}
@@ -146,11 +142,8 @@ export function AuthPanel({
 
   return (
     <div className="auth-panel">
-      <h1>Sign in to recover your wallet</h1>
-      <p>
-        Normal receipt scans use a guest wallet without a login screen.
-        Choose an account only for recovery or cross-device access.
-      </p>
+      <h1>{copy.recovery.title}</h1>
+      <p>{copy.recovery.description}</p>
       <div className="auth-panel__providers">
         <button
           className="button button--secondary button--medium"
@@ -158,7 +151,7 @@ export function AuthPanel({
           onClick={() => void signInWithProvider("google")}
           type="button"
         >
-          Continue with Google
+          {copy.recovery.google}
         </button>
         <button
           className="button button--secondary button--medium"
@@ -166,16 +159,16 @@ export function AuthPanel({
           onClick={() => void signInWithProvider("apple")}
           type="button"
         >
-          Continue with Apple
+          {copy.recovery.apple}
         </button>
       </div>
       <div aria-hidden="true" className="auth-panel__divider">
         <span />
-        or
+        {copy.recovery.or}
         <span />
       </div>
       <form onSubmit={sendMagicLink}>
-        <label htmlFor="auth-email">Email</label>
+        <label htmlFor="auth-email">{copy.recovery.emailLabel}</label>
         <input
           autoComplete="email"
           id="auth-email"
@@ -189,7 +182,7 @@ export function AuthPanel({
           disabled={busy}
           type="submit"
         >
-          Email me a sign-in link
+          {copy.recovery.emailSubmit}
         </button>
       </form>
       {messageElement}

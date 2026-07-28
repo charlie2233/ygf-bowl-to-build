@@ -2,14 +2,26 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
+import { SITE_PATHNAME_HEADER } from "@/lib/i18n/site";
+
+function nextResponseFor(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(SITE_PATHNAME_HEADER, request.nextUrl.pathname);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+}
 
 export async function updateAuthSession(request: NextRequest) {
   const runtime = resolveAuthRuntime();
   if (runtime.mode === "demo") {
-    return NextResponse.next({ request });
+    return nextResponseFor(request);
   }
 
-  let response = NextResponse.next({ request });
+  let response = nextResponseFor(request);
   const client = createServerClient(runtime.url, runtime.publishableKey, {
     cookies: {
       getAll() {
@@ -19,7 +31,7 @@ export async function updateAuthSession(request: NextRequest) {
         for (const { name, value } of cookiesToSet) {
           request.cookies.set(name, value);
         }
-        response = NextResponse.next({ request });
+        response = nextResponseFor(request);
         for (const { name, options, value } of cookiesToSet) {
           response.cookies.set(name, value, options);
         }

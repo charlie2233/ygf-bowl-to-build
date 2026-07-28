@@ -36,11 +36,11 @@ describe("public campaign pages", () => {
   it("renders the approved home-page campaign contract", () => {
     const body = renderPage(<HomePage />);
     const heading = body.querySelector("h1");
-    const claimLink = Array.from(body.querySelectorAll("a")).find(
-      (link) => normalizedText(link) === "Claim Build Credits",
+    const claimLink = body.querySelector<HTMLAnchorElement>(
+      'a[data-step="01"]',
     );
-    const agentLink = Array.from(body.querySelectorAll("a")).find(
-      (link) => normalizedText(link) === "Connect my Agent",
+    const agentLink = body.querySelector<HTMLAnchorElement>(
+      'a[data-step="02"]',
     );
     const bowlImage = Array.from(body.querySelectorAll("img")).find((image) =>
       /malatang bowl/i.test(image.getAttribute("alt") ?? ""),
@@ -51,12 +51,17 @@ describe("public campaign pages", () => {
     );
 
     expect(normalizedText(heading)).toBe("Buy a bowl. Build with AI.");
+    expect(normalizedText(claimLink)).toBe("01 Scan or enter my code");
+    expect(normalizedText(agentLink)).toBe("02 Connect Agent (optional)");
     expect(body.querySelectorAll("h1")).toHaveLength(1);
     expect(claimLink?.getAttribute("href")).toBe("/redeem");
     expect(agentLink?.getAttribute("href")).toBe("/connect/agent");
     expect(claimLink?.getAttribute("data-step")).toBe("01");
     expect(agentLink?.getAttribute("data-step")).toBe("02");
     expect(normalizedText(body)).toMatch(/not affiliated with or endorsed by USC/i);
+    expect(normalizedText(body)).toMatch(/3,000 AI Credits/i);
+    expect(normalizedText(body)).toMatch(/start with 01/i);
+    expect(normalizedText(body)).toMatch(/agent setup is optional/i);
     expect(bowlImage).toBeTruthy();
     expect(bowlImage?.getAttribute("loading")).toBe("eager");
     expect(
@@ -83,13 +88,13 @@ describe("public campaign pages", () => {
     expect(realYgfImage?.hasAttribute("data-photo-source")).toBe(false);
   });
 
-  it("shows an illustrative receipt QR and printed-code handoff", () => {
+  it("shows a clearly marked demo card QR and private-code handoff", () => {
     const text = normalizedText(renderPage(<HomePage />));
 
     expect(text).toContain("A7K3B9Q2");
-    expect(text).toMatch(/illustrative receipt code/i);
-    expect(text).toMatch(/scan receipt QR or enter code/i);
-    expect(text).toMatch(/not a live claim code/i);
+    expect(text).toMatch(/demo — use your own card/i);
+    expect(text).toMatch(/private QR or 8-character code/i);
+    expect(text).toMatch(/cannot be redeemed/i);
   });
 
   it("renders the complete public FAQ topics", () => {
@@ -106,7 +111,7 @@ describe("public campaign pages", () => {
     const termsText = normalizedText(renderPage(<TermsPage />));
 
     expect(offerText).toContain("Spend $16+ in one transaction");
-    expect(offerText).toContain("Credits expire 14 days after redemption");
+    expect(offerText).toMatch(/14 days after redemption/i);
     expect(termsText).toContain("One redemption per person/account");
     expect(termsText).toContain("No cash value");
   });

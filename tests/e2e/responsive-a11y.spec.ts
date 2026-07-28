@@ -15,7 +15,7 @@ const PUBLIC_ROUTES = [
     path: "/offer",
   },
   {
-    heading: "Claim your Build Credits",
+    heading: "Unlock 3,000 AI Credits",
     path: "/redeem",
   },
   {

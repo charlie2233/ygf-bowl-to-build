@@ -9,69 +9,70 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { useCampaignLanguage } from "@/components/campaign-language";
+import {
+  workspaceCopy,
+  type WorkspaceTaskType,
+} from "@/lib/i18n/workspace";
+
 const tasks = [
   {
-    description: "Turn notes into a study guide",
     icon: BookOpen,
-    label: "Study",
-    type: "study",
+    type: "study" satisfies WorkspaceTaskType,
   },
   {
-    description: "Explain an error or refactor code",
     icon: Laptop,
-    label: "Coding",
-    type: "coding",
+    type: "coding" satisfies WorkspaceTaskType,
   },
   {
-    description: "Sharpen a resume or outreach",
     icon: BriefcaseBusiness,
-    label: "Career",
-    type: "career",
+    type: "career" satisfies WorkspaceTaskType,
   },
   {
-    description: "Build a bowl for your budget",
     icon: Soup,
-    label: "Pick My Bowl",
-    type: "pick-my-bowl",
+    type: "pick-my-bowl" satisfies WorkspaceTaskType,
   },
 ] as const;
 
 export function TaskLauncher() {
+  const { locale } = useCampaignLanguage();
+  const copy = workspaceCopy[locale].wallet.tasks;
   const [model, setModel] = useState("best");
 
   return (
     <section className="task-launcher">
-      <h2>Choose a quick start</h2>
+      <h2>{copy.heading}</h2>
       <div className="task-launcher__grid">
-        {tasks.map(({ description, icon: Icon, label, type }) => (
-          <a
-            className="task-launcher__item"
-            href={`/task/${type}?model=${model}`}
-            key={type}
-          >
-            <Icon aria-hidden="true" />
-            <strong>{label}</strong>
-            <span>{description}</span>
-            <ArrowRight aria-hidden="true" />
-          </a>
-        ))}
+        {tasks.map(({ icon: Icon, type }) => {
+          const preset = copy.presets[type];
+
+          return (
+            <a
+              className="task-launcher__item"
+              href={`/task/${type}?model=${model}`}
+              key={type}
+            >
+              <Icon aria-hidden="true" />
+              <strong>{preset.label}</strong>
+              <span>{preset.description}</span>
+              <ArrowRight aria-hidden="true" />
+            </a>
+          );
+        })}
       </div>
       <details className="model-choice">
-        <summary>Advanced: choose a model</summary>
-        <label htmlFor="wallet-model">Model preference</label>
+        <summary>{copy.advancedSummary}</summary>
+        <label htmlFor="wallet-model">{copy.modelPreference}</label>
         <select
           id="wallet-model"
           onChange={(event) => setModel(event.target.value)}
           value={model}
         >
-          <option value="best">Best for this task</option>
-          <option value="fast">Fast and focused</option>
-          <option value="reasoning">Deeper reasoning</option>
+          <option value="best">{copy.modelOptions.best}</option>
+          <option value="fast">{copy.modelOptions.fast}</option>
+          <option value="reasoning">{copy.modelOptions.reasoning}</option>
         </select>
-        <p>
-          Every beta choice spends the same 120 Build Credits. Only
-          server-allowlisted models are available.
-        </p>
+        <p>{copy.costNote}</p>
       </details>
     </section>
   );

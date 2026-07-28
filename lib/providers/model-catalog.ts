@@ -19,6 +19,13 @@ export interface FriendlyModelChoice {
   label: string;
 }
 
+export type FriendlyModelKey =
+  | "balanced"
+  | "fast"
+  | "coding"
+  | "reasoning"
+  | "campaign";
+
 /**
  * Deliberately small and server owned. Provider ids never come from a remote
  * catalog and browser callers select only these friendly ids.
@@ -115,6 +122,21 @@ export function friendlyModelName(providerId: string) {
     MODEL_CATALOG.find((model) => model.providerId === providerId)
       ?.friendlyLabel ?? "Campaign model"
   );
+}
+
+export function friendlyModelKey(providerId: string): FriendlyModelKey {
+  const model = MODEL_CATALOG.find(
+    (catalogEntry) => catalogEntry.providerId === providerId,
+  );
+  switch (model?.id) {
+    case "balanced":
+    case "fast":
+    case "coding":
+    case "reasoning":
+      return model.id;
+    default:
+      return "campaign";
+  }
 }
 
 export function modelChoicesForTask(

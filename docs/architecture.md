@@ -23,13 +23,20 @@ There are four relevant trust boundaries:
 
 ## Public presentation and language boundary
 
-The public home is localized in English, Simplified Chinese, Spanish, French,
-and Russian from one typed copy contract. A compact native `select` is the
-accessible input; the selected locale is stored only in browser
-`localStorage`, updates the document `lang`, and contains no account, wallet,
-claim, prompt, or provider data. Legal, wallet, task, and Agent workspace
-routes remain on their reviewed English contracts until they receive complete
-translations.
+The customer journey is localized in English, Simplified Chinese, Spanish,
+French, and Russian from typed copy contracts. This includes home, redemption,
+success, wallet, task input/result states, history, sharing, auth, and
+customer-facing terminal states. A compact native `select` is the accessible
+input. The selected locale is mirrored in browser `localStorage` and a
+same-site, non-sensitive preference cookie so the server can render the
+matching document `lang` on first paint and the client can update immediately
+without freezing the current screen. The preference contains no account,
+wallet, claim, prompt, or provider data.
+
+Reviewed legal, privacy, creator, staff, and advanced Agent instructions remain
+in English. Non-English views show a localized availability notice, and those
+English content regions are explicitly tagged `lang="en"` for assistive
+technology rather than presenting an incomplete or unreviewed translation.
 
 The first viewport shows two numbered paths: **01 Claim Build Credits** remains
 the dominant ordinary-user action, while **02 Connect my Agent** links to the
@@ -84,6 +91,11 @@ is therefore absent from ordinary request logs and referrer headers. On the
 redeem page, the client must parse the fragment, prefill the input, and
 immediately call `history.replaceState` to remove it before any submission or
 navigation. It then sends the claim only in a protected request body.
+For compatibility with an earlier prototype, the redeem UI also recognizes a
+single legacy `?code=` value, moves it into the local form, and immediately
+scrubs it from the address. It never trusts query-carried consent; the customer
+must still accept the current terms before submission. New private QRs must use
+the fragment contract above.
 
 `buildClaimUrl` accepts an origin, not an arbitrary base URL. It rejects
 credentials, paths, query strings, and non-HTTPS production origins.

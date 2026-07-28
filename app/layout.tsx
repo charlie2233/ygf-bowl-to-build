@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies, headers } from "next/headers";
 import type { ReactNode } from "react";
 
 import {
@@ -6,6 +7,12 @@ import {
   LocalizedSkipLink,
 } from "@/components/campaign-language";
 import { SiteHeader } from "@/components/site-header";
+import {
+  resolveSiteLocale,
+  SITE_LOCALE_COOKIE,
+  SITE_PATHNAME_HEADER,
+  siteNavigationCopy,
+} from "@/lib/i18n/site";
 
 import "./globals.css";
 
@@ -27,11 +34,26 @@ type RootLayoutProps = Readonly<{
   children: ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const [cookieStore, requestHeaders] = await Promise.all([
+    cookies(),
+    headers(),
+  ]);
+  const preferredLocale = resolveSiteLocale(
+    cookieStore.get(SITE_LOCALE_COOKIE)?.value,
+  );
+  const adminRoute =
+    requestHeaders.get(SITE_PATHNAME_HEADER)?.startsWith("/admin") ??
+    false;
+  const initialLocale = adminRoute ? "en" : preferredLocale;
+
   return (
-    <html data-scroll-behavior="smooth" lang="en">
+    <html
+      data-scroll-behavior="smooth"
+      lang={siteNavigationCopy[initialLocale].documentLanguage}
+    >
       <body>
-        <CampaignLanguageProvider>
+        <CampaignLanguageProvider initialLocale={initialLocale}>
           <LocalizedSkipLink />
           <SiteHeader />
           <main className="app-main" id="main-content" tabIndex={-1}>

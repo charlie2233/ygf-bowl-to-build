@@ -2,11 +2,23 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const languageState = vi.hoisted(() => ({
+  locale: "en" as "en" | "zh" | "es" | "fr" | "ru",
+}));
+
+vi.mock("@/components/campaign-language", () => ({
+  useCampaignLanguage: () => ({
+    locale: languageState.locale,
+    setLocale: vi.fn(),
+  }),
+}));
+
 import {
   TaskShell,
   type TaskSubmission,
 } from "@/components/task/task-shell";
 import { getTaskDefinition } from "@/lib/content/tasks";
+import { workspaceCopy } from "@/lib/i18n/workspace";
 import { modelChoicesForTask } from "@/lib/providers/model-catalog";
 
 declare global {
@@ -20,6 +32,7 @@ describe("TaskShell", () => {
   let root: Root;
 
   beforeEach(() => {
+    languageState.locale = "en";
     container = document.createElement("div");
     document.body.append(container);
     root = createRoot(container);
@@ -33,6 +46,39 @@ describe("TaskShell", () => {
     container.remove();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it("focuses and associates the task input when a blank task is submitted", async () => {
+    await act(async () => {
+      root.render(
+        <TaskShell
+          initialCredits={3_000}
+          modelChoices={modelChoicesForTask("study")}
+          submitTask={vi.fn()}
+          task={getTaskDefinition("study")}
+        />,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>(
+      'textarea[name="input"]',
+    );
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    const errorId = textarea?.getAttribute("aria-describedby");
+    expect(document.activeElement).toBe(textarea);
+    expect(textarea?.getAttribute("aria-invalid")).toBe("true");
+    expect(errorId).toBeTruthy();
+    expect(document.getElementById(errorId ?? "")?.textContent).toBe(
+      "Tell us what you’re working on.",
+    );
   });
 
   it("keeps the default path model-free and submits bounded text", async () => {
@@ -84,6 +130,55 @@ describe("TaskShell", () => {
     });
     expect(submitTask.mock.calls[0]?.[0]).not.toHaveProperty("userId");
     expect(submitTask.mock.calls[0]?.[0]).not.toHaveProperty("model");
+  });
+
+  it("submits on private-LAN HTTP when crypto.randomUUID is unavailable", async () => {
+    vi.stubGlobal("crypto", {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.fill(0xab);
+        return bytes;
+      },
+    });
+    const submitTask = vi.fn(async () => ({
+      friendlyModel: "Balanced guide",
+      output: {
+        sections: [{ heading: "Result", items: ["Ready"] }],
+        title: "LAN result",
+      },
+      remainingCredits: 2_880,
+      sessionId: "lan-session",
+      status: "completed" as const,
+    }));
+
+    await act(async () => {
+      root.render(
+        <TaskShell
+          initialCredits={3_000}
+          modelChoices={modelChoicesForTask("study")}
+          submitTask={submitTask}
+          task={getTaskDefinition("study")}
+        />,
+      );
+    });
+    const preset = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Make a study guide",
+    );
+    await act(async () => preset?.click());
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(submitTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idempotencyKey: "abababab-abab-4bab-abab-abababababab",
+      }),
+    );
   });
 
   it("shows a useful result, updated balance, save action, and partner CTA only after success", async () => {
@@ -175,6 +270,72 @@ describe("TaskShell", () => {
     });
     expect(saveTask).toHaveBeenCalledWith("session-1");
     expect(container.textContent).toContain("Saved to history");
+  });
+
+  it("keeps a localized quick start visible and submits it in the selected language", async () => {
+    languageState.locale = "zh";
+    const submitTask = vi.fn(async () => ({
+      friendlyModel: "Balanced guide",
+      output: {
+        sections: [
+          {
+            heading: "Provider heading",
+            items: ["Provider body"],
+          },
+        ],
+        title: "Provider title",
+      },
+      remainingCredits: 2_880,
+      sessionId: "localized-session",
+      status: "completed" as const,
+    }));
+
+    await act(async () => {
+      root.render(
+        <TaskShell
+          initialCredits={3_000}
+          modelChoices={modelChoicesForTask("study")}
+          submitTask={submitTask}
+          task={getTaskDefinition("study")}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain(
+      workspaceCopy.zh.task.tasks.study.title,
+    );
+    const preset = Array.from(container.querySelectorAll("button")).find(
+      (button) =>
+        button.textContent ===
+        workspaceCopy.zh.task.tasks.study.presets[0],
+    );
+    await act(async () => preset?.click());
+
+    const textarea = container.querySelector<HTMLTextAreaElement>(
+      'textarea[name="input"]',
+    );
+    expect(textarea?.value).toBe("制作学习指南");
+
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(submitTask).toHaveBeenCalledWith({
+      idempotencyKey: "00000000-0000-4000-8000-000000000005",
+      input: "制作学习指南",
+      taskType: "study",
+    });
+    expect(container.textContent).toContain("Provider title");
+    expect(container.textContent).toContain("Provider body");
+    expect(container.textContent).toContain(
+      workspaceCopy.zh.task.result.copy,
+    );
   });
 
   it("always shows the allergen confirmation warning for Pick My Bowl", async () => {

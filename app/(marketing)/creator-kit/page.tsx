@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
-import { SiteFooter } from "@/components/site-footer";
+import {
+  EnglishOnlyContentNotice,
+  LocalizedSiteFooter,
+} from "@/components/marketing/english-only-content";
 import { creatorSections } from "@/lib/content/legal";
 
 export const metadata: Metadata = {
@@ -11,7 +14,8 @@ export const metadata: Metadata = {
 export default function CreatorKitPage() {
   return (
     <>
-      <section className="campaign-page legal-page">
+      <EnglishOnlyContentNotice />
+      <section className="campaign-page legal-page" lang="en">
         <div className="campaign-page__intro container">
           <h1>Creator kit</h1>
           <p className="campaign-page__lead">
@@ -32,7 +36,7 @@ export default function CreatorKitPage() {
           ))}
         </div>
       </section>
-      <SiteFooter />
+      <LocalizedSiteFooter />
     </>
   );
 }

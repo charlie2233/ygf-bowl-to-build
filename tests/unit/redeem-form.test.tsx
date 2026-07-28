@@ -1,9 +1,26 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const navigationMocks = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  usePathname: vi.fn(() => "/redeem"),
+  useRouter: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: navigationMocks.usePathname,
+  useRouter: navigationMocks.useRouter,
+}));
+
+import {
+  CampaignLanguageProvider,
+  CampaignLanguageSelector,
+} from "@/components/campaign-language";
 import {
   RedeemForm,
+  RedeemPageContent,
   redemptionErrorDestination,
   type RedeemFormSubmission,
 } from "@/components/redeem-form";
@@ -19,6 +36,12 @@ describe("RedeemForm", () => {
   let root: Root;
 
   beforeEach(() => {
+    navigationMocks.refresh.mockReset();
+    navigationMocks.useRouter.mockReset();
+    navigationMocks.useRouter.mockReturnValue({
+      refresh: navigationMocks.refresh,
+    });
+    localStorage.clear();
     history.replaceState(null, "", "/redeem#code=BOWL7K2A");
     container = document.createElement("div");
     document.body.append(container);
@@ -32,21 +55,49 @@ describe("RedeemForm", () => {
     vi.unstubAllGlobals();
   });
 
-  it("pre-fills a scanned receipt claim and removes it from browser history", async () => {
+  it("pre-fills a scanned card claim, clears the URL secret, and explains the next tap", async () => {
     await act(async () => {
       root.render(<RedeemForm submitClaim={vi.fn()} />);
     });
 
     const input = container.querySelector<HTMLInputElement>(
-      'input[aria-label="Receipt code"]',
+      'input[aria-label="8-character card code"]',
     );
 
     expect(input?.value).toBe("BOWL7K2A");
     expect(window.location.hash).toBe("");
     expect(window.location.pathname).toBe("/redeem");
+    expect(container.textContent).toContain(
+      "Code scanned ✓ — review the terms, then unlock your credits.",
+    );
   });
 
-  it("consumes a receipt QR opened while the redeem page is already mounted", async () => {
+  it("scrubs a legacy query claim and never trusts query consent", async () => {
+    history.replaceState(
+      null,
+      "",
+      "/redeem?code=BOWL7K2A&termsAccepted=on&source=legacy",
+    );
+
+    await act(async () => {
+      root.render(<RedeemForm submitClaim={vi.fn()} />);
+    });
+
+    expect(
+      container.querySelector<HTMLInputElement>('input[name="code"]')
+        ?.value,
+    ).toBe("BOWL7K2A");
+    expect(
+      container.querySelector<HTMLInputElement>(
+        'input[name="termsAccepted"]',
+      )?.checked,
+    ).toBe(false);
+    expect(window.location.pathname).toBe("/redeem");
+    expect(window.location.search).toBe("?source=legacy");
+    expect(window.location.hash).toBe("");
+  });
+
+  it("consumes a private QR opened while the redeem page is already mounted", async () => {
     history.replaceState(null, "", "/redeem");
     await act(async () => {
       root.render(<RedeemForm submitClaim={vi.fn()} />);
@@ -63,6 +114,86 @@ describe("RedeemForm", () => {
         ?.value,
     ).toBe("SCAN8K2A");
     expect(window.location.hash).toBe("");
+  });
+
+  it("keeps native form controls disabled in the server markup", () => {
+    const markup = renderToString(<RedeemForm />);
+    const serverContainer = document.createElement("div");
+    serverContainer.innerHTML = markup;
+
+    expect(
+      serverContainer.querySelector<HTMLInputElement>(
+        'input[name="code"]',
+      )?.disabled,
+    ).toBe(true);
+    expect(
+      serverContainer.querySelector<HTMLInputElement>(
+        'input[name="termsAccepted"]',
+      )?.disabled,
+    ).toBe(true);
+    expect(serverContainer.querySelector("button")?.disabled).toBe(true);
+  });
+
+  it("places consent before the concrete CTA and has no default alert", async () => {
+    await act(async () => {
+      root.render(<RedeemForm submitClaim={vi.fn()} />);
+    });
+
+    const consent = container.querySelector<HTMLInputElement>(
+      'input[name="termsAccepted"]',
+    );
+    const submit = container.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+
+    expect(consent).not.toBeNull();
+    expect(submit?.textContent).toBe("Unlock 3,000 credits");
+    expect(
+      consent && submit
+        ? consent.compareDocumentPosition(submit)
+        : Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    const legalLinks = Array.from(
+      container.querySelectorAll<HTMLAnchorElement>(
+        'a[href="/terms"], a[href="/privacy"]',
+      ),
+    );
+    expect(legalLinks).toHaveLength(2);
+    expect(
+      legalLinks.every(
+        (link) =>
+          link.target === "_blank" &&
+          link.rel.includes("noopener") &&
+          link.rel.includes("noreferrer"),
+      ),
+    ).toBe(true);
+    expect(container.textContent).toContain("opens in a new tab");
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it("validates the card code before terms and focuses the invalid field", async () => {
+    history.replaceState(null, "", "/redeem");
+    await act(async () => {
+      root.render(<RedeemForm submitClaim={vi.fn()} />);
+    });
+
+    const form = container.querySelector("form");
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="code"]',
+    );
+
+    await act(async () => {
+      form?.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    const alert = container.querySelector<HTMLElement>('[role="alert"]');
+    expect(alert?.textContent).toBe("Enter the 8-character card code.");
+    expect(input?.getAttribute("aria-invalid")).toBe("true");
+    expect(input?.getAttribute("aria-describedby")).toContain(alert?.id);
+    expect(document.activeElement).toBe(input);
+    expect(alert?.textContent).not.toContain("Agree");
   });
 
   it("requires terms and submits only the code plus consent", async () => {
@@ -85,6 +216,10 @@ describe("RedeemForm", () => {
       );
     });
     expect(submitClaim).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "Agree to the promotional terms and privacy notice to continue.",
+    );
+    expect(document.activeElement).toBe(consent);
 
     await act(async () => {
       consent?.click();
@@ -102,6 +237,45 @@ describe("RedeemForm", () => {
     expect(
       Object.hasOwn(submitClaim.mock.calls[0]?.[0] ?? {}, "userId"),
     ).toBe(false);
+  });
+
+  it("locks duplicate valid submissions before React can repaint", async () => {
+    let releaseSubmission: (() => void) | undefined;
+    const submitClaim = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseSubmission = resolve;
+        }),
+    );
+
+    await act(async () => {
+      root.render(<RedeemForm submitClaim={submitClaim} />);
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+    });
+
+    const form = container.querySelector("form");
+    await act(async () => {
+      form?.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+      );
+      form?.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(submitClaim).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      releaseSubmission?.();
+      await Promise.resolve();
+    });
   });
 
   it("creates an anonymous Supabase session only after eligibility, then claims immediately", async () => {
@@ -193,6 +367,11 @@ describe("RedeemForm", () => {
 
     expect(createAnonymousSession).not.toHaveBeenCalled();
     expect(container.textContent).toContain("invalid or unavailable");
+    const codeInput = container.querySelector<HTMLInputElement>(
+      'input[name="code"]',
+    );
+    expect(codeInput?.getAttribute("aria-invalid")).toBe("true");
+    expect(document.activeElement).toBe(codeInput);
   });
 
   it("preserves the secured claim and shows manual sign-in only when anonymous auth is unavailable", async () => {
@@ -262,13 +441,74 @@ describe("RedeemForm", () => {
 
     const button = Array.from(container.querySelectorAll("button")).find(
       (candidate) =>
-        candidate.textContent === "Confirm and add credits",
+        candidate.textContent === "Confirm and unlock credits",
     );
     await act(async () => {
       button?.click();
     });
 
     expect(confirmPendingClaim).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates the complete redeem experience in all five campaign languages", async () => {
+    const localizedExpectations = {
+      en: {
+        codeLabel: "8-character card code",
+        title: "Unlock 3,000 AI Credits",
+      },
+      zh: {
+        codeLabel: "卡片上的 8 位兑换码",
+        title: "解锁 3,000 AI Credits",
+      },
+      es: {
+        codeLabel: "Código de 8 caracteres",
+        title: "Desbloquea 3,000 créditos de IA",
+      },
+      fr: {
+        codeLabel: "Code de carte à 8 caractères",
+        title: "Débloquez 3 000 crédits IA",
+      },
+      ru: {
+        codeLabel: "8-значный код карты",
+        title: "Получите 3 000 AI Credits",
+      },
+    } as const;
+
+    await act(async () => {
+      root.render(
+        <CampaignLanguageProvider>
+          <CampaignLanguageSelector label="Language" />
+          <RedeemPageContent />
+        </CampaignLanguageProvider>,
+      );
+    });
+
+    for (const [locale, expectation] of Object.entries(
+      localizedExpectations,
+    )) {
+      const selector = container.querySelector<HTMLSelectElement>(
+        ".language-selector select",
+      );
+      expect(selector).not.toBeNull();
+
+      await act(async () => {
+        if (selector) {
+          selector.value = locale;
+          selector.dispatchEvent(
+            new Event("change", { bubbles: true }),
+          );
+        }
+      });
+
+      expect(container.querySelector("h1")?.textContent).toBe(
+        expectation.title,
+      );
+      expect(
+        container.querySelector<HTMLInputElement>(
+          `input[aria-label="${expectation.codeLabel}"]`,
+        ),
+      ).not.toBeNull();
+    }
   });
 
   it("routes terminal redemption errors without exposing internals", () => {
@@ -285,10 +525,10 @@ describe("RedeemForm", () => {
 
   it("shows a retryable outage without calling it an invalid code", async () => {
     const fetchMock = vi.fn<typeof fetch>(async () =>
-      Response.json(
-        { eligible: false },
-        { status: 503 },
-      ),
+      new Response("<html>temporarily unavailable</html>", {
+        headers: { "content-type": "text/html" },
+        status: 503,
+      }),
     );
     vi.stubGlobal("fetch", fetchMock);
 

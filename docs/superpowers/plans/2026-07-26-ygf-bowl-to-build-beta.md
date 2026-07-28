@@ -899,3 +899,28 @@ accounting contracts.
 - [x] Run unit, integration, lint, typecheck, build, desktop Chromium, and
   iPhone WebKit verification: 401 Vitest assertions and 61 Playwright checks
   pass, with the production build completing successfully.
+
+## July 28, 2026 follow-up — complete customer-language continuity
+
+This additive clarity pass keeps the scan/code claim dominant and does not
+change credit, model, provider, or API-key policy.
+
+- [x] Persist the selected locale across customer routes and reloads with a
+  non-sensitive preference cookie plus browser storage.
+- [x] Localize redemption, success, wallet, first task and result, auth,
+  history, sharing, and customer-facing terminal states in all five languages.
+- [x] Keep the advanced Agent path explicitly optional after redemption.
+- [x] Mark reviewed English-only legal, staff, creator, and advanced Agent
+  regions with `lang="en"` and show a localized availability notice.
+- [x] Prevent pre-hydration native form fallback, duplicate redemption submits,
+  and loss of a scanned claim when opening legal terms.
+- [x] Add tablet-width navigation collision coverage and cross-route language
+  persistence tests.
+- [x] Keep the administrator's English-only route state scoped to the current
+  pathname so client navigation restores the saved customer language.
+- [x] Keep same-Wi-Fi HTTP acceptance usable with Web Crypto request IDs and a
+  clipboard fallback that always removes temporary DOM state and restores
+  focus.
+- [x] Complete the final regression: 447 Vitest assertions and 73 Playwright
+  checks pass across desktop Chromium and iPhone WebKit; lint, typecheck,
+  dependency audit, and the production build also pass.

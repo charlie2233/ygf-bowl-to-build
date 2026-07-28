@@ -8,13 +8,13 @@ import {
   useCampaignLanguage,
 } from "@/components/campaign-language";
 import { ButtonLink } from "@/components/ui/button";
-import { campaignHomeCopy } from "@/lib/i18n/campaign";
+import { siteNavigationCopy } from "@/lib/i18n/site";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { locale } = useCampaignLanguage();
-  const isCampaignHome = pathname === "/";
-  const homeCopy = campaignHomeCopy[locale].header;
+  const isAdmin = pathname.startsWith("/admin");
+  const copy = siteNavigationCopy[isAdmin ? "en" : locale];
   const isWorkspace =
     pathname === "/wallet" ||
     pathname === "/history" ||
@@ -33,15 +33,18 @@ export function SiteHeader() {
         {isWorkspace ? (
           <>
             <nav
-              aria-label="Workspace navigation"
+              aria-label={copy.workspace.navigationLabel}
               className="site-nav site-nav--workspace"
             >
+              <CampaignLanguageSelector
+                label={copy.public.languageLabel}
+              />
               <Link
                 aria-current={pathname === "/wallet" ? "page" : undefined}
                 className="site-nav__link"
                 href="/wallet"
               >
-                Wallet
+                {copy.workspace.wallet}
               </Link>
               <Link
                 aria-current={
@@ -50,27 +53,32 @@ export function SiteHeader() {
                 className="site-nav__link"
                 href="/connect/agent"
               >
-                Agent
+                {copy.workspace.agent}
               </Link>
               <Link
                 aria-current={pathname === "/history" ? "page" : undefined}
                 className="site-nav__link"
                 href="/history"
               >
-                History
+                {copy.workspace.history}
               </Link>
               <Link className="site-nav__link" href="/faq">
-                Help
+                {copy.workspace.help}
               </Link>
               <form action="/auth/sign-out" method="post">
                 <button
                   className="button button--primary button--small"
                   type="submit"
                 >
-                  Sign out
+                  {copy.workspace.signOut}
                 </button>
               </form>
             </nav>
+            <div className="workspace-menu">
+              <CampaignLanguageSelector
+                label={copy.public.languageLabel}
+              />
+            </div>
             <details className="workspace-menu">
               <summary>
                 <span aria-hidden="true" className="workspace-menu__icon">
@@ -78,17 +86,19 @@ export function SiteHeader() {
                   <i />
                   <i />
                 </span>
-                <span className="visually-hidden">Open account menu</span>
+                <span className="visually-hidden">
+                  {copy.workspace.openAccountMenu}
+                </span>
               </summary>
               <nav
-                aria-label="Mobile workspace navigation"
+                aria-label={copy.workspace.mobileNavigationLabel}
                 className="workspace-menu__panel"
               >
                 <Link
                   aria-current={pathname === "/wallet" ? "page" : undefined}
                   href="/wallet"
                 >
-                  Wallet
+                  {copy.workspace.wallet}
                 </Link>
                 <Link
                   aria-current={
@@ -96,21 +106,21 @@ export function SiteHeader() {
                   }
                   href="/connect/agent"
                 >
-                  Agent
+                  {copy.workspace.agent}
                 </Link>
                 <Link
                   aria-current={pathname === "/history" ? "page" : undefined}
                   href="/history"
                 >
-                  History
+                  {copy.workspace.history}
                 </Link>
-                <Link href="/faq">Help</Link>
+                <Link href="/faq">{copy.workspace.help}</Link>
                 <form action="/auth/sign-out" method="post">
                   <button
                     className="button button--primary button--small"
                     type="submit"
                   >
-                    Sign out
+                    {copy.workspace.signOut}
                   </button>
                 </form>
               </nav>
@@ -118,26 +128,26 @@ export function SiteHeader() {
           </>
         ) : (
           <nav
-            aria-label="Primary navigation"
-            className={`site-nav${isCampaignHome ? " site-nav--campaign" : ""}`}
+            aria-label={copy.public.navigationLabel}
+            className={`site-nav${isAdmin ? "" : " site-nav--campaign"}`}
           >
-            {isCampaignHome ? (
-              <CampaignLanguageSelector label={homeCopy.languageLabel} />
-            ) : null}
+            {isAdmin ? null : (
+              <CampaignLanguageSelector label={copy.public.languageLabel} />
+            )}
             <Link
               className="site-nav__link site-nav__link--how"
               href="/#how-it-works"
             >
-              {isCampaignHome ? homeCopy.howItWorks : "How it works"}
+              {copy.public.howItWorks}
             </Link>
             <Link
               className="site-nav__link site-nav__link--faq"
               href="/faq"
             >
-              {isCampaignHome ? homeCopy.faq : "FAQ"}
+              {copy.public.faq}
             </Link>
             <ButtonLink href="/redeem" size="small">
-              {isCampaignHome ? homeCopy.redeem : "Redeem"}
+              {copy.public.redeem}
             </ButtonLink>
           </nav>
         )}

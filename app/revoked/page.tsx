@@ -1,10 +1,5 @@
-import { RedemptionState } from "@/components/redemption-state";
+import { LocalizedRedemptionState } from "@/components/customer-page-views";
 
 export default function RevokedPage() {
-  return (
-    <RedemptionState title="This code is unavailable">
-      This receipt code was withdrawn and cannot be redeemed. Ask YGF staff for
-      privacy-safe help if you believe this is an error.
-    </RedemptionState>
-  );
+  return <LocalizedRedemptionState state="revoked" />;
 }

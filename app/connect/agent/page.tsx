@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AgentSetup } from "@/components/agent/agent-setup";
+import { AgentConnectView } from "@/components/workspace-views";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { isWalletExpired } from "@/lib/campaign/credits";
 import { CampaignDomainError } from "@/lib/campaign/types";
@@ -71,27 +70,9 @@ export default async function AgentConnectPage() {
   }
 
   return (
-    <section className="agent-page">
-      <div className="agent-page__inner container">
-        <header className="agent-page__header">
-          <p>Optional developer path</p>
-          <h1>Connect your own Agent</h1>
-          <p>
-            Use a personal YGF key with software that accepts an
-            OpenAI-compatible API. Prefer the ready-made AI tools? They stay
-            one click away.
-          </p>
-          <Link className="button button--secondary" href="/wallet">
-            Use YGF AI instead
-          </Link>
-        </header>
-        <AgentSetup
-          configuredOrigin={configuredOrigin(
-            process.env.NEXT_PUBLIC_APP_URL,
-          )}
-          gatewayEnabled={isAgentGatewayReady(process.env)}
-        />
-      </div>
-    </section>
+    <AgentConnectView
+      configuredOrigin={configuredOrigin(process.env.NEXT_PUBLIC_APP_URL)}
+      gatewayEnabled={isAgentGatewayReady(process.env)}
+    />
   );
 }

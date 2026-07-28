@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
 import { ContactForm } from "@/components/marketing/contact-form";
-import { SiteFooter } from "@/components/site-footer";
+import {
+  EnglishOnlyContentNotice,
+  LocalizedSiteFooter,
+} from "@/components/marketing/english-only-content";
 import {
   privacySections,
   sensitiveDataWarning,
@@ -15,7 +18,8 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <>
-      <section className="campaign-page legal-page">
+      <EnglishOnlyContentNotice />
+      <section className="campaign-page legal-page" lang="en">
         <div className="campaign-page__intro container">
           <h1>Privacy notice</h1>
           <p className="campaign-page__lead">
@@ -53,7 +57,7 @@ export default function PrivacyPage() {
           </section>
         </div>
       </section>
-      <SiteFooter />
+      <LocalizedSiteFooter />
     </>
   );
 }

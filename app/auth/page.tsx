@@ -4,6 +4,7 @@ import { AuthPanel } from "@/components/auth-panel";
 import { safeAuthNextPath } from "@/lib/auth/redirect";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
 import { getAuthenticatedUser } from "@/lib/auth/user";
+import type { AuthMessageKey } from "@/lib/i18n/customer-pages";
 
 export const dynamic = "force-dynamic";
 
@@ -32,17 +33,17 @@ export default async function AuthPage({
   const runtime = resolveAuthRuntime();
   const user = await getAuthenticatedUser();
   const error = singleParameter(parameters.error);
-  const initialError =
+  const initialMessageKey: AuthMessageKey | undefined =
     error === "callback"
-      ? "We couldn’t complete sign-in. Please try again."
+      ? "callbackError"
       : error === "anonymous"
-        ? "Quick guest access is temporarily unavailable. Your secured claim is still waiting."
+        ? "anonymousError"
         : undefined;
 
   return (
     <section className="auth-page">
       <AuthPanel
-        initialError={initialError}
+        initialMessageKey={initialMessageKey}
         isAnonymous={runtime.mode === "supabase" && user?.isAnonymous === true}
         mode={runtime.mode}
         nextPath={safeAuthNextPath(parameters.next)}

@@ -1,11 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { Bot } from "lucide-react";
+
+import { useCampaignLanguage } from "@/components/campaign-language";
+import { workspaceCopy } from "@/lib/i18n/workspace";
 
 export function PartnerCta({
   eligible,
 }: {
   eligible: boolean;
 }) {
+  const { locale } = useCampaignLanguage();
+  const copy = workspaceCopy[locale].task.partner;
+
   if (!eligible) {
     return null;
   }
@@ -13,13 +21,10 @@ export function PartnerCta({
     <aside className="partner-cta">
       <Bot aria-hidden="true" />
       <div>
-        <strong>Connect my Agent</strong>
-        <span>
-          Create a personal, revocable YGF API key backed by your
-          wallet’s remaining Credits.
-        </span>
+        <strong>{copy.title}</strong>
+        <span>{copy.description}</span>
       </div>
-      <Link href="/connect/agent">Set up Agent</Link>
+      <Link href="/connect/agent">{copy.action}</Link>
     </aside>
   );
 }

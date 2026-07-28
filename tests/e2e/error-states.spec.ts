@@ -24,7 +24,7 @@ const TERMINAL_STATES = [
   },
 ] as const;
 
-test("invalid receipt QR is removed from the URL and offers printed-code recovery", async ({
+test("invalid private QR is removed from the URL and offers printed-code recovery", async ({
   page,
 }) => {
   await page.goto("/redeem#code=BOWL7K2A&next=/wallet");
@@ -32,12 +32,56 @@ test("invalid receipt QR is removed from the URL and offers printed-code recover
   await expect
     .poll(() => new URL(page.url()).hash)
     .toBe("");
-  await expect(page.getByLabel("Receipt code")).toHaveValue("");
+  await expect(page.getByLabel("8-character card code")).toHaveValue("");
   await expect(
     page.getByText(
-      "That receipt QR is not valid. Enter the printed code instead.",
+      "That private QR is not valid. Enter the code printed on your card.",
     ),
   ).toBeVisible();
+});
+
+test("legacy query claims are scrubbed without trusting query consent", async ({
+  page,
+}) => {
+  await page.goto(
+    "/redeem?code=BOWL7K2A&termsAccepted=on&source=legacy",
+  );
+
+  await expect(
+    page.getByLabel("8-character card code"),
+  ).toHaveValue("BOWL7K2A");
+  await expect(
+    page.getByRole("checkbox", { name: /promotional terms/i }),
+  ).not.toBeChecked();
+  await expect
+    .poll(() => new URL(page.url()).search)
+    .toBe("?source=legacy");
+  expect(page.url()).not.toContain("BOWL7K2A");
+  expect(page.url()).not.toContain("termsAccepted");
+});
+
+test("reviewing legal terms keeps a scanned private code on the redeem page", async ({
+  page,
+}) => {
+  await page.goto("/redeem#code=BOWL7K2A");
+  const codeInput = page.getByLabel("8-character card code");
+  await expect(codeInput).toHaveValue("BOWL7K2A");
+  await expect
+    .poll(() => new URL(page.url()).hash)
+    .toBe("");
+
+  const termsLink = page.getByRole("link", {
+    name: "promotional terms",
+  });
+  await expect(termsLink).toHaveAttribute("target", "_blank");
+  const popupPromise = page.waitForEvent("popup");
+  await termsLink.click();
+  const legalPage = await popupPromise;
+  await expect(legalPage).toHaveURL(/\/terms$/);
+  await legalPage.close();
+
+  await expect(page).toHaveURL(/\/redeem$/);
+  await expect(codeInput).toHaveValue("BOWL7K2A");
 });
 
 test("claim form explains missing consent, missing code, and an unavailable code", async ({
@@ -45,10 +89,25 @@ test("claim form explains missing consent, missing code, and an unavailable code
 }) => {
   await page.goto("/redeem");
 
-  await page.getByRole("button", { name: "Continue" }).click();
+  const codeInput = page.getByLabel("8-character card code");
+  const submit = page.getByRole("button", {
+    name: "Unlock 3,000 credits",
+  });
+
+  await submit.click();
+  await expect(
+    page.getByText("Enter the 8-character card code.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(codeInput).toBeFocused();
+  await expect(codeInput).toHaveAttribute("aria-invalid", "true");
+
+  await codeInput.fill("NOPE1234");
+  await submit.click();
   await expect(
     page.getByText(
-      "Agree to the promotional terms and privacy notice.",
+      "Agree to the promotional terms and privacy notice to continue.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -56,23 +115,17 @@ test("claim form explains missing consent, missing code, and an unavailable code
   await page
     .getByRole("checkbox", { name: /promotional terms/i })
     .check();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(
-    page.getByText("Enter the 8-character receipt code."),
-  ).toBeVisible();
-
-  await page.getByLabel("Receipt code").fill("NOPE1234");
   const validationResponsePromise = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/code/validate" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Continue" }).click();
+  await submit.click();
   const validationResponse = await validationResponsePromise;
   expect(validationResponse.status()).toBe(200);
   await expect(
     page.getByText(
-      "That code is invalid or unavailable. Check it and try again.",
+      "That code is invalid or unavailable. Check the card and try again.",
     ),
   ).toBeVisible();
 });
@@ -85,14 +138,17 @@ test("redemption terminal states remain actionable and privacy safe", async ({
     await expect(
       page.getByRole("heading", { level: 1, name: state.title }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("link", {
-        name:
-          state.path === "/already-used"
-            ? "Open my wallet"
-            : "Try another code",
-      }),
-    ).toBeVisible();
+    const action = page.getByRole("link", {
+      name:
+        state.path === "/already-used"
+          ? "Open my wallet"
+          : "Try another code",
+    });
+    await expect(action).toBeVisible();
+    await expect(action).toHaveAttribute(
+      "href",
+      state.path === "/already-used" ? "/wallet" : "/redeem",
+    );
     await expect(page.locator("main")).not.toContainText("BOWL7K2A");
     await expectNoHorizontalOverflow(page, state.path);
     await expectNoAccessibilityViolations(page, state.path);

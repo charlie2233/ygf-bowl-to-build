@@ -48,6 +48,18 @@ const guidanceExpectations = {
   ru: "Начните с шага 1. Подключение Agent необязательно.",
 } as const;
 
+const optionalLabelExpectations = {
+  en: "optional",
+  zh: "可选",
+  es: "opcional",
+  fr: "facultatif",
+  ru: "необязательно",
+} as const;
+
+function normalizedText(element: Element | undefined) {
+  return element?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+}
+
 describe("campaign localization contract", () => {
   it("ships the five requested languages", () => {
     expect(campaignLocales).toEqual(["en", "zh", "es", "fr", "ru"]);
@@ -105,19 +117,82 @@ describe("campaign localization contract", () => {
         }),
       );
 
-      const actions = hero.querySelector(".marketing-hero__actions");
-      const rewardNote = hero.querySelector(
-        ".marketing-hero__reward-note",
+      const copyContainer = hero.querySelector(".marketing-hero__copy");
+      const copyChildren = Array.from(copyContainer?.children ?? []);
+
+      expect(copyChildren).toHaveLength(6);
+
+      const [
+        heading,
+        subhead,
+        guidance,
+        actions,
+        rewardNote,
+        disclaimer,
+      ] = copyChildren;
+
+      expect(heading?.tagName).toBe("H1");
+      expect(subhead?.matches(".marketing-hero__subhead")).toBe(true);
+      expect(guidance?.matches(".marketing-hero__guidance")).toBe(true);
+      expect(actions?.matches(".marketing-hero__actions")).toBe(true);
+      expect(rewardNote?.matches(".marketing-hero__reward-note")).toBe(
+        true,
+      );
+      expect(disclaimer?.matches(".marketing-hero__disclaimer")).toBe(
+        true,
+      );
+      expect(normalizedText(subhead)).toBe(
+        campaignHomeCopy[locale].hero.subhead,
+      );
+      expect(normalizedText(guidance)).toBe(
+        campaignHomeCopy[locale].hero.guidance,
+      );
+      expect(normalizedText(rewardNote)).toBe(offerContext);
+      expect(normalizedText(disclaimer)).toBe(
+        campaignHomeCopy[locale].hero.disclaimer,
       );
 
-      expect(actions).toBeTruthy();
-      expect(rewardNote).toBeTruthy();
-      expect(actions?.querySelectorAll("a[data-step]")).toHaveLength(2);
+      const actionLinks = Array.from(actions?.children ?? []);
+
+      expect(actionLinks).toHaveLength(2);
+
+      const [stepOne, stepTwo] = actionLinks;
+
+      expect(stepOne?.tagName).toBe("A");
+      expect(stepOne?.getAttribute("href")).toBe("/redeem");
+      expect(stepOne?.getAttribute("data-step")).toBe("1");
+      expect(stepOne?.classList.contains("button--primary")).toBe(true);
       expect(
-        actions?.compareDocumentPosition(rewardNote as Node) ??
-          Node.DOCUMENT_POSITION_PRECEDING,
-      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-      expect(rewardNote?.textContent).toBe(offerContext);
+        stepOne?.classList.contains("marketing-hero__cta--secondary"),
+      ).toBe(false);
+      expect(stepOne?.classList.contains("button--secondary")).toBe(
+        false,
+      );
+      expect(normalizedText(stepOne)).toContain(
+        campaignHomeCopy[locale].hero.stepOne,
+      );
+      expect(normalizedText(stepOne)).toContain(
+        campaignHomeCopy[locale].hero.claimCredits,
+      );
+
+      expect(stepTwo?.tagName).toBe("A");
+      expect(stepTwo?.getAttribute("href")).toBe("/connect/agent");
+      expect(stepTwo?.getAttribute("data-step")).toBe("2");
+      expect(stepTwo?.classList.contains("button--secondary")).toBe(
+        true,
+      );
+      expect(
+        stepTwo?.classList.contains("marketing-hero__cta--secondary"),
+      ).toBe(true);
+      expect(normalizedText(stepTwo)).toContain(
+        campaignHomeCopy[locale].hero.stepTwo,
+      );
+      expect(normalizedText(stepTwo)).toContain(
+        campaignHomeCopy[locale].hero.connectAgent,
+      );
+      expect(campaignHomeCopy[locale].hero.connectAgent).toContain(
+        optionalLabelExpectations[locale],
+      );
 
       for (const context of [offerContext, redeemContext]) {
         expect(context).toContain(expectation.credits);

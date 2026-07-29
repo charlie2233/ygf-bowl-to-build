@@ -178,8 +178,23 @@ test("long public navigation stays inside a tablet viewport", async ({
 });
 
 test("campaign motion honors reduced-motion preferences", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-campaign-motion",
+    "enhanced",
+  );
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-campaign-motion-engine",
+    "gsap",
+  );
+  await expect(page.locator(".campaign-home")).toHaveAttribute(
+    "data-motion-ready",
+    "true",
+  );
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
 
   await expect(page.locator("html")).toHaveAttribute(
     "data-campaign-motion",
@@ -197,6 +212,39 @@ test("campaign motion honors reduced-motion preferences", async ({ page }) => {
     "data-motion-ready",
     "true",
   );
+
+  const hero = page.locator(".marketing-hero");
+  const heroImage = page.locator(".marketing-hero__image");
+
+  await expect(heroImage).toHaveCSS("position", "absolute");
+  await expect(heroImage).toHaveCSS("transform", "none");
+  await expect(heroImage).toBeVisible();
+
+  const heroBounds = await hero.boundingBox();
+  const imageBounds = await heroImage.boundingBox();
+
+  expect(heroBounds).not.toBeNull();
+  expect(imageBounds).not.toBeNull();
+  expect(
+    Math.abs((imageBounds?.x ?? 0) - (heroBounds?.x ?? 0)),
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs((imageBounds?.y ?? 0) - (heroBounds?.y ?? 0)),
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(
+      (imageBounds?.x ?? 0) +
+        (imageBounds?.width ?? 0) -
+        ((heroBounds?.x ?? 0) + (heroBounds?.width ?? 0)),
+    ),
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(
+      (imageBounds?.y ?? 0) +
+        (imageBounds?.height ?? 0) -
+        ((heroBounds?.y ?? 0) + (heroBounds?.height ?? 0)),
+    ),
+  ).toBeLessThanOrEqual(1);
 
   const motionTargets = page.locator(
     ".marketing-hero__image, [data-motion-phone], [data-motion-reveal], [data-motion-journey-progress]",

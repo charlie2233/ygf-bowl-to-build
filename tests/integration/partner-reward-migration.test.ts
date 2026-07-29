@@ -17,6 +17,7 @@ const migrationNames = [
   "202607270006_provider_budget_3usd.sql",
   "202607270007_bounded_agent_replay_cleanup.sql",
   "202607270008_partner_rewards.sql",
+  "20260729060004_function_execute_hardening.sql",
 ] as const;
 
 const adminId = "11111111-1111-4111-8111-111111111111";

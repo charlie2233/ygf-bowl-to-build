@@ -7,7 +7,7 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 
 | Area | Required owner | Decision |
 | --- | --- | --- |
-| Offer, menu and prices, staff policy | YGF store manager | Confirms the current **$16+** threshold and checkout language match the live register |
+| Offer, menu and prices, staff policy | YGF store manager | Confirms the current **$25+** threshold and checkout language match the live register |
 | Code inventory and exceptions | Campaign manager | Controls batches, manager-only revoke/reissue, and reconciliation |
 | Application, database, AI spend | Engineering owner | Verifies production configuration, migrations, alarms, and rollback |
 | Privacy, terms, retention | YGF accountable owner | Approves data handling, deletion/retention, incident path, and public copy |
@@ -17,7 +17,7 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 ## Offer and creative gates
 
 - [ ] Store manager verifies the current menu and prices at the participating
-  location and signs off that **$16+ in one completed transaction** is
+  location and signs off that **$25+ in one completed transaction** is
   operationally correct.
 - [ ] Legal/communications owner approves the full promotional fine print,
   university disclaimer, terms, privacy notice, and creator disclosure.

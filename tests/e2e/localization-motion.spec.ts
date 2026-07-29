@@ -57,8 +57,11 @@ test("campaign home switches all requested languages and remembers the choice", 
     await expect(
       page.getByText(campaignHomeCopy[locale].hero.guidance, {
         exact: true,
-      }),
+      }).first(),
     ).toBeVisible();
+    await expect(
+      page.locator('[data-campaign-handoff] a[href="/redeem"]'),
+    ).toContainText(campaignHomeCopy[locale].hero.claimCredits);
     await expect(page.locator(".marketing-hero__subhead")).toContainText(
       "3,000",
     );
@@ -196,14 +199,18 @@ test("campaign motion honors reduced-motion preferences", async ({ page }) => {
   );
 
   const motionTargets = page.locator(
-    ".marketing-hero__image, [data-motion-phone], [data-motion-reveal]",
+    ".marketing-hero__image, [data-motion-phone], [data-motion-reveal], [data-motion-journey-progress]",
   );
-  await expect(motionTargets).toHaveCount(7);
+  await expect(motionTargets).toHaveCount(9);
 
   for (const target of await motionTargets.all()) {
     await expect(target).toHaveCSS("transform", "none");
     await expect(target).toBeVisible();
   }
+  await expect(page.locator(".campaign-step__number").first()).toHaveCSS(
+    "transform",
+    "none",
+  );
 });
 
 test("campaign motion initializes the bundled GSAP experience", async ({
@@ -230,6 +237,9 @@ test("campaign motion initializes the bundled GSAP experience", async ({
   await expect(
     page.locator('a[data-step="02"][href="/connect/agent"]'),
   ).toBeVisible();
+  await expect(
+    page.locator("[data-motion-journey-progress]"),
+  ).not.toHaveCSS("transform", "none");
   await page
     .locator('a[data-step="01"][href="/redeem"]')
     .click({ trial: true });
@@ -242,6 +252,22 @@ test("campaign motion initializes the bundled GSAP experience", async ({
     await reveal.scrollIntoViewIfNeeded();
     await expect(reveal).toBeVisible();
   }
+
+  await expect
+    .poll(() =>
+      page
+        .locator("[data-motion-journey-progress]")
+        .evaluate((element) => {
+          const transform = window.getComputedStyle(element).transform;
+
+          if (transform === "none") {
+            return 1;
+          }
+
+          return new DOMMatrix(transform).m11;
+        }),
+    )
+    .toBeGreaterThan(0.95);
 });
 
 test("translated reveal targets are rebuilt and preseeded before scroll", async ({
@@ -333,6 +359,70 @@ test("long translations stay inside a narrow mobile viewport", async ({
     ).toBeVisible();
     await expectNoHorizontalOverflow(page, `home-narrow-${locale}`);
   }
+});
+
+test("mobile journey line and next action stay aligned", async ({ page }) => {
+  await page.setViewportSize({ height: 800, width: 360 });
+  await page.goto("/");
+
+  const journey = page.locator("[data-motion-journey]");
+  const progress = page.locator("[data-motion-journey-progress]");
+  const firstNumber = page.locator(".campaign-step__number").first();
+  const handoff = page.locator("[data-campaign-handoff]");
+  const action = handoff.locator('a[href="/redeem"]');
+
+  const journeyBox = await journey.boundingBox();
+  const progressBox = await progress.boundingBox();
+  const numberBox = await firstNumber.boundingBox();
+  const actionBox = await action.boundingBox();
+
+  expect(journeyBox).not.toBeNull();
+  expect(progressBox).not.toBeNull();
+  expect(numberBox).not.toBeNull();
+  expect(actionBox).not.toBeNull();
+  expect(Math.round(journeyBox?.width ?? 0)).toBe(328);
+  expect(
+    Math.abs(
+      (progressBox?.x ?? 0) +
+        (progressBox?.width ?? 0) / 2 -
+        ((numberBox?.x ?? 0) + (numberBox?.width ?? 0) / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+  expect(Math.round(actionBox?.width ?? 0)).toBe(328);
+  expect(actionBox?.height ?? 0).toBeGreaterThanOrEqual(60);
+  await expectNoHorizontalOverflow(page, "home-journey-360");
+});
+
+test("tablet journey keeps the horizontal progress axis", async ({ page }) => {
+  await page.setViewportSize({ height: 900, width: 768 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  await expect(page.locator(".campaign-home")).toHaveAttribute(
+    "data-motion-ready",
+    "true",
+  );
+
+  const axis = await page
+    .locator("[data-motion-journey-progress]")
+    .evaluate((element) => {
+      const style = window.getComputedStyle(element);
+      const [originX, originY] = style.transformOrigin
+        .split(" ")
+        .map((value) => Number.parseFloat(value));
+      const matrix = new DOMMatrixReadOnly(style.transform);
+
+      return {
+        height: Number.parseFloat(style.height),
+        originX,
+        originY,
+        scaleY: matrix.d,
+      };
+    });
+
+  expect(axis.originX).toBeCloseTo(0, 1);
+  expect(axis.originY).toBeCloseTo(axis.height / 2, 1);
+  expect(axis.scaleY).toBeCloseTo(1, 2);
+  await expectNoHorizontalOverflow(page, "home-journey-tablet");
 });
 
 test("workspace navigation avoids translated-label collisions at tablet width", async ({

@@ -124,7 +124,7 @@ export const CAMPAIGN_TOKENS = Object.freeze({
     shortUniversity:
       "For the USC community. Not affiliated with or endorsed by USC.",
     subhead:
-      "Spend $16+ at YGF and unlock limited Build Credits for study help, coding help, career tasks, and smarter bowl picks.",
+      "Spend $25+ at YGF and unlock limited Build Credits for study help, coding help, career tasks, and smarter bowl picks.",
     university:
       "This promotion is offered by YGF for the USC community and is not sponsored, endorsed by, or administered by the University of Southern California.",
   }),
@@ -576,7 +576,7 @@ function buildHorizontalScene(
       x: 965,
       y: 376,
     }),
-    text(["Spend $16+."], {
+    text(["Spend $25+."], {
       color: colors.white,
       fontSize: 18,
       fontWeight: 700,
@@ -848,7 +848,7 @@ export function renderPrivateClaimRowSvg(
     `<text x="52" y="183" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="52" font-weight="800" letter-spacing="5">${escapeXml(row.code)}</text>`,
     `<text x="52" y="232" fill="${CAMPAIGN_TOKENS.color.sage}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="18" font-weight="600">Scan the matching QR or enter this code.</text>`,
     `<text x="52" y="276" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="14" font-weight="500"><tspan x="52" dy="0">Keep private. One redemption per person/account.</tspan><tspan x="52" dy="22">Credits expire 14 days after redemption.</tspan></text>`,
-    `<text x="52" y="350" fill="${CAMPAIGN_TOKENS.color.accent}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="13" font-weight="800" letter-spacing="1">HAND OUT ONLY AFTER A QUALIFYING $16+ PURCHASE</text>`,
+    `<text x="52" y="350" fill="${CAMPAIGN_TOKENS.color.accent}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="13" font-weight="800" letter-spacing="1">HAND OUT ONLY AFTER A QUALIFYING $25+ PURCHASE</text>`,
     qr,
     `<text x="465" y="312" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="13" font-weight="800" letter-spacing="1">PRIVATE CLAIM QR</text>`,
     `<text data-row-reference="${escapeXml(rowReference)}" x="465" y="342" fill="${CAMPAIGN_TOKENS.color.sage}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="12" font-weight="700">ROW REF: ${escapeXml(rowReference)}</text>`,

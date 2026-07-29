@@ -24,6 +24,14 @@ type MotionConditions = Readonly<{
   reduceMotion: boolean;
 }>;
 
+function supportsCampaignMotionRuntime() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    typeof window.requestAnimationFrame === "function"
+  );
+}
+
 function getRevealChildren(element: HTMLElement) {
   if (element.matches(".use-cases")) {
     return element.querySelectorAll<HTMLElement>(".use-cases h2, .use-case");
@@ -35,8 +43,12 @@ function getRevealChildren(element: HTMLElement) {
     );
   }
 
-  if (element.matches(".campaign-steps")) {
+  if (element.matches(".campaign-steps-wrap")) {
     return element.querySelectorAll<HTMLElement>(".campaign-step");
+  }
+
+  if (element.matches(".campaign-handoff")) {
+    return element.querySelectorAll<HTMLElement>("p, a");
   }
 
   if (element.matches(".busy-week__inner")) {
@@ -57,6 +69,10 @@ export function useCampaignMotionExperience({
 }>) {
   useGSAP(
     (_context, contextSafe) => {
+      if (!supportsCampaignMotionRuntime()) {
+        return;
+      }
+
       const scope = scopeRef.current;
 
       if (!scope) {
@@ -327,6 +343,10 @@ export function useCampaignMotionExperience({
 
   useGSAP(
     () => {
+      if (!supportsCampaignMotionRuntime()) {
+        return;
+      }
+
       const scope = scopeRef.current;
 
       if (!scope) {
@@ -337,6 +357,12 @@ export function useCampaignMotionExperience({
         "[data-motion-reveal]",
         scope,
       );
+      const journey = scope.querySelector<HTMLElement>(
+        "[data-motion-journey]",
+      );
+      const journeyProgress = journey?.querySelector<HTMLElement>(
+        "[data-motion-journey-progress]",
+      );
       const matchMedia = gsap.matchMedia();
       let refreshFrame = 0;
 
@@ -344,8 +370,8 @@ export function useCampaignMotionExperience({
 
       matchMedia.add(
         {
-          isDesktop: "(min-width: 821px)",
-          isMobile: "(max-width: 820px)",
+          isDesktop: "(min-width: 641px)",
+          isMobile: "(max-width: 640px)",
           reduceMotion: reducedMotionQuery,
         },
         (mediaContext) => {
@@ -359,6 +385,11 @@ export function useCampaignMotionExperience({
             gsap.set([...revealElements, ...revealChildren], {
               clearProps: "all",
             });
+            if (journeyProgress) {
+              gsap.set(journeyProgress, {
+                clearProps: "all",
+              });
+            }
           } else {
             revealElements.forEach((element) => {
               const children = Array.from(getRevealChildren(element));
@@ -399,6 +430,36 @@ export function useCampaignMotionExperience({
                 );
               }
             });
+
+            if (journey && journeyProgress) {
+              gsap.set(journeyProgress, {
+                scaleX: isMobile ? 1 : 0,
+                scaleY: isMobile ? 0 : 1,
+                transformOrigin: isMobile ? "center top" : "left center",
+              });
+
+              const journeyTimeline = gsap.timeline({
+                scrollTrigger: {
+                  end: "clamp(bottom 44%)",
+                  invalidateOnRefresh: true,
+                  markers: false,
+                  scrub: isMobile ? 0.25 : 0.35,
+                  start: "clamp(top 84%)",
+                  trigger: journey,
+                },
+              });
+
+              journeyTimeline.to(
+                journeyProgress,
+                {
+                  duration: 1,
+                  ease: "none",
+                  scaleX: 1,
+                  scaleY: 1,
+                },
+                0,
+              );
+            }
           }
 
           refreshFrame = window.requestAnimationFrame(() => {

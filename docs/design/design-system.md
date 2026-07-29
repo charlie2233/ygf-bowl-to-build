@@ -42,7 +42,7 @@ CTA, then complete fine print. Avoid extra stacked microcopy.
 ## Approved copy
 
 - Headline: **Buy a bowl. Build with AI.**
-- Subhead: **Spend $16+ at YGF and unlock limited Build Credits for study
+- Subhead: **Spend $25+ at YGF and unlock limited Build Credits for study
   help, coding help, career tasks, and smarter bowl picks.**
 - CTA: **Scan to claim**
 - Checkout cue: **Get your code at checkout.**

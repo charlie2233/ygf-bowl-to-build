@@ -53,7 +53,7 @@ For USC-facing consumers, **“Build Credits”** or **“AI Credits”** will c
 
 ## 1.4 Final offer
 **Proposed public offer (beta):**
-- Spend **$16+** in one transaction
+- Spend **$25+** in one transaction
 - Receive **limited YGF Build Credits**
 - Credits expire **14 days after redemption**
 - No cash value; one account per person; eligible tasks only
@@ -327,7 +327,7 @@ Every task page should follow the same shell:
 **Buy a bowl. Build with AI.**
 
 **Subhead:**  
-Spend $16+ at YGF and unlock limited **Build Credits** for study help, coding help, career tasks, and smarter bowl picks.
+Spend $25+ at YGF and unlock limited **Build Credits** for study help, coding help, career tasks, and smarter bowl picks.
 
 **CTA block:**  
 **Scan to claim**  
@@ -754,7 +754,7 @@ id uuid primary key
 batch_id uuid references promo_batches(id)
 code_hash text unique
 receipt_id text null
-minimum_purchase_cents int default 1600
+minimum_purchase_cents int default 2500
 issued_at timestamptz
 expires_at timestamptz
 redeemed_by uuid null references users(id)

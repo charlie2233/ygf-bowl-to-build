@@ -19,7 +19,7 @@ proof, deployed-origin proof, or public-launch approval.
 | Bowl weighted to the right | Controlled cover crop of beta bowl image | Composition matched; source not launch-ready | Creative owner must approve a rights-cleared real YGF food photo |
 | Study, Coding, Career, Pick My Bowl | Four white cards with red line icons | Matched with vector-native replacements | `data-use-case` contract in every SVG |
 | Dominant QR and checkout cue | High-contrast square QR, “Scan to claim,” and “Get your code at checkout.” | Matched with credential clarification | Exact modules decode in integration test |
-| Limited campaign explanation | Approved $16+ Build Credits subhead | Matched | Text contract in every asset |
+| Limited campaign explanation | Approved $25+ Build Credits subhead | Matched | Text contract in every asset |
 | Legal footer | Complete promotional fine print and full university disclaimer | Expanded from the short concept footer | Text contract and print-raster review |
 | Poster-first composition | Derived portrait, card, feed, story, and horizontal scenes | Deliberate responsive reflow | Variant matrix below |
 
@@ -59,14 +59,14 @@ proof, deployed-origin proof, or public-launch approval.
 | PDF structure and page dimensions | Deterministic byte test plus `pdfinfo` | 1728x2592 pt and 360x504 pt | Vendor proof at 100% |
 | Crop, hierarchy, clipping, black-square artifacts | `pdftoppm` raster review | Local design review recorded with release | Manager/creative sign-off |
 | Fine-print legibility | Raster review at print-proportional scale | Local review only | Physical 24x36 and 5x7 proof |
-| Menu and prices | Not encoded as evidence by the renderer | Not verified | Store manager signs current $16+ offer |
+| Menu and prices | Not encoded as evidence by the renderer | Not verified | Store manager signs current $25+ offer |
 | External account configuration | Not part of assets | Not verified | Named account owners verify production |
 
 ## Open launch blockers
 
 - Replace the generated fallback with a rights-cleared real YGF food photo and
   record permission.
-- Confirm current menu and prices and the participating location's $16+
+- Confirm current menu and prices and the participating location's $25+
   threshold.
 - Replace the example origin with the approved production origin, if
   different, and regenerate/scan every QR.
@@ -170,7 +170,7 @@ page error, and the production images contain no Next.js development badge.
 No material copy mismatch remains:
 
 - H1: exact canonical text.
-- Offer: qualifying purchase language and $16+ detail remain consistent.
+- Offer: qualifying purchase language and $25+ detail remain consistent.
 - Primary action: `Claim Build Credits`.
 - Secondary action: `Connect my Agent` (numbered step 02); `How it works`
   remains in the public navigation.

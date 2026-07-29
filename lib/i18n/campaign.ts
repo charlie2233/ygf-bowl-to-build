@@ -95,7 +95,7 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Buy a bowl.",
       titleLineTwo: "Build with AI.",
       subhead:
-        "Spend $16+ at YGF, get an AI card at checkout, then scan or enter its private code to unlock 3,000 AI Credits for 14 days.",
+        "Spend $25+ at YGF, get an AI card at checkout, then scan or enter its private code to unlock 3,000 AI Credits for 14 days.",
       guidance:
         "New here? Start with 01. Agent setup is optional after redemption.",
       claimCredits: "Scan or enter my code",
@@ -140,12 +140,12 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Three simple steps.",
       description:
-        "Spend $16+ in one transaction. Receive an AI card at checkout. Redeem it for 3,000 AI Credits that last 14 days.",
+        "Spend $25+ in one transaction. Receive an AI card at checkout. Redeem it for 3,000 AI Credits that last 14 days.",
       photoAlt: "Assorted YGF ingredients ready to choose at the counter",
       steps: [
         {
           title: "Get your AI card",
-          description: "Spend $16+ and receive it at checkout.",
+          description: "Spend $25+ and receive it at checkout.",
         },
         {
           title: "Scan or enter the code",
@@ -167,7 +167,7 @@ export const campaignHomeCopy: Record<
         {
           question: "Who’s eligible?",
           answer:
-            "Guests who spend $16+ in one transaction and receive a code at checkout. One redemption per person/account.",
+            "Guests who spend $25+ in one transaction and receive a code at checkout. One redemption per person/account.",
         },
         {
           question: "Is this official USC?",
@@ -208,7 +208,7 @@ export const campaignHomeCopy: Record<
       titleLineOne: "吃一碗。",
       titleLineTwo: "用 AI 开始创造。",
       subhead:
-        "在 YGF 单笔消费满 $16，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 AI Credits，有效 14 天。",
+        "在 YGF 单笔消费满 $25，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 AI Credits，有效 14 天。",
       guidance: "第一次使用？从 01 开始。Agent 连接是兑换后的可选功能。",
       claimCredits: "扫码或输入兑换码",
       connectAgent: "连接 Agent（可选）",
@@ -251,12 +251,12 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "简单三步即可开始。",
       description:
-        "单笔消费满 $16，结账时领取 AI 算力卡。兑换后获得 3,000 AI Credits，有效 14 天。",
+        "单笔消费满 $25，结账时领取 AI 算力卡。兑换后获得 3,000 AI Credits，有效 14 天。",
       photoAlt: "YGF 柜台中可自由选择的丰富食材",
       steps: [
         {
           title: "领取 AI 算力卡",
-          description: "单笔消费满 $16，结账时领取。",
+          description: "单笔消费满 $25，结账时领取。",
         },
         {
           title: "扫码或输入兑换码",
@@ -278,7 +278,7 @@ export const campaignHomeCopy: Record<
         {
           question: "谁可以参加？",
           answer:
-            "单笔消费满 $16，并在结账时领取兑换码的顾客。每人或每个账户限兑换一次。",
+            "单笔消费满 $25，并在结账时领取兑换码的顾客。每人或每个账户限兑换一次。",
         },
         {
           question: "这是 USC 官方活动吗？",
@@ -318,7 +318,7 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Compra un bowl.",
       titleLineTwo: "Crea con IA.",
       subhead:
-        "Gasta $16+ en YGF, recibe una tarjeta de IA en caja y escanea o escribe su código privado para desbloquear 3,000 AI Credits durante 14 días.",
+        "Gasta $25+ en YGF, recibe una tarjeta de IA en caja y escanea o escribe su código privado para desbloquear 3,000 AI Credits durante 14 días.",
       guidance:
         "¿Es tu primera vez? Empieza por 01. Conectar un Agent es opcional después del canje.",
       claimCredits: "Escanear o escribir código",
@@ -363,12 +363,12 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Tres pasos sencillos.",
       description:
-        "Gasta $16+ en una transacción y recibe una tarjeta de IA en caja. Canjéala por 3,000 AI Credits válidos durante 14 días.",
+        "Gasta $25+ en una transacción y recibe una tarjeta de IA en caja. Canjéala por 3,000 AI Credits válidos durante 14 días.",
       photoAlt: "Ingredientes variados de YGF listos para elegir en el mostrador",
       steps: [
         {
           title: "Recibe tu tarjeta de IA",
-          description: "Gasta $16+ y recíbela en caja.",
+          description: "Gasta $25+ y recíbela en caja.",
         },
         {
           title: "Escanea o escribe el código",
@@ -390,7 +390,7 @@ export const campaignHomeCopy: Record<
         {
           question: "¿Quién puede participar?",
           answer:
-            "Quienes gasten $16+ en una transacción y reciban un código en caja. Un canje por persona o cuenta.",
+            "Quienes gasten $25+ en una transacción y reciban un código en caja. Un canje por persona o cuenta.",
         },
         {
           question: "¿Es una actividad oficial de USC?",
@@ -431,7 +431,7 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Prenez un bowl.",
       titleLineTwo: "Créez avec l’IA.",
       subhead:
-        "Dépensez 16 $ ou plus chez YGF, recevez une carte IA en caisse, puis scannez ou saisissez son code privé pour débloquer 3,000 AI Credits pendant 14 jours.",
+        "Dépensez 25 $ ou plus chez YGF, recevez une carte IA en caisse, puis scannez ou saisissez son code privé pour débloquer 3,000 AI Credits pendant 14 jours.",
       guidance:
         "Première visite ? Commencez par 01. La connexion d’un Agent est facultative après l’activation.",
       claimCredits: "Scanner ou saisir le code",
@@ -476,12 +476,12 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Trois étapes simples.",
       description:
-        "Dépensez 16 $ ou plus en une transaction et recevez une carte IA en caisse. Activez 3,000 AI Credits valables 14 jours.",
+        "Dépensez 25 $ ou plus en une transaction et recevez une carte IA en caisse. Activez 3,000 AI Credits valables 14 jours.",
       photoAlt: "Ingrédients YGF variés à choisir au comptoir",
       steps: [
         {
           title: "Recevez votre carte IA",
-          description: "Dépensez 16 $ ou plus et recevez-la en caisse.",
+          description: "Dépensez 25 $ ou plus et recevez-la en caisse.",
         },
         {
           title: "Scannez ou saisissez le code",
@@ -503,7 +503,7 @@ export const campaignHomeCopy: Record<
         {
           question: "Qui peut participer ?",
           answer:
-            "Les clients dépensant 16 $ ou plus en une transaction et recevant un code en caisse. Une activation par personne ou compte.",
+            "Les clients dépensant 25 $ ou plus en une transaction et recevant un code en caisse. Une activation par personne ou compte.",
         },
         {
           question: "Est-ce une activité officielle de l’USC ?",
@@ -544,7 +544,7 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Купите боул.",
       titleLineTwo: "Создавайте с ИИ.",
       subhead:
-        "Потратьте в YGF от $16, получите AI-карту на кассе и отсканируйте или введите её личный код, чтобы открыть 3,000 AI Credits на 14 дней.",
+        "Потратьте в YGF от $25, получите AI-карту на кассе и отсканируйте или введите её личный код, чтобы открыть 3,000 AI Credits на 14 дней.",
       guidance:
         "Впервые здесь? Начните с 01. Подключение Agent — необязательный шаг после активации.",
       claimCredits: "Сканировать или ввести код",
@@ -589,12 +589,12 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Три простых шага.",
       description:
-        "Потратьте от $16 за одну покупку и получите AI-карту на кассе. Активируйте 3,000 AI Credits на 14 дней.",
+        "Потратьте от $25 за одну покупку и получите AI-карту на кассе. Активируйте 3,000 AI Credits на 14 дней.",
       photoAlt: "Разнообразные ингредиенты YGF для выбора у стойки",
       steps: [
         {
           title: "Получите AI-карту",
-          description: "Потратьте от $16 и заберите её на кассе.",
+          description: "Потратьте от $25 и заберите её на кассе.",
         },
         {
           title: "Сканируйте или введите код",
@@ -616,7 +616,7 @@ export const campaignHomeCopy: Record<
         {
           question: "Кто может участвовать?",
           answer:
-            "Гости, потратившие от $16 за одну покупку и получившие код на кассе. Одна активация на человека или аккаунт.",
+            "Гости, потратившие от $25 за одну покупку и получившие код на кассе. Одна активация на человека или аккаунт.",
         },
         {
           question: "Это официальная акция USC?",

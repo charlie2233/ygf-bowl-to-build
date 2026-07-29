@@ -42,6 +42,9 @@ describe("public campaign pages", () => {
     const agentLink = body.querySelector<HTMLAnchorElement>(
       'a[data-step="02"]',
     );
+    const handoffLink = body.querySelector<HTMLAnchorElement>(
+      '[data-campaign-handoff] a[href="/redeem"]',
+    );
     const heroImage = Array.from(body.querySelectorAll("img")).find((image) =>
       /real ygf ingredient counter/i.test(image.getAttribute("alt") ?? ""),
     );
@@ -58,8 +61,15 @@ describe("public campaign pages", () => {
     expect(agentLink?.getAttribute("href")).toBe("/connect/agent");
     expect(claimLink?.getAttribute("data-step")).toBe("01");
     expect(agentLink?.getAttribute("data-step")).toBe("02");
+    expect(normalizedText(handoffLink)).toBe("01 Scan or enter my code");
+    expect(body.querySelector("[data-motion-journey]")).toBeTruthy();
+    expect(body.querySelectorAll("[data-motion-journey-step]")).toHaveLength(
+      3,
+    );
     expect(normalizedText(body)).toMatch(/not affiliated with or endorsed by USC/i);
     expect(normalizedText(body)).toMatch(/3,000 AI Credits/i);
+    expect(normalizedText(body)).toMatch(/\$25\+/);
+    expect(normalizedText(body)).not.toMatch(/\$16\+/);
     expect(normalizedText(body)).toMatch(/start with 01/i);
     expect(normalizedText(body)).toMatch(/agent setup is optional/i);
     expect(heroImage).toBeTruthy();
@@ -113,7 +123,7 @@ describe("public campaign pages", () => {
     const offerText = normalizedText(renderPage(<OfferPage />));
     const termsText = normalizedText(renderPage(<TermsPage />));
 
-    expect(offerText).toContain("Spend $16+ in one transaction");
+    expect(offerText).toContain("Spend $25+ in one transaction");
     expect(offerText).toMatch(/14 days after redemption/i);
     expect(termsText).toContain("One redemption per person/account");
     expect(termsText).toContain("No cash value");

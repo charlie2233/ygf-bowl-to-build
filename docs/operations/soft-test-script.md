@@ -25,7 +25,7 @@ into the test log. Use a non-secret fixture/row identifier.
   database, limits, and AI-provider controls.
 - Public campaign QR fixtures and paired human-readable code/private claim QR
   rows were produced by the release process.
-- Terms, privacy, offer copy, menu and prices, and the $16+ threshold have
+- Terms, privacy, offer copy, menu and prices, and the $25+ threshold have
   owner approval.
 - The manager can pause redemption and task execution immediately.
 
@@ -78,7 +78,7 @@ After each participant, ask:
 
 1. What did you think the public QR would do?
 2. Could you tell the public campaign QR from the private claim QR?
-3. Did you understand the $16+ requirement and 14-day expiry?
+3. Did you understand the $25+ requirement and 14-day expiry?
 4. At any point did you feel asked to share more information than necessary?
 5. What was the first confusing or slow moment?
 

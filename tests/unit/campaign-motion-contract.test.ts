@@ -27,6 +27,15 @@ describe("campaign motion contract", () => {
     expect(source).toContain("gsap.matchMedia");
     expect(source).toContain("gsap.set(heroHeadlineLines");
     expect(source).toContain("gsap.set(children");
+    expect(source).toContain("data-motion-journey-progress");
+    expect(source).toContain("scaleX: isMobile ? 1 : 0");
+    expect(source).toContain("scaleY: isMobile ? 0 : 1");
+    expect(source).toContain("data-motion-journey");
+    expect(source).toContain("scrub: isMobile ? 0.25 : 0.35");
+    expect(source).toContain("supportsCampaignMotionRuntime");
+    expect(source).not.toContain("back.out");
+    expect(source).not.toContain("pin:");
+    expect(source).not.toContain("ScrollTrigger.getAll()");
     expect(source).not.toContain(".fromTo(");
     expect(source).not.toContain("IntersectionObserver");
     expect(source).not.toContain(".animate(");

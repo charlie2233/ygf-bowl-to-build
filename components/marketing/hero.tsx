@@ -98,7 +98,7 @@ export function Hero({
               <dl>
                 <div>
                   <dt>{copy.receipt.total}</dt>
-                  <dd>$16+</dd>
+                  <dd>$25+</dd>
                 </div>
                 <div>
                   <dt>{copy.receipt.status}</dt>

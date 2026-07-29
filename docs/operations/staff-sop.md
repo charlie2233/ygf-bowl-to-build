@@ -21,7 +21,7 @@ them.
 
 ## Qualifying checkout
 
-A guest qualifies only after spending **$16+ in one completed transaction**.
+A guest qualifies only after spending **$25+ in one completed transaction**.
 Use the final transaction total and the current manager-approved menu and
 prices. Do not combine separate receipts, issue a code before payment
 finishes, or require a USC email. The offer allows one redemption per

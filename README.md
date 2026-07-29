@@ -2,7 +2,7 @@
 
 YGF Bowl-to-Build turns a qualifying meal into one simple AI balance:
 
-1. A guest spends $16+ in one completed transaction.
+1. A guest spends $25+ in one completed transaction.
 2. Staff hand over one private row containing the same claim as text and QR.
 3. The guest scans or enters the claim, accepts the terms, and receives 3,000
    non-cash Build Credits for 14 days in a private guest wallet—without a

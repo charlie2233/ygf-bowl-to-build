@@ -26,15 +26,19 @@ describe("campaign localization contract", () => {
       expect(copy.hero.claimCredits).toBeTruthy();
       expect(copy.hero.connectAgent).toBeTruthy();
       expect(copy.hero.connectAgent).not.toBe(copy.hero.claimCredits);
+      expect(copy.hero.subhead).toContain("25");
       expect(copy.hero.subhead).toContain("3,000");
       expect(copy.hero.subhead).toContain("14");
+      expect(copy.howItWorks.description).toContain("25");
       expect(copy.hero.guidance).toMatch(/01/);
       expect(copy.hero.imageAlt).toBeTruthy();
       expect(copy.hero.disclaimer).toMatch(/USC/i);
       expect(copy.useCases.items).toHaveLength(4);
       expect(copy.howItWorks.steps).toHaveLength(3);
       expect(copy.faq.items).toHaveLength(4);
+      expect(copy.faq.items[0]?.answer).toContain("25");
       expect(copy.footer.disclaimer).toMatch(/USC/i);
+      expect(JSON.stringify(copy)).not.toMatch(/(?:\$16|16 \$)/);
     },
   );
 

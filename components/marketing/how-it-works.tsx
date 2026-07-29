@@ -1,7 +1,8 @@
-import { CheckCircle2, Soup, Ticket } from "lucide-react";
+import { ArrowRight, CheckCircle2, Soup, Ticket } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 
+import { ButtonLink } from "@/components/ui/button";
 import {
   campaignHomeCopy,
   type CampaignHomeCopy,
@@ -40,9 +41,14 @@ function BusyWeekIllustration() {
 export function HowItWorks({
   copy = campaignHomeCopy.en.howItWorks,
   eagerImage = false,
+  handoff,
 }: {
   copy?: CampaignHomeCopy["howItWorks"];
   eagerImage?: boolean;
+  handoff?: Pick<
+    CampaignHomeCopy["hero"],
+    "claimCredits" | "guidance"
+  >;
 } = {}) {
   return (
     <>
@@ -67,26 +73,65 @@ export function HowItWorks({
           </div>
         </div>
 
-        <ol className="campaign-steps container" data-motion-reveal>
-          {copy.steps.map(({ description, title }, index) => {
-            const { icon: Icon } = stepVisuals[index];
+        <div
+          className="campaign-steps-wrap container"
+          data-motion-journey
+          data-motion-reveal
+        >
+          <span
+            aria-hidden="true"
+            className="campaign-steps__progress"
+            data-motion-journey-progress
+          />
+          <ol className="campaign-steps">
+            {copy.steps.map(({ description, title }, index) => {
+              const { icon: Icon } = stepVisuals[index];
 
-            return (
-              <li className="campaign-step" key={title}>
-                <span aria-hidden="true" className="campaign-step__number">
-                  {index + 1}
-                </span>
-                <Icon
-                  aria-hidden="true"
-                  className="campaign-step__icon"
-                  strokeWidth={1.6}
-                />
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </li>
-            );
-          })}
-        </ol>
+              return (
+                <li
+                  className="campaign-step"
+                  data-motion-journey-step
+                  key={title}
+                >
+                  <span aria-hidden="true" className="campaign-step__number">
+                    {index + 1}
+                  </span>
+                  <Icon
+                    aria-hidden="true"
+                    className="campaign-step__icon"
+                    strokeWidth={1.6}
+                  />
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        {handoff ? (
+          <div
+            className="campaign-handoff container"
+            data-campaign-handoff
+            data-motion-reveal
+          >
+            <p>{handoff.guidance}</p>
+            <ButtonLink
+              className="campaign-handoff__cta"
+              href="/redeem"
+            >
+              <span
+                aria-hidden="true"
+                className="campaign-handoff__step-number"
+              >
+                01
+              </span>
+              {" "}
+              <span>{handoff.claimCredits}</span>
+              <ArrowRight aria-hidden="true" size={20} strokeWidth={2} />
+            </ButtonLink>
+          </div>
+        ) : null}
       </section>
 
       <section aria-labelledby="busy-week-title" className="busy-week">

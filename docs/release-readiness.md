@@ -172,7 +172,7 @@ checkout:
 These require named human owners:
 
 - [ ] YGF manager verifies the participating location, current menu/prices,
-  qualifying $16+ checkout rule, ingredient facts, and allergen escalation.
+  qualifying $25+ checkout rule, ingredient facts, and allergen escalation.
 - [ ] Brand owner confirms rights for the selected user-provided YGF photo or
   supplies an approved replacement; regenerate all affected artifacts.
 - [ ] Legal/privacy owner approves terms, privacy, university disclaimer,

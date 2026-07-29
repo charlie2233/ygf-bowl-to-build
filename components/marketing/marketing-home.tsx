@@ -25,7 +25,13 @@ export function MarketingHome() {
     <div className="campaign-home" data-language={locale} ref={scopeRef}>
       <Hero copy={copy.hero} />
       <UseCases copy={copy.useCases} />
-      <HowItWorks copy={copy.howItWorks} />
+      <HowItWorks
+        copy={copy.howItWorks}
+        handoff={{
+          claimCredits: copy.hero.claimCredits,
+          guidance: copy.hero.guidance,
+        }}
+      />
       <section
         aria-labelledby="faq-preview-title"
         className="faq-preview"

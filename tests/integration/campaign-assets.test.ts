@@ -191,7 +191,7 @@ describe("campaign asset renderer", () => {
       expect(svg).toContain(`height="${height}"`);
       expect(text).toContain("Buy a bowl. Build with AI.");
       expect(text).toContain(
-        "Spend $16+ at YGF and unlock limited Build Credits for study help, coding help, career tasks, and smarter bowl picks.",
+        "Spend $25+ at YGF and unlock limited Build Credits for study help, coding help, career tasks, and smarter bowl picks.",
       );
       expect(text).toContain(finePrint);
       expect(text).toContain(universityDisclaimer);
@@ -441,7 +441,7 @@ describe("campaign operations pack", () => {
     const corpus = documents.join("\n").toLowerCase();
 
     for (const requiredPhrase of [
-      "$16+",
+      "$25+",
       "human-readable code",
       "public campaign qr",
       "private claim qr",

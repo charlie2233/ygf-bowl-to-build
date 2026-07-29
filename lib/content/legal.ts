@@ -28,7 +28,7 @@ export const publicFaq: readonly PublicFaqItem[] = [
   {
     question: "Who’s eligible?",
     answer:
-      "Guests who spend $16+ in one transaction and receive a code at checkout. One redemption per person/account.",
+      "Guests who spend $25+ in one transaction and receive a code at checkout. One redemption per person/account.",
   },
   {
     question: "Is this official USC?",
@@ -86,7 +86,7 @@ export const promotionalTerms: readonly LegalSection[] = [
   {
     title: "Qualifying purchase",
     body: [
-      "Spend $16+ in one transaction. Get your code at checkout. Staff only hand the code after the receipt threshold is met.",
+      "Spend $25+ in one transaction. Get your code at checkout. Staff only hand the code after the receipt threshold is met.",
     ],
   },
   {
@@ -184,7 +184,7 @@ export const creatorSections: readonly LegalSection[] = [
   {
     title: "Describe the offer accurately",
     bullets: [
-      "Spend $16+ in one transaction.",
+      "Spend $25+ in one transaction.",
       "Get your code at checkout.",
       "Credits expire 14 days after redemption.",
       "Build Credits are limited, non-transferable, and have no cash value.",
@@ -203,7 +203,7 @@ export const staffSections: readonly LegalSection[] = [
   {
     title: "At checkout",
     bullets: [
-      "Confirm the guest spent $16+ in one transaction.",
+      "Confirm the guest spent $25+ in one transaction.",
       "Staff only hand the code after the receipt threshold is met.",
       "One redemption per person/account.",
     ],

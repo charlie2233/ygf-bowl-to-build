@@ -702,15 +702,12 @@ textarea {
   object-position: center 50%;
 }
 
-.campaign-steps {
+.campaign-steps-wrap {
   position: relative;
-  display: grid;
   margin-top: 4.25rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2rem;
 }
 
-.campaign-steps::before {
+.campaign-steps-wrap::before {
   position: absolute;
   top: 1.45rem;
   right: 16%;
@@ -719,8 +716,31 @@ textarea {
   content: "";
 }
 
+.campaign-steps__progress {
+  position: absolute;
+  z-index: 0;
+  top: 1.39rem;
+  right: 16%;
+  left: 16%;
+  height: 0.24rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c2001c 0%, #eea500 100%);
+  pointer-events: none;
+  transform-origin: left center;
+}
+
+.campaign-steps {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  list-style: none;
+}
+
 .campaign-step {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -770,6 +790,39 @@ textarea {
   max-width: 13rem;
   margin: 0.65rem 0 0;
   color: #263244;
+}
+
+.campaign-handoff {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #ded4cb;
+  margin-top: 4rem;
+}
+
+.campaign-handoff p {
+  max-width: 39rem;
+  margin: 0;
+  color: #263244;
+  font-size: 1.02rem;
+  font-weight: 680;
+  line-height: 1.55;
+}
+
+.campaign-handoff__cta {
+  flex: 0 0 auto;
+}
+
+.campaign-handoff__step-number {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: 50%;
+  font-size: 0.72rem;
+  place-items: center;
 }
 
 .busy-week {
@@ -2156,12 +2209,23 @@ textarea {
     gap: 2.5rem;
   }
 
-  .campaign-steps::before {
+  .campaign-steps-wrap::before {
     top: 1.5rem;
     bottom: 1.5rem;
     left: 1.5rem;
     border-top: 0;
     border-left: 2px dashed #d7c9bd;
+  }
+
+  .campaign-steps__progress {
+    top: 1.5rem;
+    right: auto;
+    bottom: 1.5rem;
+    left: calc(1.5rem - 0.12rem);
+    width: 0.24rem;
+    height: auto;
+    background: linear-gradient(180deg, #c2001c 0%, #eea500 100%);
+    transform-origin: center top;
   }
 
   .campaign-step {
@@ -2193,6 +2257,16 @@ textarea {
     max-width: none;
     align-self: start;
     margin: -0.6rem 0 0;
+  }
+
+  .campaign-handoff {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .campaign-handoff__cta {
+    width: 100%;
+    min-height: 3.8rem;
   }
 
   .busy-week__inner {

@@ -30,7 +30,7 @@ changes are **manager-only**.
 ## Manager recovery procedure
 
 1. Move the conversation away from the active line when practical.
-2. Verify the **$16+** completed transaction using the minimum receipt facts
+2. Verify the **$25+** completed transaction using the minimum receipt facts
    needed. Do not photograph or attach the full receipt to an issue.
 3. Ask the guest to reproduce the state on their own device. Do not ask them
    to send or read the full code.

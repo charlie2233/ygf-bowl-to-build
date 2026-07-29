@@ -441,7 +441,7 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
       partner: {
         title: "连接我的 Agent（可选）",
         description:
-          "创建一把个人、可撤销的 YGF API Key，并使用钱包中的剩余 Credits。",
+          "创建一把个人、可撤销的杨国福 API Key，并使用钱包中的剩余 Credits。",
         action: "设置 Agent",
       },
       tasks: {
@@ -497,7 +497,7 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
           ],
           reviewNote: "AI 可能出错，请在使用前检查结果。",
           safetyNote:
-            "食物建议仅供参考。请向 YGF 员工确认食材和过敏原。",
+            "食物建议仅供参考。请向杨国福员工确认食材和过敏原。",
         },
       },
     },
@@ -505,9 +505,9 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
       eyebrow: "可选开发者路径",
       title: "连接你自己的 Agent",
       description:
-        "使用个人 YGF Key 接入支持 OpenAI-compatible API 的软件。更想直接用现成的 AI 工具？只需点击一下。",
+        "使用个人杨国福 API Key 接入支持 OpenAI-compatible API 的软件。更想直接用现成的杨国福 AI 工具？只需点击一下。",
       controlsLanguageNotice: "下方的高级设置控件目前仅提供英文。",
-      useYgfAi: "改用 YGF AI",
+      useYgfAi: "改用杨国福 AI",
     },
   },
   es: {

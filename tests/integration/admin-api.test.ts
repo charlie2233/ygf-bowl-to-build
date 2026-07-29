@@ -45,9 +45,11 @@ function request(
 
 function createGateway(): AdminCodeGateway & {
   activateBatch: ReturnType<typeof vi.fn>;
+  assignPartnerReward: ReturnType<typeof vi.fn>;
   createBatch: ReturnType<typeof vi.fn>;
   recordEvent: ReturnType<typeof vi.fn>;
   revokeCode: ReturnType<typeof vi.fn>;
+  revokePartnerReward: ReturnType<typeof vi.fn>;
 } {
   return {
     activateBatch: vi.fn(async () => ({
@@ -58,6 +60,13 @@ function createGateway(): AdminCodeGateway & {
       name: "Lunch receipts",
       source: "receipt-insert" as const,
       status: "active" as const,
+    })),
+    assignPartnerReward: vi.fn(async (input) => ({
+      expiresAt: input.expiresAt,
+      id: "reward-1",
+      kind: "claude-pro-gift" as const,
+      rowReference: input.rowReference,
+      state: "assigned" as const,
     })),
     createBatch: vi.fn(
       async (
@@ -79,6 +88,13 @@ function createGateway(): AdminCodeGateway & {
       codeId: "code-1",
       revokedAt: "2026-07-27T12:00:00.000Z",
       rowReference: ROW_REFERENCE,
+    })),
+    revokePartnerReward: vi.fn(async (input) => ({
+      expiresAt: "2026-08-28T12:00:00.000Z",
+      id: "reward-1",
+      kind: "claude-pro-gift" as const,
+      rowReference: input.rowReference,
+      state: "revoked" as const,
     })),
   };
 }

@@ -7,16 +7,28 @@ import {
 import { createServiceRoleClient } from "@/lib/auth/server";
 import type {
   CampaignRepository,
+  GetPartnerRewardInput,
   GetWalletInput,
   RedeemCodeInput,
   RedemptionResult,
+  RevealPartnerRewardInput,
   ValidateCodeInput,
   ValidateCodeResult,
 } from "@/lib/repositories/campaign-repository";
+import { isPartnerRewardSecretEnvelope } from "@/lib/rewards/secret";
+import type {
+  PartnerRewardReveal,
+  PartnerRewardState,
+  PartnerRewardSummary,
+} from "@/lib/rewards/types";
 
 export type Task4CampaignRepository = Pick<
   CampaignRepository,
-  "getWallet" | "redeemCode" | "validateCode"
+  | "getPartnerReward"
+  | "getWallet"
+  | "redeemCode"
+  | "revealPartnerReward"
+  | "validateCode"
 >;
 
 interface WalletRow {
@@ -43,6 +55,21 @@ interface RedemptionRpcRow {
   wallet_created_at: string;
   wallet_id: string;
   wallet_user_id: string;
+}
+
+interface PartnerRewardRpcRow {
+  reward_expires_at: string;
+  reward_id: string;
+  reward_kind: "claude-pro-gift";
+  reward_revealed_at: string | null;
+  reward_state: PartnerRewardState;
+}
+
+interface PartnerRewardRevealRpcRow extends PartnerRewardRpcRow {
+  secret_ciphertext: string;
+  secret_digest: string;
+  secret_iv: string;
+  secret_tag: string;
 }
 
 export class CampaignRepositoryUnavailableError extends Error {
@@ -78,6 +105,9 @@ function mapDatabaseError(message: unknown): never {
     "CODE_NOT_FOUND",
     "CODE_REVOKED",
     "IDEMPOTENCY_CONFLICT",
+    "PARTNER_REWARD_EXPIRED",
+    "PARTNER_REWARD_NOT_FOUND",
+    "PARTNER_REWARD_REVOKED",
   ] as const;
   const code =
     typeof message === "string"
@@ -87,6 +117,47 @@ function mapDatabaseError(message: unknown): never {
     return domainError(code);
   }
   return repositoryUnavailable();
+}
+
+const PARTNER_REWARD_STATES = new Set<PartnerRewardState>([
+  "assigned",
+  "revealed",
+  "revoked",
+  "expired",
+]);
+
+function isPartnerRewardRow(
+  value: unknown,
+): value is PartnerRewardRpcRow {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const row = value as Partial<PartnerRewardRpcRow>;
+  return (
+    validIdentifier(row.reward_id) &&
+    row.reward_kind === "claude-pro-gift" &&
+    typeof row.reward_state === "string" &&
+    PARTNER_REWARD_STATES.has(
+      row.reward_state as PartnerRewardState,
+    ) &&
+    validTimestamp(row.reward_expires_at) &&
+    (row.reward_revealed_at === null ||
+      validTimestamp(row.reward_revealed_at))
+  );
+}
+
+function mapPartnerReward(
+  row: PartnerRewardRpcRow,
+): PartnerRewardSummary {
+  return {
+    expiresAt: row.reward_expires_at,
+    id: row.reward_id,
+    kind: row.reward_kind,
+    ...(row.reward_revealed_at === null
+      ? {}
+      : { revealedAt: row.reward_revealed_at }),
+    state: row.reward_state,
+  };
 }
 
 function validIdentifier(value: unknown): value is string {
@@ -234,6 +305,87 @@ export class SupabaseCampaignRepository
       return repositoryUnavailable();
     }
     return mapWallet(data);
+  }
+
+  async getPartnerReward({
+    userId,
+  }: GetPartnerRewardInput): Promise<PartnerRewardSummary | null> {
+    let response: Awaited<
+      ReturnType<ReturnType<typeof createServiceRoleClient>["rpc"]>
+    >;
+    try {
+      response = await createServiceRoleClient().rpc(
+        "get_partner_reward_summary",
+        {
+          p_user_id: userId,
+        },
+      );
+    } catch {
+      return repositoryUnavailable();
+    }
+    if (response.error) {
+      return mapDatabaseError(response.error.message);
+    }
+    if (!Array.isArray(response.data)) {
+      return repositoryUnavailable();
+    }
+    if (response.data.length === 0) {
+      return null;
+    }
+    if (
+      response.data.length !== 1 ||
+      !isPartnerRewardRow(response.data[0])
+    ) {
+      return repositoryUnavailable();
+    }
+    return mapPartnerReward(response.data[0]);
+  }
+
+  async revealPartnerReward({
+    userId,
+  }: RevealPartnerRewardInput): Promise<PartnerRewardReveal> {
+    let response: Awaited<
+      ReturnType<ReturnType<typeof createServiceRoleClient>["rpc"]>
+    >;
+    try {
+      response = await createServiceRoleClient().rpc(
+        "reveal_partner_reward",
+        {
+          p_reward_id: null,
+          p_user_id: userId,
+        },
+      );
+    } catch {
+      return repositoryUnavailable();
+    }
+    if (response.error) {
+      return mapDatabaseError(response.error.message);
+    }
+    const row =
+      Array.isArray(response.data) && response.data.length === 1
+        ? response.data[0]
+        : null;
+    if (
+      !isPartnerRewardRow(row) ||
+      typeof row !== "object" ||
+      row === null
+    ) {
+      return repositoryUnavailable();
+    }
+    const revealRow = row as PartnerRewardRevealRpcRow;
+    const secret = {
+      ciphertext: revealRow.secret_ciphertext,
+      digest: revealRow.secret_digest,
+      iv: revealRow.secret_iv,
+      tag: revealRow.secret_tag,
+    };
+    if (!isPartnerRewardSecretEnvelope(secret)) {
+      return repositoryUnavailable();
+    }
+    return {
+      reward: mapPartnerReward(revealRow),
+      secret,
+    };
   }
 
   async redeemCode({

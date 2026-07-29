@@ -52,6 +52,7 @@ export function Hero({
             {copy.subhead}
           </p>
           <p className="marketing-hero__guidance">{copy.guidance}</p>
+          <p className="marketing-hero__guidance">{copy.rewardContext}</p>
           <div className="marketing-hero__actions">
             <ButtonLink
               className="marketing-hero__cta marketing-hero__cta--step"

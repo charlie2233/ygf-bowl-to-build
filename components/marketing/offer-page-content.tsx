@@ -52,6 +52,7 @@ export function OfferPageContent() {
             {copy.hero.titleLineOne} {copy.hero.titleLineTwo}
           </h1>
           <p className="campaign-page__lead">{copy.hero.subhead}</p>
+          <p className="campaign-page__microcopy">{copy.hero.rewardContext}</p>
           <div className="campaign-page__actions">
             <ButtonLink href="/redeem">{copy.hero.claimCredits}</ButtonLink>
             <ButtonLink href="#how-it-works" variant="secondary">

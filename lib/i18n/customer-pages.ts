@@ -245,13 +245,13 @@ export const customerPagesCopy = {
       expired: {
         title: "此兑换权益已过期",
         description:
-          "此兑换码或钱包已超出有效期。如果你认为有误，请向 YGF 员工寻求不泄露隐私的帮助。",
+          "此兑换码或钱包已超出有效期。如果你认为有误，请向杨国福员工寻求不泄露隐私的帮助。",
         actionLabel: "尝试其他兑换码",
       },
       revoked: {
         title: "此兑换码不可用",
         description:
-          "此卡片兑换码已撤回，无法兑换。如果你认为有误，请向 YGF 员工寻求不泄露隐私的帮助。",
+          "此卡片兑换码已撤回，无法兑换。如果你认为有误，请向杨国福员工寻求不泄露隐私的帮助。",
         actionLabel: "尝试其他兑换码",
       },
       blocked: {
@@ -277,7 +277,7 @@ export const customerPagesCopy = {
       anonymous: {
         title: "升级账户以连接 Agent",
         description:
-          "你的访客钱包已可使用 YGF 网页 AI。仅在需要个人 Agent Key、恢复或跨设备使用时绑定已验证身份。",
+          "你的访客钱包已可使用杨国福网页 AI。仅在需要个人 Agent Key、恢复或跨设备使用时绑定已验证身份。",
         warning:
           "绑定账户前，清除此浏览器的网站数据可能会永久失去此访客钱包。",
         google: "绑定 Google",
@@ -317,24 +317,24 @@ export const customerPagesCopy = {
       agent: {
         title: "连接我的 Agent",
         description:
-          "创建一把个人、可撤销的 YGF API Key，共享钱包中的剩余 Credits 限额。",
+          "创建一把个人、可撤销的杨国福 API Key，共享钱包中的剩余 Credits 限额。",
         action: "设置 Agent",
       },
     },
     share: {
       page: {
-        eyebrow: "YGF Bowl-to-Build",
+        eyebrow: "杨国福 Bowl-to-Build",
         title: "生成你的打卡图",
         description:
           "预览公开打卡图，准备好后下载 SVG。如果你已完成任务，系统会自动加入经过验证的任务类型。",
       },
       card: {
-        campaign: "YGF Bowl-to-Build",
+        campaign: "杨国福 Bowl-to-Build",
         milestone: "今天这碗，为我的 AI 充了 3,000 Credits。",
         firstBuild: (taskLabel) => `第一个任务：${taskLabel}`,
         hashtag: "#一碗一算力",
         uscDisclaimer: "本活动与 USC 无隶属关系，也未获其赞助或认可。",
-        description: "公开的 YGF Bowl-to-Build 打卡图。",
+        description: "公开的杨国福 Bowl-to-Build 打卡图。",
         taskLabels: {
           study: "学习",
           coding: "编程",

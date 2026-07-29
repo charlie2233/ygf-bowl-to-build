@@ -14,6 +14,11 @@ import type {
   CampaignRepository,
   RecordEventInput,
 } from "@/lib/repositories/campaign-repository";
+import type {
+  PartnerRewardSecretEnvelope,
+  PartnerRewardState,
+  PartnerRewardSummary,
+} from "@/lib/rewards/types";
 
 export const ADMIN_BATCH_SOURCES = [
   "receipt-insert",
@@ -67,6 +72,29 @@ export interface AdminRevokeResult {
   rowReference: string;
 }
 
+export interface AdminPartnerRewardAssignInput {
+  expiresAt: string;
+  kind: "claude-pro-gift";
+  operatorId: string;
+  requestId: string;
+  rowReference: string;
+  secret: PartnerRewardSecretEnvelope;
+}
+
+/**
+ * Revocation deliberately uses the non-secret operations row reference.
+ * Reward UUIDs are returned as audit metadata, never accepted as selectors.
+ */
+export interface AdminPartnerRewardRevokeInput {
+  operatorId: string;
+  rowReference: string;
+}
+
+export interface AdminPartnerRewardRecord
+  extends PartnerRewardSummary {
+  rowReference: string;
+}
+
 export interface AdminAnalyticsData {
   activeWalletCount: number;
   batchCount: number;
@@ -83,16 +111,24 @@ export interface AdminCodeGateway {
   createBatch(
     input: AdminBatchCreateInput,
   ): Promise<AdminBatchRecord>;
+  assignPartnerReward(
+    input: AdminPartnerRewardAssignInput,
+  ): Promise<AdminPartnerRewardRecord>;
+  revokePartnerReward(
+    input: AdminPartnerRewardRevokeInput,
+  ): Promise<AdminPartnerRewardRecord>;
   getAnalyticsData(): Promise<AdminAnalyticsData>;
   recordEvent(input: RecordEventInput): Promise<unknown>;
   revokeCode(input: AdminRevokeInput): Promise<AdminRevokeResult>;
 }
 
 export type AdminGatewayErrorCode =
+  | "ALREADY_ASSIGNED"
   | "FORBIDDEN"
   | "IDEMPOTENCY_CONFLICT"
   | "NOT_FOUND"
   | "NOT_ACTIVATABLE"
+  | "NOT_ASSIGNABLE"
   | "NOT_REVOCABLE"
   | "UNAVAILABLE";
 
@@ -236,6 +272,43 @@ function mapRevokeRpcRow(
   };
 }
 
+function mapPartnerRewardRpcRow(
+  value: unknown,
+  expectedRowReference: string,
+  allowedStates: readonly PartnerRewardState[] = [
+    "assigned",
+    "revealed",
+  ],
+): AdminPartnerRewardRecord {
+  const row = rpcRow(value);
+  if (
+    !row ||
+    !validIdentifier(row.reward_id) ||
+    row.reward_kind !== "claude-pro-gift" ||
+    (row.reward_state !== "assigned" &&
+      row.reward_state !== "revealed" &&
+      row.reward_state !== "revoked" &&
+      row.reward_state !== "expired") ||
+    !allowedStates.includes(row.reward_state as PartnerRewardState) ||
+    row.row_reference !== expectedRowReference ||
+    !validTimestamp(row.reward_expires_at) ||
+    (row.reward_revealed_at !== null &&
+      !validTimestamp(row.reward_revealed_at))
+  ) {
+    return unavailable();
+  }
+  return {
+    expiresAt: row.reward_expires_at,
+    id: row.reward_id,
+    kind: "claude-pro-gift",
+    ...(validTimestamp(row.reward_revealed_at)
+      ? { revealedAt: row.reward_revealed_at }
+      : {}),
+    rowReference: row.row_reference,
+    state: row.reward_state,
+  };
+}
+
 function mapMutationError(message: unknown): never {
   const text = typeof message === "string" ? message : "";
   if (text.includes("IDEMPOTENCY_CONFLICT")) {
@@ -246,7 +319,8 @@ function mapMutationError(message: unknown): never {
   }
   if (
     text.includes("ADMIN_BATCH_NOT_FOUND") ||
-    text.includes("ADMIN_CODE_NOT_FOUND")
+    text.includes("ADMIN_CODE_NOT_FOUND") ||
+    text.includes("PARTNER_REWARD_NOT_FOUND")
   ) {
     throw new AdminGatewayError("NOT_FOUND");
   }
@@ -258,6 +332,15 @@ function mapMutationError(message: unknown): never {
   }
   if (text.includes("ADMIN_CODE_NOT_REVOCABLE")) {
     throw new AdminGatewayError("NOT_REVOCABLE");
+  }
+  if (
+    text.includes("PARTNER_REWARD_ALREADY_ASSIGNED") ||
+    text.includes("PARTNER_REWARD_SECRET_ALREADY_ASSIGNED")
+  ) {
+    throw new AdminGatewayError("ALREADY_ASSIGNED");
+  }
+  if (text.includes("PARTNER_REWARD_NOT_ASSIGNABLE")) {
+    throw new AdminGatewayError("NOT_ASSIGNABLE");
   }
   return unavailable();
 }
@@ -397,6 +480,57 @@ export class SupabaseAdminCodeGateway implements AdminCodeGateway {
       return unavailable();
     }
     return batch;
+  }
+
+  async assignPartnerReward(
+    input: AdminPartnerRewardAssignInput,
+  ): Promise<AdminPartnerRewardRecord> {
+    const client = this.#clientFactory();
+    let response: Awaited<ReturnType<ServiceClient["rpc"]>>;
+    try {
+      response = await client.rpc("assign_partner_reward", {
+        p_expires_at: input.expiresAt,
+        p_kind: input.kind,
+        p_operator_id: input.operatorId,
+        p_request_id: input.requestId,
+        p_row_reference: input.rowReference,
+        p_secret_ciphertext: input.secret.ciphertext,
+        p_secret_digest: input.secret.digest,
+        p_secret_iv: input.secret.iv,
+        p_secret_tag: input.secret.tag,
+      });
+    } catch {
+      return unavailable();
+    }
+    if (response.error) {
+      return mapMutationError(response.error.message);
+    }
+    return mapPartnerRewardRpcRow(
+      response.data,
+      input.rowReference,
+    );
+  }
+
+  async revokePartnerReward(
+    input: AdminPartnerRewardRevokeInput,
+  ): Promise<AdminPartnerRewardRecord> {
+    const client = this.#clientFactory();
+    let response: Awaited<ReturnType<ServiceClient["rpc"]>>;
+    try {
+      response = await client.rpc("revoke_partner_reward", {
+        p_operator_id: input.operatorId,
+        p_row_reference: input.rowReference,
+      });
+    } catch {
+      return unavailable();
+    }
+    if (response.error) {
+      return mapMutationError(response.error.message);
+    }
+    return mapPartnerRewardRpcRow(response.data, input.rowReference, [
+      "revoked",
+      "expired",
+    ]);
   }
 
   async revokeCode(
@@ -546,17 +680,26 @@ function memoryEvents(repository: CampaignRepository): MetricEvent[] {
     .filter((event): event is MetricEvent => event !== null);
 }
 
+interface DemoInventoryPartnerReward {
+  assignment: AdminPartnerRewardAssignInput;
+  record: AdminPartnerRewardRecord;
+}
+
 interface DemoInventoryBatch {
   codeHashes: readonly string[];
   record: AdminBatchRecord;
+  rewardsByRow: Map<string, DemoInventoryPartnerReward>;
   revokedRows: Set<string>;
   rowReferences: readonly string[];
 }
 
 interface DemoInventoryMutation {
   fingerprint: string;
-  operation: "activate" | "create" | "revoke";
-  result: AdminBatchRecord | AdminRevokeResult;
+  operation: "activate" | "assign-reward" | "create" | "revoke";
+  result:
+    | AdminBatchRecord
+    | AdminPartnerRewardRecord
+    | AdminRevokeResult;
 }
 
 interface DemoInventoryStore {
@@ -604,6 +747,42 @@ function replayDemoMutation<T>(
     throw new AdminGatewayError("IDEMPOTENCY_CONFLICT");
   }
   return prior.result as T;
+}
+
+function clonePartnerRewardRecord(
+  reward: AdminPartnerRewardRecord,
+): AdminPartnerRewardRecord {
+  return { ...reward };
+}
+
+function expireDemoRewardIfNeeded(
+  reward: DemoInventoryPartnerReward,
+  now = Date.now(),
+): AdminPartnerRewardRecord {
+  if (
+    (reward.record.state === "assigned" ||
+      reward.record.state === "revealed") &&
+    new Date(reward.record.expiresAt).getTime() <= now
+  ) {
+    reward.record = {
+      ...reward.record,
+      state: "expired",
+    };
+  }
+  return clonePartnerRewardRecord(reward.record);
+}
+
+function demoPartnerRewardForRow(
+  store: DemoInventoryStore,
+  rowReference: string,
+): DemoInventoryPartnerReward | undefined {
+  for (const batch of store.batches.values()) {
+    const reward = batch.rewardsByRow.get(rowReference);
+    if (reward) {
+      return reward;
+    }
+  }
+  return undefined;
 }
 
 export class RepositoryAdminCodeGateway
@@ -655,6 +834,42 @@ export class RepositoryAdminCodeGateway
         : { expiresAt: stored.record.expiresAt }),
       name: stored.record.name,
     });
+    const rewardAssignable = this.#repository as CampaignRepository & {
+      assignPartnerReward?: (input: {
+        codeHash: string;
+        expiresAt: string;
+        secret: PartnerRewardSecretEnvelope;
+      }) => Promise<PartnerRewardSummary>;
+    };
+    for (const [rowReference, reward] of stored.rewardsByRow) {
+      const rewardRecord = expireDemoRewardIfNeeded(reward);
+      // A reward revoked while its batch was pending remains revoked after
+      // activation. It must never be attached to the newly active code.
+      if (rewardRecord.state !== "assigned") {
+        continue;
+      }
+      const rowIndex = stored.rowReferences.indexOf(rowReference);
+      if (
+        rowIndex < 0 ||
+        typeof rewardAssignable.assignPartnerReward !== "function"
+      ) {
+        return unavailable();
+      }
+      const assigned = await rewardAssignable.assignPartnerReward({
+        codeHash: stored.codeHashes[rowIndex]!,
+        expiresAt: reward.assignment.expiresAt,
+        secret: reward.assignment.secret,
+      });
+      reward.record = {
+        ...reward.record,
+        ...(assigned.revealedAt === undefined
+          ? {}
+          : { revealedAt: assigned.revealedAt }),
+        expiresAt: assigned.expiresAt,
+        id: assigned.id,
+        state: assigned.state,
+      };
+    }
     await this.#repository.recordEvent({
       metadata: { count: stored.codeHashes.length },
       name: "batch_distributed",
@@ -731,6 +946,7 @@ export class RepositoryAdminCodeGateway
     this.#store.batches.set(result.id, {
       codeHashes: [...input.codeHashes],
       record: result,
+      rewardsByRow: new Map(),
       revokedRows: new Set(),
       rowReferences: [...input.rowReferences],
     });
@@ -740,6 +956,173 @@ export class RepositoryAdminCodeGateway
       result,
     });
     return { ...result };
+  }
+
+  async assignPartnerReward(
+    input: AdminPartnerRewardAssignInput,
+  ): Promise<AdminPartnerRewardRecord> {
+    const fingerprint = demoFingerprint({
+      expiresAt: input.expiresAt,
+      kind: input.kind,
+      operation: "assign-reward",
+      operatorId: input.operatorId,
+      rowReference: input.rowReference,
+      secretDigest: input.secret.digest,
+    });
+    const replay = replayDemoMutation<AdminPartnerRewardRecord>(
+      this.#store,
+      input.requestId,
+      "assign-reward",
+      fingerprint,
+    );
+    if (replay) {
+      // The original assignment response is not authoritative after a
+      // manager revokes it (or it expires). Production replays the current
+      // database row, so demo mode must do the same without touching the
+      // encrypted envelope.
+      const current = demoPartnerRewardForRow(
+        this.#store,
+        input.rowReference,
+      );
+      return current
+        ? expireDemoRewardIfNeeded(current)
+        : unavailable();
+    }
+
+    let stored: DemoInventoryBatch | undefined;
+    let rowIndex = -1;
+    for (const candidate of this.#store.batches.values()) {
+      rowIndex = candidate.rowReferences.indexOf(
+        input.rowReference,
+      );
+      if (rowIndex >= 0) {
+        stored = candidate;
+        break;
+      }
+    }
+    if (!stored || rowIndex < 0) {
+      throw new AdminGatewayError("NOT_FOUND");
+    }
+    if (
+      stored.revokedRows.has(input.rowReference) ||
+      new Date(input.expiresAt).getTime() <= Date.now()
+    ) {
+      throw new AdminGatewayError("NOT_ASSIGNABLE");
+    }
+    if (
+      stored.rewardsByRow.has(input.rowReference) ||
+      [...this.#store.batches.values()].some((batch) =>
+        [...batch.rewardsByRow.values()].some(
+          (reward) =>
+            reward.assignment.secret.digest === input.secret.digest,
+        ),
+      )
+    ) {
+      throw new AdminGatewayError("ALREADY_ASSIGNED");
+    }
+
+    const result: AdminPartnerRewardRecord = {
+      expiresAt: input.expiresAt,
+      id: `demo-reward-${input.rowReference}`,
+      kind: input.kind,
+      rowReference: input.rowReference,
+      state: "assigned",
+    };
+    stored.rewardsByRow.set(input.rowReference, {
+      assignment: {
+        ...input,
+        secret: { ...input.secret },
+      },
+      record: result,
+    });
+    if (stored.record.status === "active") {
+      const rewardAssignable =
+        this.#repository as CampaignRepository & {
+          assignPartnerReward?: (input: {
+            codeHash: string;
+            expiresAt: string;
+            secret: PartnerRewardSecretEnvelope;
+          }) => Promise<PartnerRewardSummary>;
+        };
+      if (
+        typeof rewardAssignable.assignPartnerReward !== "function"
+      ) {
+        return unavailable();
+      }
+      const assigned = await rewardAssignable.assignPartnerReward({
+        codeHash: stored.codeHashes[rowIndex]!,
+        expiresAt: input.expiresAt,
+        secret: input.secret,
+      });
+      result.id = assigned.id;
+      result.state = assigned.state;
+      if (assigned.revealedAt !== undefined) {
+        result.revealedAt = assigned.revealedAt;
+      }
+      stored.rewardsByRow.get(input.rowReference)!.record = result;
+    }
+    this.#store.mutations.set(input.requestId, {
+      fingerprint,
+      operation: "assign-reward",
+      result,
+    });
+    return { ...result };
+  }
+
+  async revokePartnerReward(
+    input: AdminPartnerRewardRevokeInput,
+  ): Promise<AdminPartnerRewardRecord> {
+    let stored: DemoInventoryBatch | undefined;
+    let rowIndex = -1;
+    for (const candidate of this.#store.batches.values()) {
+      rowIndex = candidate.rowReferences.indexOf(
+        input.rowReference,
+      );
+      if (rowIndex >= 0) {
+        stored = candidate;
+        break;
+      }
+    }
+    const reward = stored?.rewardsByRow.get(input.rowReference);
+    if (!stored || rowIndex < 0 || !reward) {
+      throw new AdminGatewayError("NOT_FOUND");
+    }
+
+    if (stored.record.status === "active") {
+      const rewardRevocable = this.#repository as CampaignRepository & {
+        revokePartnerRewardByCodeHash?: (input: {
+          codeHash: string;
+        }) => Promise<PartnerRewardSummary>;
+      };
+      if (
+        typeof rewardRevocable.revokePartnerRewardByCodeHash !==
+        "function"
+      ) {
+        return unavailable();
+      }
+      const revoked = await rewardRevocable.revokePartnerRewardByCodeHash({
+        codeHash: stored.codeHashes[rowIndex]!,
+      });
+      reward.record = {
+        ...reward.record,
+        ...(revoked.revealedAt === undefined
+          ? {}
+          : { revealedAt: revoked.revealedAt }),
+        expiresAt: revoked.expiresAt,
+        id: revoked.id,
+        state: revoked.state,
+      };
+      return clonePartnerRewardRecord(reward.record);
+    }
+
+    const current = expireDemoRewardIfNeeded(reward);
+    if (current.state === "assigned" || current.state === "revealed") {
+      reward.record = {
+        ...current,
+        state: "revoked",
+      };
+    }
+    return clonePartnerRewardRecord(reward.record);
   }
 
   async revokeCode(

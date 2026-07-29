@@ -5,6 +5,30 @@ import {
   campaignLanguageOptions,
   campaignLocales,
 } from "@/lib/i18n/campaign";
+import { redeemCopy } from "@/lib/i18n/redeem";
+
+const rewardContextExpectations = {
+  en: {
+    credits: "Every valid code",
+    selectedGift: "Selected special codes may also",
+  },
+  zh: {
+    credits: "每个有效兑换码",
+    selectedGift: "部分特别兑换码还可能",
+  },
+  es: {
+    credits: "Cada código válido",
+    selectedGift: "Algunos códigos especiales seleccionados también pueden",
+  },
+  fr: {
+    credits: "Chaque code valide",
+    selectedGift: "Certains codes spéciaux sélectionnés peuvent aussi",
+  },
+  ru: {
+    credits: "Каждый действительный код",
+    selectedGift: "Некоторые специальные коды также могут",
+  },
+} as const;
 
 describe("campaign localization contract", () => {
   it("ships the five requested languages", () => {
@@ -29,6 +53,7 @@ describe("campaign localization contract", () => {
       expect(copy.hero.subhead).toContain("25");
       expect(copy.hero.subhead).toContain("3,000");
       expect(copy.hero.subhead).toContain("14");
+      expect(copy.hero.rewardContext).toMatch(/Claude Pro/i);
       expect(copy.howItWorks.description).toContain("25");
       expect(copy.hero.guidance).toMatch(/01/);
       expect(copy.hero.imageAlt).toBeTruthy();
@@ -41,6 +66,31 @@ describe("campaign localization contract", () => {
       expect(JSON.stringify(copy)).not.toMatch(/(?:\$16|16 \$)/);
     },
   );
+
+  it.each(campaignLocales)(
+    "keeps credits guaranteed and Claude Pro limited to selected codes in %s",
+    (locale) => {
+      const expectation = rewardContextExpectations[locale];
+      const offerContext = campaignHomeCopy[locale].hero.rewardContext;
+      const redeemContext = redeemCopy[locale].next.description;
+
+      for (const context of [offerContext, redeemContext]) {
+        expect(context).toContain(expectation.credits);
+        expect(context).toContain(expectation.selectedGift);
+        expect(context).toMatch(/3[ ,]000/);
+        expect(context).toMatch(/Claude Pro/i);
+        expect(context).not.toMatch(/or\s+(?:a\s+)?Claude Pro/i);
+      }
+    },
+  );
+
+  it("uses 杨国福 in the Chinese customer-facing offer context", () => {
+    const chinese = campaignHomeCopy.zh;
+
+    expect(chinese.hero.subhead).toContain("杨国福");
+    expect(chinese.hero.rewardContext).toContain("杨国福");
+    expect(chinese.hero.rewardContext).not.toContain("YGF");
+  });
 
   it("uses standards-compatible document language tags", () => {
     expect(

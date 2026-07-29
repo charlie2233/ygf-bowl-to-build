@@ -157,6 +157,59 @@ maps that single RPC row directly and must not perform follow-up wallet or
 ledger reads: a read failure after commit cannot be allowed to report a
 successful grant as failed.
 
+## Code-bound partner rewards
+
+Selected claim rows may have one optional `claude-pro-gift` reward assigned by
+an administrator. The normal offer remains authoritative: every eligible
+claim still grants the same 3,000-credit wallet, while an unassigned claim
+reveals no external reward. The reward cannot be inferred through public code
+validation.
+
+`partner_rewards` is keyed one-to-one to `promo_codes`. Assignment happens
+before redemption by non-secret `row_reference`; redemption atomically binds
+the existing reward to the authenticated user in the same code/wallet
+transaction. An idempotent retry returns the same owner and reward. The
+service-role-only RPC boundaries are:
+
+- `assign_partner_reward`
+- `revoke_partner_reward`
+- `get_partner_reward_summary`
+- `reveal_partner_reward`
+
+The official gift URL is treated as a bearer credential. The application
+accepts only HTTPS URLs on the exact `claude.ai` host using a provider gift
+redemption path (`/gift/redeem` with exactly one non-empty `gift` query value,
+or
+`/gift/redeem/<token>`), encrypts
+the canonical URL with AES-256-GCM and authenticated context, and stores
+ciphertext, IV, tag, and a keyed digest—not plaintext. The independent
+`YGF_REWARD_ENCRYPTION_KEY` is server-only. Forced RLS and explicit revokes
+prevent browser roles from reading the encrypted envelope; the summary RPC
+returns only reward ID, kind, lifecycle state, and timestamps.
+
+Manager revocation accepts only the matching non-secret `row_reference`, not
+a bearer URL or reward UUID. The RPC verifies the database admin role, locks
+the authoritative code and reward rows, then transitions assigned or revealed
+rewards to `revoked`; it returns existing `revoked` or `expired` state
+idempotently. It never returns the encrypted envelope. The authenticated
+same-origin admin route returns metadata only. Revocation blocks future YGF
+opens, but cannot recall a destination already exposed to a browser or already
+redeemed by the external provider.
+
+Opening a gift requires an authenticated, same-origin POST. The route derives
+the owner from the session, asks the database to check assignment, expiry, and
+revocation, decrypts only on the server, and issues a `303` with no-store,
+no-referrer, noindex, and restrictive CSP headers. It never fetches a
+user-controlled destination. Reveal is idempotent so a failed browser
+navigation does not destroy the gift; the external gift provider is the
+authority for actual single redemption.
+
+Gift URLs never enter claim CSVs, private/public QRs, page props, client
+storage, analytics, or serialization snapshots. YGF does not create Claude
+accounts, distribute shared credentials, resell provider access, or claim an
+Anthropic partnership. Real gift purchase, eligibility, provider redemption,
+and production account review remain external gates.
+
 ## Share-card integrity
 
 `/share` is dynamically rendered and requires a current user plus a redeemed,
@@ -462,8 +515,9 @@ deployment gate.
 ## Privacy and retention
 
 The database has no plaintext-claim column, request-text column, raw network
-identifier, plaintext Agent API key, provider credential, or external access
-token. Abuse signals are
+identifier, plaintext Agent API key, provider credential, or plaintext
+external access token. Optional partner gift URLs are stored only in an
+authenticated encryption envelope. Abuse signals are
 HMAC-derived with a server-only secret, version, purpose, and five-minute time
 bucket. Empty or oversized values and secrets shorter than 32 bytes are
 rejected. Persisted signals have an explicit expiry and can be deleted by a

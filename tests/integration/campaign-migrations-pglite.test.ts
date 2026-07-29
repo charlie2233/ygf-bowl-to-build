@@ -16,6 +16,7 @@ const migrationNames = [
   "202607270005_anonymous_share_integrity.sql",
   "202607270006_provider_budget_3usd.sql",
   "202607270007_bounded_agent_replay_cleanup.sql",
+  "202607270008_partner_rewards.sql",
 ] as const;
 
 const userId = "11111111-1111-4111-8111-111111111111";

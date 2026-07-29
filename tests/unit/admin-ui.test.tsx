@@ -24,6 +24,11 @@ describe("admin campaign UI", () => {
         'input[name="rowReference"][pattern^="YGF-"]',
       ),
     ).toBeTruthy();
+    expect(
+      document.body.querySelector(
+        'input[name="rewardRevokeRowReference"][pattern^="YGF-"]',
+      ),
+    ).toBeTruthy();
     expect(document.body.textContent).toContain(
       "I confirm the private CSV is saved in approved storage.",
     );
@@ -42,8 +47,13 @@ describe("admin campaign UI", () => {
     ).toEqual([
       "Create and download CSV",
       "Activate saved batch",
+      "Attach Claude gift",
+      "Revoke Claude gift",
       "Revoke code",
     ]);
+    expect(document.body.textContent).toContain(
+      "cannot retract a bearer link that was already opened or provider-redeemed",
+    );
   });
 
   it("uses definition semantics for the complete dashboard summary", () => {

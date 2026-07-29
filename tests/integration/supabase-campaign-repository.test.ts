@@ -24,6 +24,21 @@ const redemptionRow = {
   wallet_user_id: "user-1",
 };
 
+const partnerRewardRow = {
+  reward_expires_at: "2026-08-28T12:00:00.000Z",
+  reward_id: "reward-1",
+  reward_kind: "claude-pro-gift",
+  reward_revealed_at: null,
+  reward_state: "assigned",
+};
+
+const rewardEnvelope = {
+  secret_ciphertext: "Q2lwaGVydGV4dA",
+  secret_digest: "a".repeat(64),
+  secret_iv: "AAAAAAAAAAAAAAAA",
+  secret_tag: "AQEBAQEBAQEBAQEBAQEBAQ",
+};
+
 function mockServiceClient(response: {
   data: unknown;
   error: { message: string } | null;
@@ -178,6 +193,84 @@ describe("SupabaseCampaignRepository redemption", () => {
       repository.getWallet({ userId: "user-1" }),
     ).rejects.toMatchObject({
       message: "CAMPAIGN_REPOSITORY_UNAVAILABLE",
+    });
+  });
+
+  it("maps partner reward summaries without exposing a secret envelope", async () => {
+    const { rpc } = mockServiceClient({
+      data: [{ ...partnerRewardRow, ...rewardEnvelope }],
+      error: null,
+    });
+    const repository = new SupabaseCampaignRepository();
+
+    const summary = await repository.getPartnerReward({
+      userId: "user-1",
+    });
+
+    expect(summary).toEqual({
+      expiresAt: "2026-08-28T12:00:00.000Z",
+      id: "reward-1",
+      kind: "claude-pro-gift",
+      state: "assigned",
+    });
+    expect(JSON.stringify(summary)).not.toContain(
+      rewardEnvelope.secret_ciphertext,
+    );
+    expect(rpc).toHaveBeenCalledWith("get_partner_reward_summary", {
+      p_user_id: "user-1",
+    });
+  });
+
+  it("maps a reveal envelope only from the reveal RPC", async () => {
+    const { rpc } = mockServiceClient({
+      data: [{ ...partnerRewardRow, ...rewardEnvelope }],
+      error: null,
+    });
+    const repository = new SupabaseCampaignRepository();
+
+    await expect(
+      repository.revealPartnerReward({ userId: "user-1" }),
+    ).resolves.toEqual({
+      reward: {
+        expiresAt: "2026-08-28T12:00:00.000Z",
+        id: "reward-1",
+        kind: "claude-pro-gift",
+        state: "assigned",
+      },
+      secret: {
+        ciphertext: rewardEnvelope.secret_ciphertext,
+        digest: rewardEnvelope.secret_digest,
+        iv: rewardEnvelope.secret_iv,
+        tag: rewardEnvelope.secret_tag,
+      },
+    });
+    expect(rpc).toHaveBeenCalledWith("reveal_partner_reward", {
+      p_reward_id: null,
+      p_user_id: "user-1",
+    });
+  });
+
+  it("rejects malformed reveal envelopes and maps reward domain errors", async () => {
+    mockServiceClient({
+      data: [{ ...partnerRewardRow, ...rewardEnvelope, secret_iv: "bad" }],
+      error: null,
+    });
+    const repository = new SupabaseCampaignRepository();
+    await expect(
+      repository.revealPartnerReward({ userId: "user-1" }),
+    ).rejects.toMatchObject({
+      message: "CAMPAIGN_REPOSITORY_UNAVAILABLE",
+    });
+
+    mockServiceClient({
+      data: null,
+      error: { message: "PARTNER_REWARD_EXPIRED" },
+    });
+    await expect(
+      repository.revealPartnerReward({ userId: "user-1" }),
+    ).rejects.toMatchObject({
+      code: "PARTNER_REWARD_EXPIRED",
+      name: "CampaignDomainError",
     });
   });
 });

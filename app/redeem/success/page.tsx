@@ -19,11 +19,18 @@ export default async function RedeemSuccessPage() {
     redirect("/auth?next=/wallet");
   }
 
+  const repository = getCampaignRepository();
   let wallet;
+  let reward;
   try {
-    wallet = await getCampaignRepository().getWallet({
-      userId: user.id,
-    });
+    [wallet, reward] = await Promise.all([
+      repository.getWallet({
+        userId: user.id,
+      }),
+      repository.getPartnerReward({
+        userId: user.id,
+      }),
+    ]);
   } catch (error) {
     if (
       error instanceof CampaignDomainError &&
@@ -38,5 +45,5 @@ export default async function RedeemSuccessPage() {
     redirect("/expired");
   }
 
-  return <RedeemSuccessView />;
+  return <RedeemSuccessView reward={reward} />;
 }

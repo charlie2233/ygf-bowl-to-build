@@ -50,7 +50,13 @@ test("demo administrator can inspect campaign metrics and code operations", asyn
   ).toBeVisible();
   await expect(page.getByLabel("Batch name")).toBeVisible();
   await expect(
-    page.getByLabel("Row reference"),
+    page.getByLabel("Gift assignment row reference"),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Gift row reference"),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Code row reference"),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, "/admin/codes");
   await expectNoAccessibilityViolations(page, "/admin/codes");

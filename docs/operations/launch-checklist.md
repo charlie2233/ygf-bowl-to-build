@@ -9,6 +9,7 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 | --- | --- | --- |
 | Offer, menu and prices, staff policy | YGF store manager | Confirms the current **$25+** threshold and checkout language match the live register |
 | Code inventory and exceptions | Campaign manager | Controls batches, manager-only revoke/reissue, and reconciliation |
+| Optional Claude gifts | Campaign manager plus account owner | Buys and reconciles one official transferable gift per selected row without sharing accounts |
 | Application, database, AI spend | Engineering owner | Verifies production configuration, migrations, alarms, and rollback |
 | Privacy, terms, retention | YGF accountable owner | Approves data handling, deletion/retention, incident path, and public copy |
 | Photography and print | Creative/brand owner | Confirms rights for the supplied YGF photo or approves a replacement and final print proof |
@@ -91,6 +92,25 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   `private/` location with restricted permissions.
 - [ ] Redeem success, invalid, already used, expired, and revoked states are
   tested. Repeat submission does not create a second wallet.
+- [ ] Ordinary claims remain credits-only. A special test claim atomically
+  grants the normal wallet plus exactly one reward, and retries/concurrency do
+  not reassign it.
+- [ ] A dedicated production `YGF_REWARD_ENCRYPTION_KEY` is installed before
+  any gift assignment. It is not reused for claims, Agent keys, task
+  fingerprints, or abuse signals.
+- [ ] Claude gift assignment accepts only an official exact-host HTTPS gift
+  URL and future bounded expiry. Database rows, claim CSV/QR, HTML, client
+  bundles, logs, analytics, and support evidence contain no plaintext gift
+  URL.
+- [ ] Staging verifies owner reveal plus non-owner, unauthenticated,
+  cross-origin, expired, revoked, tampered-ciphertext, and disabled-inventory
+  failures. Redirect headers are no-store/no-referrer and no automatic
+  navigation occurs.
+- [ ] A manager can revoke a selected gift only with its non-secret row
+  reference. Verify database-admin authorization, assigned/revealed-to-revoked
+  and already-expired idempotence, and that no route/result exposes an
+  envelope. Record that revocation prevents future YGF opens but cannot recall
+  a bearer URL already opened or provider-redeemed.
 - [ ] Wallet expiry, credit ledger, first task, provider failure, and balance
   behavior are tested with production-like configuration.
 - [ ] Independent Agent key-digest and request-fingerprint secrets are
@@ -141,6 +161,16 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Any partner OAuth remains disabled until its privacy terms, scopes,
   callback, disconnect path, and owner are approved. Do not advertise a
   provider partnership without a signed relationship.
+- [ ] For every selected Claude reward row, the named owner purchases and
+  records custody of one official transferable gift, verifies recipient
+  eligibility/region and provider expiry, and attaches it through the admin
+  workflow. Do not resell access, share an account, or claim Anthropic
+  sponsorship/endorsement.
+- [ ] Reconcile purchased, assigned, redeemed, expired, and revoked gifts
+  without copying bearer links into an operations sheet. The external
+  provider redemption and customer-support path have named owners. Use the
+  YGF admin gift-revocation form with the row reference; never paste a gift
+  URL or reward UUID as a manager selector.
 - [ ] Generate only the approved beta quantity. Count, secure, and reconcile
   printed claim rows without copying codes into an operations sheet.
 - [ ] A manager creates a pending batch in the admin UI and saves its one-time
@@ -181,7 +211,7 @@ gate is a no-go, not an item to finish after customers arrive.
 
 ## Rollback
 
-Trigger rollback for plaintext batch or API-key exposure, duplicate grants,
+Trigger rollback for plaintext batch, gift-link, or API-key exposure, duplicate grants,
 auth/admin bypass, uncontrolled provider spend, material privacy failure,
 broken claim QRs, incorrect public terms/prices, or sustained
 redemption/task/Agent errors.

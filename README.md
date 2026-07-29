@@ -12,6 +12,9 @@ YGF Bowl-to-Build turns a qualifying meal into one simple AI balance:
    create a personal, limited `ygf_…` API key and connect an
    OpenAI-compatible Agent. Agent calls reserve and settle variable credits
    from the same wallet.
+6. A specially designated claim can also unlock one official prepaid Claude
+   subscription gift when a campaign manager has purchased and securely
+   attached that gift to the claim. Ordinary claims remain credits-only.
 
 The default experience is task-first: **Use AI now** is dominant, **Connect my
 Agent** is secondary, and **Developer API key** is advanced. A physical claim
@@ -32,6 +35,8 @@ is never an API key. Provider credentials stay on the server.
 - fixed-endpoint OpenAI Chat Completions adapter plus deterministic demo provider
 - personal one-time-display API keys and an OpenAI-compatible `/v1` demo
   gateway with wallet-wide limits, revocation, rotation, and idempotency
+- optional code-bound Claude subscription gifts with encrypted-at-rest bearer
+  links, owner-only reveal, expiry/revocation states, and manager assignment
 - manager-only batch, revocation, funnel, inventory, and cost operations
 - safe user-triggered check-in cards plus four collectible Agent Pass fronts,
   shared backs, print PDFs, and private claim renderers
@@ -49,6 +54,9 @@ be committed or logged.
 - Chromium/WebKit browsers installed by Playwright for browser verification
 - a Supabase project and CLI only when using the Supabase modes
 - an OpenAI API project with billing and project limits for live inference
+- a separately purchased official Claude gift for every special reward claim;
+  this repository does not create subscriptions or confer an Anthropic
+  partnership
 
 Install dependencies and browser engines:
 
@@ -80,6 +88,24 @@ deterministic structured output through the same application contract as the
 live provider. Visit `/connect/agent` to create a process-local personal key,
 copy an OpenAI-compatible configuration, and run the bounded demo connection
 test.
+
+To exercise the optional Claude gift path locally, first buy or obtain an
+official transferable gift from `https://claude.ai/gift`, then put its bearer
+URL only in ignored `.env.local` together with a future expiry and a dedicated
+32-byte base64 encryption key:
+
+```env
+YGF_REWARD_ENCRYPTION_KEY=<openssl-rand-base64-32-output>
+YGF_DEMO_CLAUDE_GIFT_URL=https://claude.ai/gift/redeem?gift=<provider-issued-value>
+YGF_DEMO_CLAUDE_GIFT_EXPIRES_AT=<future-ISO-8601-timestamp>
+```
+
+Restart the demo and redeem `CLAUDE26`. It grants the same 3,000 Credits as a
+normal claim plus the configured gift. Omitting both demo gift variables
+disables the special demo claim. Configuring exactly one fails closed during
+repository initialization; configure both together with a future expiry. The
+gift URL is a bearer credential and must never be committed, printed, copied
+into a QR, or placed in a `NEXT_PUBLIC_*` variable.
 
 For a local phone acceptance test that keeps the in-memory demo wallet but
 uses the real OpenAI provider, install `OPENAI_API_KEY` in the ignored
@@ -169,6 +195,10 @@ Production uses the same Supabase and provider variables as Mode 2, with
 The public Agent provider path also fails closed unless
 `YGF_AGENT_GATEWAY_ENABLED=true`; leave it false until the provider, domain,
 retention, billing, and concurrency checks below are complete.
+Install a dedicated `YGF_REWARD_ENCRYPTION_KEY` before assigning any optional
+Claude gift. Production gift URLs are entered through the authenticated admin
+workflow after the matching code inventory exists; they do not come from demo
+environment variables.
 
 ```env
 NEXT_PUBLIC_APP_URL=https://malatangai.com
@@ -201,6 +231,44 @@ pnpm start
 Do not place server secrets in `NEXT_PUBLIC_*` variables. Do not expose the
 Supabase secret/service-role key, provider keys, or admin allowlist to client
 components.
+
+## Optional Claude subscription gift
+
+This is a prepaid benefit attached to selected YGF claim rows, not a second
+authentication system and not a shared Claude account:
+
+1. A manager purchases one official, transferable Claude subscription gift.
+2. In the YGF admin inventory, the manager selects the claim's non-secret row
+   reference, enters the official `https://claude.ai/gift/redeem?gift=<value>` or
+   `https://claude.ai/gift/redeem/<token>` link and its
+   expiry, and submits once.
+3. The server validates the exact HTTPS host, encrypts the link with
+   AES-256-GCM, stores only the ciphertext/envelope and a keyed digest, and
+   never adds it to the claim CSV or QR.
+4. When that claim is redeemed, ownership is atomically bound to the wallet.
+   The success page shows a secondary gift callout; ordinary claims show
+   nothing.
+5. The owner explicitly opens the gift through a same-origin POST. The server
+   rechecks ownership/state, decrypts only at that moment, and returns a
+   no-store, no-referrer redirect to the official destination.
+6. To revoke, a manager enters the same non-secret row reference in **Revoke
+   one Claude Pro gift**. The server invokes the service-role-only
+   `revoke_partner_reward` RPC, which records a revoked (or already expired)
+   state without returning the encrypted envelope. This stops future YGF
+   opens, but cannot retract a bearer URL already opened by a browser or
+   already redeemed by the provider.
+
+Reopening the YGF button is intentionally safe because an interrupted browser
+redirect must not destroy a purchased gift. Actual single redemption is
+enforced by the gift provider. Revoked, expired, malformed, cross-origin, and
+non-owner requests fail closed. No gift URL, complete claim, email, or API key
+belongs in logs or analytics.
+
+YGF is not affiliated with, sponsored by, or endorsed by Anthropic. Do not
+resell Claude access or distribute shared credentials. A production launch
+still requires a real purchased gift per selected code, Anthropic eligibility
+and regional review, named inventory custody, the database migration, and a
+live owner/non-owner smoke.
 
 ## Personal Agent API
 

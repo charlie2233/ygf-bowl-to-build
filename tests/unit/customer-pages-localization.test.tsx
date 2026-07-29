@@ -105,6 +105,13 @@ function readBlobAsText(blob: Blob) {
 }
 
 describe("remaining customer-page localization", () => {
+  it("uses 杨国福 for every natural brand reference in Chinese customer copy", () => {
+    const chinese = JSON.stringify(customerPagesCopy.zh);
+
+    expect(chinese).toContain("杨国福");
+    expect(chinese).not.toContain("YGF");
+  });
+
   let container: HTMLDivElement;
   let root: Root;
 

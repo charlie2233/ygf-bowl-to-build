@@ -14,6 +14,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { locale } = useCampaignLanguage();
   const isAdmin = pathname.startsWith("/admin");
+  const brandName = locale === "zh" && !isAdmin ? "杨国福" : "YGF";
   const copy = siteNavigationCopy[isAdmin ? "en" : locale];
   const isWorkspace =
     pathname === "/wallet" ||
@@ -26,7 +27,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header__inner container">
         <Link className="site-brand" href="/">
-          <span className="site-brand__name">YGF</span>
+          <span className="site-brand__name">{brandName}</span>
           <span className="site-brand__campaign">Bowl-to-Build</span>
         </Link>
 

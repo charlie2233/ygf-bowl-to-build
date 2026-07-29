@@ -53,6 +53,14 @@ const PROVIDER_OUTPUT: TaskOutput = {
 };
 
 describe("post-redemption workspace localization", () => {
+  it("uses 杨国福 rather than the Latin brand in Chinese workspace copy", () => {
+    const chinese = JSON.stringify(workspaceCopy.zh);
+
+    expect(chinese).toContain("杨国福 API Key");
+    expect(chinese).toContain("杨国福 AI");
+    expect(chinese).not.toContain("YGF");
+  });
+
   let container: HTMLDivElement;
   let root: Root;
 

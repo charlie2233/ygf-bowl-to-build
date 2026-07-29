@@ -5,12 +5,16 @@ import Link from "next/link";
 
 import { AgentSetup } from "@/components/agent/agent-setup";
 import { useCampaignLanguage } from "@/components/campaign-language";
+import { ClaudeGiftSuccessCallout } from "@/components/reward/claude-gift";
 import { TaskLauncher } from "@/components/task-launcher";
 import { WalletBalance } from "@/components/wallet-balance";
 import type { BrowserWallet } from "@/lib/http/campaign-dto";
 import { workspaceCopy } from "@/lib/i18n/workspace";
+import type { PartnerRewardSummary } from "@/lib/rewards/types";
 
-export function RedeemSuccessView() {
+export function RedeemSuccessView({
+  reward,
+}: Readonly<{ reward?: PartnerRewardSummary | null }> = {}) {
   const { locale } = useCampaignLanguage();
   const copy = workspaceCopy[locale].redeemSuccess;
 
@@ -40,6 +44,7 @@ export function RedeemSuccessView() {
         <Link className="redemption-state__share" href="/share">
           {copy.share}
         </Link>
+        {reward ? <ClaudeGiftSuccessCallout reward={reward} /> : null}
       </div>
     </section>
   );

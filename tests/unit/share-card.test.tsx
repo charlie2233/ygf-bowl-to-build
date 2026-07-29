@@ -189,7 +189,9 @@ describe("safe share card", () => {
 
     await act(async () => {
       button?.click();
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await vi.waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      });
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);

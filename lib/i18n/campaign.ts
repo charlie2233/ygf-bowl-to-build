@@ -47,6 +47,7 @@ export type CampaignHomeCopy = Readonly<{
     guidance: string;
     imageAlt: string;
     phoneAriaLabel: string;
+    rewardContext: string;
     receipt: Readonly<{
       exampleOnly: string;
       expires: string;
@@ -98,6 +99,8 @@ export const campaignHomeCopy: Record<
         "Spend $25+ at YGF, get an AI card at checkout, then scan or enter its private code to unlock 3,000 AI Credits for 14 days.",
       guidance:
         "New here? Start with 01. Agent setup is optional after redemption.",
+      rewardContext:
+        "Every valid code adds 3,000 AI Credits. Selected special codes may also include a Claude Pro gift.",
       claimCredits: "Scan or enter my code",
       connectAgent: "Connect Agent (optional)",
       disclaimer:
@@ -208,12 +211,14 @@ export const campaignHomeCopy: Record<
       titleLineOne: "吃一碗。",
       titleLineTwo: "用 AI 开始创造。",
       subhead:
-        "在 YGF 单笔消费满 $25，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 AI Credits，有效 14 天。",
+        "在杨国福单笔消费满 $25，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 杨国福 AI Credits，有效 14 天。",
       guidance: "第一次使用？从 01 开始。Agent 连接是兑换后的可选功能。",
+      rewardContext:
+        "每个有效兑换码均可获得 3,000 杨国福 AI Credits；部分特别兑换码还可能附带一份 Claude Pro 礼赠。",
       claimCredits: "扫码或输入兑换码",
       connectAgent: "连接 Agent（可选）",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
-      imageAlt: "真实的 YGF 麻辣烫新鲜食材柜台",
+      imageAlt: "真实的杨国福麻辣烫新鲜食材柜台",
       phoneAriaLabel:
         "带私人二维码和纸质兑换码的 AI 算力卡示意图；仅作示例，并非真实兑换码",
       receipt: {
@@ -252,7 +257,7 @@ export const campaignHomeCopy: Record<
       heading: "简单三步即可开始。",
       description:
         "单笔消费满 $25，结账时领取 AI 算力卡。兑换后获得 3,000 AI Credits，有效 14 天。",
-      photoAlt: "YGF 柜台中可自由选择的丰富食材",
+      photoAlt: "杨国福柜台中可自由选择的丰富食材",
       steps: [
         {
           title: "领取 AI 算力卡",
@@ -283,7 +288,7 @@ export const campaignHomeCopy: Record<
         {
           question: "这是 USC 官方活动吗？",
           answer:
-            "本活动由 YGF 面向 USC 社区提供，并非由南加州大学赞助、认可或管理。",
+            "本活动由杨国福面向 USC 社区提供，并非由南加州大学赞助、认可或管理。",
         },
         {
           question: "Credits 什么时候到期？",
@@ -321,6 +326,8 @@ export const campaignHomeCopy: Record<
         "Gasta $25+ en YGF, recibe una tarjeta de IA en caja y escanea o escribe su código privado para desbloquear 3,000 AI Credits durante 14 días.",
       guidance:
         "¿Es tu primera vez? Empieza por 01. Conectar un Agent es opcional después del canje.",
+      rewardContext:
+        "Cada código válido añade 3,000 créditos de IA. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro.",
       claimCredits: "Escanear o escribir código",
       connectAgent: "Agent (opcional)",
       disclaimer:
@@ -434,6 +441,8 @@ export const campaignHomeCopy: Record<
         "Dépensez 25 $ ou plus chez YGF, recevez une carte IA en caisse, puis scannez ou saisissez son code privé pour débloquer 3,000 AI Credits pendant 14 jours.",
       guidance:
         "Première visite ? Commencez par 01. La connexion d’un Agent est facultative après l’activation.",
+      rewardContext:
+        "Chaque code valide ajoute 3 000 crédits IA. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro.",
       claimCredits: "Scanner ou saisir le code",
       connectAgent: "Agent (facultatif)",
       disclaimer:
@@ -547,6 +556,8 @@ export const campaignHomeCopy: Record<
         "Потратьте в YGF от $25, получите AI-карту на кассе и отсканируйте или введите её личный код, чтобы открыть 3,000 AI Credits на 14 дней.",
       guidance:
         "Впервые здесь? Начните с 01. Подключение Agent — необязательный шаг после активации.",
+      rewardContext:
+        "Каждый действительный код добавляет 3 000 AI Credits. Некоторые специальные коды также могут включать подарок Claude Pro.",
       claimCredits: "Сканировать или ввести код",
       connectAgent: "Agent (необязательно)",
       disclaimer:

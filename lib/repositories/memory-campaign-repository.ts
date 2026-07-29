@@ -22,6 +22,7 @@ import type {
   CommitSpendInput,
   CreateBatchInput,
   DashboardSnapshot,
+  GetPartnerRewardInput,
   GetWalletInput,
   ListHistoryInput,
   PromoBatch,
@@ -29,6 +30,7 @@ import type {
   RecordSessionInput,
   RedeemCodeInput,
   RedemptionResult,
+  RevealPartnerRewardInput,
   RefundSpendInput,
   ReserveSpendInput,
   RevokedCode,
@@ -38,10 +40,19 @@ import type {
   ValidateCodeInput,
   ValidateCodeResult,
 } from "@/lib/repositories/campaign-repository";
+import { isPartnerRewardSecretEnvelope } from "@/lib/rewards/secret";
+import type {
+  PartnerRewardReveal,
+  PartnerRewardSecretEnvelope,
+  PartnerRewardState,
+  PartnerRewardSummary,
+} from "@/lib/rewards/types";
 
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
 const DEMO_CODE_HASH =
   "98fad4549c16908f2b2ed175655e5e17982a0331665fe45fef8885e3d39bbbbb";
+const DEMO_CLAUDE_CODE_HASH =
+  "c8404c77a1a90d62a01ba3f673837f04d432936b98b9d67e50865e3ed069b885";
 
 interface StoredCode {
   id: string;
@@ -55,6 +66,17 @@ interface StoredCode {
   createdAt: string;
 }
 
+interface StoredPartnerReward {
+  codeId: string;
+  expiresAt: string;
+  id: string;
+  kind: "claude-pro-gift";
+  revealedAt?: string;
+  revealedBy?: string;
+  secret: PartnerRewardSecretEnvelope;
+  state: PartnerRewardState;
+}
+
 type StoredBatch = PromoBatch;
 
 interface IdempotentResult<T> {
@@ -63,8 +85,26 @@ interface IdempotentResult<T> {
 }
 
 export interface MemoryCampaignRepositoryOptions {
+  demoPartnerReward?: {
+    expiresAt: string;
+    secret: PartnerRewardSecretEnvelope;
+  };
   demoMode?: boolean;
   now?: () => Date;
+}
+
+export interface AssignMemoryPartnerRewardInput {
+  codeHash: string;
+  expiresAt: string;
+  secret: PartnerRewardSecretEnvelope;
+}
+
+/**
+ * Narrow demo-admin seam used only by RepositoryAdminCodeGateway. It accepts a
+ * stored code hash, never a bearer link, and returns metadata only.
+ */
+export interface RevokeMemoryPartnerRewardInput {
+  codeHash: string;
 }
 
 export interface MemoryAgentReserveInput {
@@ -107,6 +147,20 @@ function cloneSession(session: TaskSession): TaskSession {
   return { ...session };
 }
 
+function cloneReward(
+  reward: StoredPartnerReward,
+): PartnerRewardSummary {
+  return {
+    expiresAt: reward.expiresAt,
+    id: reward.id,
+    kind: reward.kind,
+    ...(reward.revealedAt === undefined
+      ? {}
+      : { revealedAt: reward.revealedAt }),
+    state: reward.state,
+  };
+}
+
 function validIdentifier(value: string): boolean {
   return (
     typeof value === "string" &&
@@ -138,6 +192,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   readonly #now: () => Date;
   readonly #batches = new Map<string, StoredBatch>();
   readonly #codes = new Map<string, StoredCode>();
+  readonly #partnerRewards = new Map<string, StoredPartnerReward>();
   readonly #wallets = new Map<string, CreditWallet>();
   readonly #reservations = new Map<string, SpendReservation>();
   readonly #redemptions = new Map<
@@ -166,6 +221,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   #sequence = 0;
 
   constructor({
+    demoPartnerReward,
     demoMode = false,
     now = () => new Date(),
   }: MemoryCampaignRepositoryOptions = {}) {
@@ -176,7 +232,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
       this.#batches.set("batch-demo", {
         id: "batch-demo",
         name: "Development demo",
-        codeCount: 1,
+        codeCount: demoPartnerReward ? 2 : 1,
         createdAt,
       });
       this.#codes.set(DEMO_CODE_HASH, {
@@ -186,6 +242,34 @@ export class MemoryCampaignRepository implements CampaignRepository {
         state: "eligible",
         createdAt,
       });
+      if (demoPartnerReward) {
+        const expiresAt = new Date(demoPartnerReward.expiresAt);
+        if (
+          !Number.isFinite(expiresAt.getTime()) ||
+          expiresAt.getTime() <= this.currentTime().getTime() ||
+          !isPartnerRewardSecretEnvelope(
+            demoPartnerReward.secret,
+          )
+        ) {
+          domainError("BATCH_INVALID");
+        }
+        const codeId = "code-demo-claude";
+        this.#codes.set(DEMO_CLAUDE_CODE_HASH, {
+          id: codeId,
+          batchId: "batch-demo",
+          codeHash: DEMO_CLAUDE_CODE_HASH,
+          state: "eligible",
+          createdAt,
+        });
+        this.#partnerRewards.set(codeId, {
+          codeId,
+          expiresAt: expiresAt.toISOString(),
+          id: "reward-demo-claude",
+          kind: "claude-pro-gift",
+          secret: { ...demoPartnerReward.secret },
+          state: "assigned",
+        });
+      }
     }
   }
 
@@ -311,6 +395,142 @@ export class MemoryCampaignRepository implements CampaignRepository {
   async getWallet({ userId }: GetWalletInput): Promise<CreditWallet> {
     validateUserId(userId);
     return cloneWallet(this.requireWallet(userId));
+  }
+
+  private rewardState(
+    reward: StoredPartnerReward,
+    now: Date,
+  ): PartnerRewardState {
+    if (
+      (reward.state === "assigned" ||
+        reward.state === "revealed") &&
+      new Date(reward.expiresAt).getTime() <= now.getTime()
+    ) {
+      reward.state = "expired";
+    }
+    return reward.state;
+  }
+
+  async assignPartnerReward(
+    input: AssignMemoryPartnerRewardInput,
+  ): Promise<PartnerRewardSummary> {
+    const codeHash = input.codeHash.toLowerCase();
+    const code = this.#codes.get(codeHash);
+    const expiresAt = new Date(input.expiresAt);
+    if (
+      !HASH_PATTERN.test(codeHash) ||
+      !code ||
+      this.codeState(code, this.currentTime()) !== "eligible" ||
+      !Number.isFinite(expiresAt.getTime()) ||
+      expiresAt.getTime() <= this.currentTime().getTime() ||
+      !isPartnerRewardSecretEnvelope(input.secret)
+    ) {
+      throw new Error("PARTNER_REWARD_NOT_ASSIGNABLE");
+    }
+    if (
+      this.#partnerRewards.has(code.id) ||
+      [...this.#partnerRewards.values()].some(
+        (reward) =>
+          reward.secret.digest === input.secret.digest,
+      )
+    ) {
+      throw new Error("PARTNER_REWARD_ALREADY_ASSIGNED");
+    }
+
+    const reward: StoredPartnerReward = {
+      codeId: code.id,
+      expiresAt: expiresAt.toISOString(),
+      id: this.nextId("reward"),
+      kind: "claude-pro-gift",
+      secret: { ...input.secret },
+      state: "assigned",
+    };
+    this.#partnerRewards.set(code.id, reward);
+    return cloneReward(reward);
+  }
+
+  async revokePartnerRewardByCodeHash({
+    codeHash: untrustedCodeHash,
+  }: RevokeMemoryPartnerRewardInput): Promise<PartnerRewardSummary> {
+    const codeHash = untrustedCodeHash.toLowerCase();
+    if (!HASH_PATTERN.test(codeHash)) {
+      throw new Error("PARTNER_REWARD_NOT_FOUND");
+    }
+    const code = this.#codes.get(codeHash);
+    const reward = code
+      ? this.#partnerRewards.get(code.id)
+      : undefined;
+    if (!reward) {
+      throw new Error("PARTNER_REWARD_NOT_FOUND");
+    }
+
+    const state = this.rewardState(reward, this.currentTime());
+    if (state === "assigned" || state === "revealed") {
+      reward.state = "revoked";
+    }
+    return cloneReward(reward);
+  }
+
+  async getPartnerReward({
+    userId,
+  }: GetPartnerRewardInput): Promise<PartnerRewardSummary | null> {
+    validateUserId(userId);
+    const code = [...this.#codes.values()].find(
+      (candidate) =>
+        candidate.state === "redeemed" &&
+        candidate.redeemedBy === userId,
+    );
+    if (!code) {
+      return null;
+    }
+    const reward = this.#partnerRewards.get(code.id);
+    if (!reward) {
+      return null;
+    }
+    this.rewardState(reward, this.currentTime());
+    return cloneReward(reward);
+  }
+
+  async revealPartnerReward({
+    userId,
+  }: RevealPartnerRewardInput): Promise<PartnerRewardReveal> {
+    validateUserId(userId);
+    const code = [...this.#codes.values()].find(
+      (candidate) =>
+        candidate.state === "redeemed" &&
+        candidate.redeemedBy === userId,
+    );
+    const reward =
+      code === undefined
+        ? undefined
+        : this.#partnerRewards.get(code.id);
+    if (!reward) {
+      return domainError("PARTNER_REWARD_NOT_FOUND");
+    }
+
+    const state = this.rewardState(reward, this.currentTime());
+    if (state === "expired") {
+      return domainError("PARTNER_REWARD_EXPIRED");
+    }
+    if (state === "revoked") {
+      return domainError("PARTNER_REWARD_REVOKED");
+    }
+    if (
+      reward.revealedBy !== undefined &&
+      reward.revealedBy !== userId
+    ) {
+      return domainError("PARTNER_REWARD_NOT_FOUND");
+    }
+    if (state === "assigned") {
+      reward.state = "revealed";
+      reward.revealedAt = this.currentTime().toISOString();
+      reward.revealedBy = userId;
+    }
+
+    return {
+      reward: cloneReward(reward),
+      secret: { ...reward.secret },
+    };
   }
 
   /**
@@ -941,6 +1161,9 @@ export class MemoryCampaignRepository implements CampaignRepository {
           : { revokedAt: code.revokedAt }),
         createdAt: code.createdAt,
       })),
+      partnerRewards: [...this.#partnerRewards.values()].map(
+        cloneReward,
+      ),
       wallets: [...this.#wallets.values()].map(cloneWallet),
       ledgerEntries: [...this.#reservations.values()].map(
         cloneReservation,

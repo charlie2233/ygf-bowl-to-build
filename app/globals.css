@@ -3681,6 +3681,188 @@ textarea {
   font-size: 0.9rem;
 }
 
+.claude-gift-callout {
+  display: grid;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e7c982;
+  border-radius: var(--radius-control);
+  margin-top: 1.5rem;
+  background: #fffaf0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  text-align: left;
+}
+
+.claude-gift-callout > svg {
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-primary);
+}
+
+.claude-gift-callout h2,
+.claude-gift-callout p {
+  margin: 0;
+}
+
+.claude-gift-callout h2 {
+  color: #111827;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.redemption-state .claude-gift-callout p {
+  margin-top: 0.25rem;
+  color: #5b4a34;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.claude-gift-callout .button {
+  text-align: center;
+}
+
+.claude-gift-page {
+  display: grid;
+  min-height: calc(100vh - var(--header-height));
+  padding: clamp(2.5rem, 7vw, 5.5rem) var(--container-gutter);
+  background:
+    radial-gradient(circle at 72% 15%, rgb(242 184 75 / 18%), transparent 24rem),
+    var(--color-background);
+  place-items: center;
+}
+
+.claude-gift-card {
+  width: min(100%, 42rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-primary);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-surface);
+}
+
+.claude-gift-card__header,
+.claude-gift-card__terminal {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.claude-gift-card__header > svg,
+.claude-gift-card__terminal > svg {
+  width: 2.6rem;
+  height: 2.6rem;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.claude-gift-card h1,
+.claude-gift-card h2,
+.claude-gift-card p {
+  margin: 0;
+}
+
+.claude-gift-card h1 {
+  color: #0f1725;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+}
+
+.claude-gift-card__header p,
+.claude-gift-card__terminal p {
+  margin-top: 0.7rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.claude-gift-card__availability {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d8e7df;
+  border-radius: var(--radius-control);
+  margin-top: 1.5rem;
+  background: #f3faf7;
+}
+
+.claude-gift-card__availability strong {
+  color: var(--color-success);
+}
+
+.claude-gift-card__availability time {
+  color: #4b5563;
+  font-size: 0.86rem;
+}
+
+.claude-gift-card__open {
+  margin-top: 1rem;
+}
+
+.claude-gift-card__open .button {
+  width: 100%;
+}
+
+.claude-gift-card__open .button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.claude-gift-card__open > p {
+  margin-top: 0.65rem;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.claude-gift-card__privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-left: 3px solid var(--color-accent);
+  margin-top: 1.5rem;
+  background: #fffaf0;
+}
+
+.claude-gift-card__privacy > svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.claude-gift-card__privacy h2 {
+  font-size: 0.95rem;
+}
+
+.claude-gift-card__privacy p {
+  margin-top: 0.3rem;
+  color: #5b4a34;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.claude-gift-card__disclaimer {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 1.5rem !important;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.claude-gift-card__back {
+  display: inline-flex;
+  margin-top: 1.25rem;
+  color: var(--color-primary);
+  font-weight: 750;
+  text-underline-offset: 0.2rem;
+}
+
 .wallet-next-steps {
   position: relative;
   z-index: 1;
@@ -4107,6 +4289,24 @@ textarea {
 @media (max-width: 520px) {
   .redemption-state__actions {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .claude-gift-callout {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .claude-gift-callout .button {
+    grid-column: 1 / -1;
+  }
+
+  .claude-gift-card__header,
+  .claude-gift-card__terminal {
+    flex-direction: column;
+  }
+
+  .claude-gift-card__availability {
+    align-items: flex-start;
     flex-direction: column;
   }
 

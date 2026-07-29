@@ -36,6 +36,7 @@ import { GET as authCallback } from "@/app/auth/callback/route";
 import AgentConnectPage from "@/app/connect/agent/page";
 import AuthPage from "@/app/auth/page";
 import RedeemSuccessPage from "@/app/redeem/success/page";
+import ClaudeProRewardPage from "@/app/reward/claude-pro/page";
 import SharePage from "@/app/share/page";
 import WalletPage from "@/app/wallet/page";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
@@ -61,11 +62,19 @@ describe("authentication pages", () => {
   const exchangeCodeForSession = vi.fn();
   const getWallet =
     vi.fn<ReturnType<typeof getCampaignRepository>["getWallet"]>();
+  const getPartnerReward =
+    vi.fn<
+      ReturnType<
+        typeof getCampaignRepository
+      >["getPartnerReward"]
+    >();
 
   beforeEach(() => {
     vi.clearAllMocks();
     exchangeCodeForSession.mockReset();
     getWallet.mockReset();
+    getPartnerReward.mockReset();
+    getPartnerReward.mockResolvedValue(null);
     taskWorkflowMocks.getEarliestCompletedTask.mockReset();
     taskWorkflowMocks.getEarliestCompletedTask.mockResolvedValue(null);
     exchangeCodeForSession.mockResolvedValue({ error: null });
@@ -74,8 +83,10 @@ describe("authentication pages", () => {
     } as never);
     vi.mocked(resolveAuthRuntime).mockReturnValue({ mode: "demo" });
     vi.mocked(getCampaignRepository).mockReturnValue({
+      getPartnerReward,
       getWallet,
       redeemCode: vi.fn(),
+      revealPartnerReward: vi.fn(),
       validateCode: vi.fn(),
     });
   });
@@ -275,6 +286,30 @@ describe("authentication pages", () => {
     expect(html).toContain("Use YGF AI instead");
     expect(html).toContain("Developer API key");
     expect(getWallet).toHaveBeenCalledWith({ userId: "user-1" });
+  });
+
+  it("keeps a valid Claude gift page available after the wallet has expired", async () => {
+    vi.mocked(getAuthenticatedUser).mockResolvedValue({
+      id: "user-1",
+      isAnonymous: false,
+    });
+    getWallet.mockResolvedValue({
+      ...ACTIVE_WALLET,
+      expiresAt: "2020-01-01T00:00:00.000Z",
+    });
+    getPartnerReward.mockResolvedValue({
+      expiresAt: "2099-08-10T12:00:00.000Z",
+      id: "reward-1",
+      kind: "claude-pro-gift",
+      state: "assigned",
+    });
+
+    const html = renderToStaticMarkup(await ClaudeProRewardPage());
+
+    expect(html).toContain("Open private gift");
+    expect(getPartnerReward).toHaveBeenCalledWith({ userId: "user-1" });
+    expect(getWallet).not.toHaveBeenCalled();
+    expect(navigationMocks.redirect).not.toHaveBeenCalled();
   });
 
   it("routes anonymous wallet users to account linking before Agent setup", async () => {

@@ -127,6 +127,32 @@ describe("site language UI", () => {
     expect(navigationMocks.refresh).not.toHaveBeenCalled();
   });
 
+  it("switches the customer-facing brand with the locale but keeps admin in English", async () => {
+    await renderClient(<SiteHeader />);
+
+    expect(container.querySelector(".site-brand__name")?.textContent).toBe(
+      "YGF",
+    );
+
+    const selector = container.querySelector<HTMLSelectElement>("select");
+    await act(async () => {
+      if (selector) {
+        selector.value = "zh";
+        selector.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+
+    expect(container.querySelector(".site-brand__name")?.textContent).toBe(
+      "杨国福",
+    );
+
+    navigationMocks.usePathname.mockReturnValue("/admin/dashboard");
+    await renderClient(<SiteHeader />, "zh");
+    expect(container.querySelector(".site-brand__name")?.textContent).toBe(
+      "YGF",
+    );
+  });
+
   it("shows localized selectors and navigation on public and workspace routes, but not admin", async () => {
     window.localStorage.setItem(SITE_LOCALE_STORAGE_KEY, "zh");
     document.cookie = `${SITE_LOCALE_COOKIE}=zh; Path=/; SameSite=Lax`;

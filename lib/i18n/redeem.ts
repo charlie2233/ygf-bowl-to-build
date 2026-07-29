@@ -66,7 +66,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "What happens next",
       description:
-        "We add 3,000 credits in this browser. Then choose Study, Coding, Career, or Pick My Bowl—no login screen.",
+        "Every valid code adds 3,000 credits in this browser. Selected special codes may also include a Claude Pro gift. Then choose Study, Coding, Career, or Pick My Bowl—no login screen.",
     },
     form: {
       codeLabel: "8-character card code",
@@ -110,10 +110,10 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
   zh: {
     backToOffer: "返回活动页",
     title: "解锁 3,000 AI Credits",
-    intro: "扫描 YGF AI 算力卡背面的私人二维码，或输入卡片上的 8 位兑换码。",
+    intro: "扫描杨国福 AI 算力卡背面的私人二维码，或输入卡片上的 8 位兑换码。",
     preview: {
-      ariaLabel: "带有示例兑换码的 YGF AI 算力卡示意图",
-      title: "YGF AI 算力卡",
+      ariaLabel: "带有示例兑换码的杨国福 AI 算力卡示意图",
+      title: "杨国福 AI 算力卡",
       privateSide: "私人兑换面",
       reward: "可领取",
       cardCode: "示例兑换码",
@@ -122,7 +122,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "接下来会发生什么",
       description:
-        "我们会在此浏览器中加入 3,000 Credits。然后直接选择学习、编程、求职或下一碗，无需登录。",
+        "每个有效兑换码都会在此浏览器中加入 3,000 杨国福 AI Credits；部分特别兑换码还可能附带一份 Claude Pro 礼赠。然后直接选择学习、编程、求职或下一碗，无需登录。",
     },
     form: {
       codeLabel: "卡片上的 8 位兑换码",
@@ -172,7 +172,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "Qué sucede después",
       description:
-        "Añadimos 3,000 créditos en este navegador. Después elige Estudio, Programación, Carrera o Elige mi bowl, sin iniciar sesión.",
+        "Cada código válido añade 3,000 créditos en este navegador. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro. Después elige Estudio, Programación, Carrera o Elige mi bowl, sin iniciar sesión.",
     },
     form: {
       codeLabel: "Código de 8 caracteres",
@@ -231,7 +231,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "Et ensuite ?",
       description:
-        "Nous ajoutons 3 000 crédits dans ce navigateur. Choisissez ensuite Études, Code, Carrière ou Choisir mon bowl, sans connexion.",
+        "Chaque code valide ajoute 3 000 crédits dans ce navigateur. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro. Choisissez ensuite Études, Code, Carrière ou Choisir mon bowl, sans connexion.",
     },
     form: {
       codeLabel: "Code de carte à 8 caractères",
@@ -289,7 +289,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "Что будет дальше",
       description:
-        "Мы добавим 3 000 Credits в этом браузере. Затем выберите Учёбу, Программирование, Карьеру или Мой боул — вход не нужен.",
+        "Каждый действительный код добавляет 3 000 Credits в этом браузере. Некоторые специальные коды также могут включать подарок Claude Pro. Затем выберите Учёбу, Программирование, Карьеру или Мой боул — вход не нужен.",
     },
     form: {
       codeLabel: "8-значный код карты",

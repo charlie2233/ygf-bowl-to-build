@@ -8,6 +8,10 @@ import type {
   TaskSession,
   TaskType,
 } from "@/lib/campaign/types";
+import type {
+  PartnerRewardReveal,
+  PartnerRewardSummary,
+} from "@/lib/rewards/types";
 
 export interface ValidateCodeInput {
   code: string;
@@ -34,6 +38,14 @@ export interface RedemptionResult {
 }
 
 export interface GetWalletInput {
+  userId: string;
+}
+
+export interface GetPartnerRewardInput {
+  userId: string;
+}
+
+export interface RevealPartnerRewardInput {
   userId: string;
 }
 
@@ -132,6 +144,12 @@ export interface CampaignRepository {
   validateCode(input: ValidateCodeInput): Promise<ValidateCodeResult>;
   redeemCode(input: RedeemCodeInput): Promise<RedemptionResult>;
   getWallet(input: GetWalletInput): Promise<CreditWallet>;
+  getPartnerReward(
+    input: GetPartnerRewardInput,
+  ): Promise<PartnerRewardSummary | null>;
+  revealPartnerReward(
+    input: RevealPartnerRewardInput,
+  ): Promise<PartnerRewardReveal>;
   reserveSpend(input: ReserveSpendInput): Promise<SpendResult>;
   commitSpend(input: CommitSpendInput): Promise<SpendResult>;
   refundSpend(input: RefundSpendInput): Promise<SpendResult>;

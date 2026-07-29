@@ -45,8 +45,11 @@ describe("public campaign pages", () => {
     const handoffLink = body.querySelector<HTMLAnchorElement>(
       '[data-campaign-handoff] a[href="/redeem"]',
     );
+    const heroVideo = body.querySelector<HTMLVideoElement>(
+      ".marketing-hero__video",
+    );
     const heroImage = Array.from(body.querySelectorAll("img")).find((image) =>
-      /fresh yangguofu ingredient wall/i.test(
+      /overhead bowl of spicy malatang/i.test(
         image.getAttribute("alt") ?? "",
       ),
     );
@@ -80,7 +83,12 @@ describe("public campaign pages", () => {
     expect(heroImage?.getAttribute("loading")).toBe("eager");
     expect(
       decodeURIComponent(heroImage?.getAttribute("src") ?? ""),
-    ).toContain("/media/ygf-fresh-bar-hero.jpg");
+    ).toContain("/media/ygf-cinematic-hero-poster.webp");
+    expect(heroVideo).toBeTruthy();
+    expect(heroVideo?.getAttribute("aria-hidden")).toBe("true");
+    expect(heroVideo?.getAttribute("preload")).toBe("none");
+    expect(heroVideo?.querySelectorAll("source")).toHaveLength(0);
+    expect(heroVideo?.hasAttribute("poster")).toBe(false);
     expect(
       decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
     ).toContain(

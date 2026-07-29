@@ -1,6 +1,6 @@
 import { Clock3 } from "lucide-react";
-import Image from "next/image";
 
+import { HeroVideo } from "@/components/marketing/hero-video";
 import { ButtonLink } from "@/components/ui/button";
 import {
   campaignHomeCopy,
@@ -31,14 +31,10 @@ export function Hero({
       className="marketing-hero"
       data-motion-hero
     >
-      <Image
-        alt={copy.imageAlt}
-        className="marketing-hero__image"
-        fill
-        loading="eager"
-        priority
-        sizes="100vw"
-        src="/media/ygf-fresh-bar-hero.jpg"
+      <HeroVideo
+        imageAlt={copy.imageAlt}
+        pauseLabel={copy.pauseMotion}
+        playLabel={copy.playMotion}
       />
 
       <div className="marketing-hero__inner container">

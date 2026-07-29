@@ -101,11 +101,11 @@ fragment was removed before submission, and the rendered balance changed from
 
 | Comparison | Reference evidence | Final rendered treatment | Closure |
 | --- | --- | --- | --- |
-| Above-fold copy | “Buy a bowl. Build with AI.”, qualifying-purchase subhead, claim/how-it-works actions, USC disclaimer | Exact canonical English H1 and approved subhead remain; the explicitly requested secondary action is now numbered `02 Connect my Agent`, while `How it works` remains in navigation | Matched with requested CTA evolution |
+| Above-fold copy | “Buy a bowl. Build with AI.”, qualifying-purchase subhead, claim/how-it-works actions, USC disclaimer | Exact canonical English H1 and approved subhead remain; the explicitly requested secondary action is now `Step 2 Connect my Agent`, while `How it works` remains in navigation | Matched with requested CTA evolution |
 | First-viewport composition | Editorial copy left, dominant bowl media, receipt/wallet phone at right | Same visual order and one dominant media frame; phone remains illustrative and explicitly says its claim is not live | Matched |
 | Typography and hierarchy | Large dark editorial H1 with restrained supporting copy | Bold system/Geist-compatible display scale, short line lengths, and quieter control type; one H1 per page | Matched |
-| Palette and surfaces | Warm cream, true white, burgundy, gold, teal/sage | Shared tokens use the locked values without university colors/marks; the real-photo hero has one cream readability gradient | Matched with accessible media overlay |
-| Media treatment | Overhead malatang hero with no embedded words or logos | The first viewport now uses an optimized derivative of the user-provided YGF fresh-ingredient wall, with the store wordmark retained in the uncropped source, localized alt text, controlled desktop/mobile crops, and a cream readability overlay; the separate ingredient-counter frame remains below the fold | Requested authentic-photo upgrade implemented; brand-rights confirmation pending |
+| Palette and surfaces | Warm cream, true white, burgundy, gold, teal/sage | Shared tokens use the locked values without university colors/marks; the cinematic hero has one cream readability gradient | Matched with accessible media overlay |
+| Media treatment | Overhead malatang hero with no embedded words or logos | The first viewport uses a stable generated cinematic bowl loop with a localized, eager poster fallback, controlled desktop/mobile crops, and a cream readability overlay; the real ingredient-counter frame remains below the fold | Requested video upgrade implemented; generated-media approval pending |
 | Container model | Open landing layout and bounded white workflow/result panels | Marketing stays open; wallet/task/admin use thin borders, 18px radii, restrained shadows, and stable wide containers | Matched |
 | Controls and icons | Clear rectangular actions and simple line metaphors | Semantic buttons/links, Lucide or code-native line icons, visible focus, and no model/provider jargon on the default path | Matched |
 | Language access | Not present in the accepted concept | Compact native selector adds English, Chinese, Spanish, French, and Russian; selection persists locally and updates document language | Intentional requested enhancement |
@@ -132,13 +132,44 @@ fragment was removed before submission, and the rendered balance changed from
    project rather than emulating mobile Safari in Chromium. Both passed
    locally. Firefox, physical device/camera behavior, and
    assistive-technology manual review remain external coverage.
-6. The 2026-07-28 home enhancement keeps redemption as step 01 and promotes
-   the already built first-party Agent setup as step 02. It adds no external
+6. The 2026-07-28 home enhancement keeps redemption as Step 1 and promotes
+   the already built first-party Agent setup as Step 2. It adds no external
    partner claim and does not make API knowledge part of redemption.
 7. The initial browser-native motion layer was superseded on 2026-07-28 by
    locked `gsap` and `@gsap/react` dependencies. The runtime is bundled
    locally with scoped cleanup and responsive/reduced-motion branches; no CDN,
    remote motion runtime, Three.js, or Remotion dependency is used.
+8. The 2026-07-29 cinematic hero remains progressive enhancement: video
+   sources are added only after client policy permits motion and network use.
+   The poster remains the canonical no-JavaScript, reduced-motion,
+   browser-reported data-saver/2G, and autoplay-failure first viewport.
+
+### July 29 cinematic hero verification
+
+The selected Sora 2 Pro output is an eight-second 1280 × 720 bowl animation.
+The runtime uses a 13.433-second forward/reverse encode so the loop returns to
+its starting composition without the original hard reset. End-to-start SSIM
+improved from 0.378 on the direct loop to 0.918 on the selected encode. The
+runtime MP4 is 2,122,006 bytes and the WebM is 1,796,349 bytes; both are
+silent. Four representative content frames plus an exact first/last seam pair
+were inspected with stable bowl geometry, ingredients, chopsticks, and
+background. No person, embedded word, logo, private QR, redemption code, API
+key, or university mark appears.
+
+| Check | Concept intent | Implemented treatment |
+| --- | --- | --- |
+| Composition | Food-led motion without displacing the offer | Bowl remains on the right; existing copy and phone hierarchy stay unchanged |
+| Start-up | No blank or black first paint | Eager 1280 × 720 WebP poster is present before client hydration and remains until `playing` |
+| Motion policy | Motion must not be mandatory | Reduced motion, browser-reported data saver/2G, play rejection, and no-JavaScript retain the poster |
+| Performance | Cinematic motion without the 4.9 MB source payload | WebM is preferred, MP4 is fallback, audio is removed, and background-tab playback pauses |
+| Accessibility | Preserve localized image meaning and let users stop motion | Poster keeps accurate localized alt text; the video is `aria-hidden` and muted; a localized keyboard-accessible control pauses/resumes it |
+| Responsive crop | Keep offer legible on desktop and phone | Poster and video share the same cover crop and cream readability layer at each breakpoint |
+
+The accepted local in-app-browser playback captures are retained as review
+evidence at:
+
+- `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/desktop-playing-iab.png`
+- `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/iphone-playing-iab.png`
 
 ### July 29 authentic cover-photo verification
 
@@ -196,8 +227,8 @@ page error, and the production images contain no Next.js development badge.
 
 - Copy, typography, warm palette, dominant bowl crop, phone placement, open
   container model, and section order remain aligned with the references.
-- The requested language selector and numbered Agent step 02 are the only
-  material first-viewport information additions; claim remains step 01 and
+- The requested language selector and numbered Agent Step 2 are the only
+  material first-viewport information additions; claim remains Step 1 and
   visually dominant.
 - The first GSAP attempt initialized before the parent scope ref existed; the
   motion controller now runs as a hook owned by that scope and is proven by
@@ -215,7 +246,7 @@ No material copy mismatch remains:
 - H1: exact canonical text.
 - Offer: qualifying purchase language and $25+ detail remain consistent.
 - Primary action: `Claim Build Credits`.
-- Secondary action: `Connect my Agent` (numbered step 02); `How it works`
+- Secondary action: `Connect my Agent` (numbered Step 2); `How it works`
   remains in the public navigation.
 - Disclaimer: YGF for the USC community, with no USC sponsorship or
   endorsement claim.

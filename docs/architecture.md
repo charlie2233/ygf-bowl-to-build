@@ -38,10 +38,10 @@ in English. Non-English views show a localized availability notice, and those
 English content regions are explicitly tagged `lang="en"` for assistive
 technology rather than presenting an incomplete or unreviewed translation.
 
-The first viewport shows two numbered paths: **01 Claim Build Credits** remains
-the dominant ordinary-user action, while **02 Connect my Agent** links to the
-existing identity-gated `/connect/agent` flow. It does not bypass redemption,
-wallet ownership, identity upgrade, or key policy.
+The first viewport shows two numbered paths: **Step 1 Claim Build Credits**
+remains the dominant ordinary-user action, while **Step 2 Connect my Agent**
+links to the existing identity-gated `/connect/agent` flow. It does not bypass
+redemption, wallet ownership, identity upgrade, or key policy.
 
 Campaign depth uses locally installed `gsap` and `@gsap/react`. The client-only
 motion component registers ScrollTrigger in the browser, scopes every selector

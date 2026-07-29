@@ -893,13 +893,13 @@ scan/code-first experience and keeps paid inference opt-in by operations.
   production dependency audit, and the 81-check desktop Chromium/iPhone
   WebKit browser matrix.
 
-## July 28, 2026 addendum — localized home and Agent step 02
+## July 28, 2026 addendum — localized home and Agent Step 2
 
 This additive UI phase preserves the completed QR/code, wallet, task, and
 Agent gateway work.
 
 - [x] Keep claim redemption as the first and dominant public action.
-- [x] Add a numbered `02 Connect my Agent` action on the first viewport,
+- [x] Add a numbered `Step 2 Connect my Agent` action on the first viewport,
   linking only to the first-party `/connect/agent` flow.
 - [x] Add a persistent accessible selector for English, Simplified Chinese,
   Spanish, French, and Russian, with a matching document language.
@@ -923,7 +923,7 @@ accounting contracts.
   no remote runtime or CDN script.
 - [x] Replace the Web Animations API and intersection observer with scoped
   `useGSAP` timelines, ScrollTrigger reveals, and automatic cleanup.
-- [x] Keep step 01 ahead of step 02 in the hero sequence and leave both links
+- [x] Keep Step 1 ahead of Step 2 in the hero sequence and leave both links
   immediately actionable.
 - [x] Use transform-only `quickTo` pointer depth on fine-pointer desktop
   devices; use restrained mobile entrances without horizontal movement.
@@ -960,3 +960,28 @@ change credit, model, provider, or API-key policy.
 - [x] Complete the final regression: 447 Vitest assertions and 73 Playwright
   checks pass across desktop Chromium and iPhone WebKit; lint, typecheck,
   dependency audit, and the production build also pass.
+
+## July 29, 2026 follow-up — cinematic progressive hero
+
+This presentation-only phase keeps Step 1 redemption, optional Step 2 Agent
+setup, all five languages, wallet accounting, provider controls, and
+production safety switches unchanged.
+
+- [x] Generate and visually inspect a people-free, text-free, QR-free
+  1280 × 720 cinematic bowl animation. Record that the connected environment
+  used Sora 2 Pro because the requested Seedance 2.0 runtime was unavailable.
+- [x] Encode silent WebM and MP4 variants plus an eager WebP poster, and replace
+  the direct hard-reset loop with a smoother forward/reverse loop.
+- [x] Load video only after client motion/network policy permits it; keep the
+  poster for no JavaScript, reduced motion, browser-reported data saver/2G,
+  failed playback, and unsupported media.
+- [x] Add a localized, keyboard-accessible Pause/Play control and accurate bowl
+  alternative text in English, Chinese, Spanish, French, and Russian.
+- [x] Preserve the shared poster/video crop under GSAP depth, keep desktop and
+  mobile free of horizontal overflow, and keep the mobile control ahead of the
+  headline without overlap.
+- [x] Add deterministic preference tests, real playback-advance and
+  pause/resume checks, source-failure fallback coverage, five-language control
+  checks, and desktop Chromium/iPhone WebKit visual verification.
+- [ ] Re-run the complete release matrix, commit, push, deploy the candidate,
+  and verify the production deployment and GitHub SHA.

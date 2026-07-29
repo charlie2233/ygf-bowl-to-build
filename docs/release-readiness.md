@@ -32,13 +32,13 @@ after this document is committed.
 | --- | --- | --- |
 | Lint | `pnpm lint` | Pass on July 29, 2026 |
 | TypeScript | `pnpm typecheck` | Pass on July 29, 2026 |
-| Unit/integration/security contracts | `pnpm test` | Pass on July 29, 2026: 71 files, 533 tests |
+| Unit/integration/security contracts | `pnpm test` | Pass on July 29, 2026: 72 files, 537 tests |
 | Production compilation | `pnpm build` | Pass on July 29, 2026: optimized build, page generation, and dynamic route manifest |
 | Production dependency audit | `pnpm audit --prod` | Pass on July 29, 2026: 0 known vulnerabilities |
-| Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 29, 2026: 81 tests across setup, desktop Chromium, and iPhone WebKit projects |
-| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 40 desktop checks; the shared setup passed once |
-| Full Playwright matrix | `pnpm test:e2e` | Pass on July 29, 2026: 81/81 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
-| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 40 WebKit checks after the shared setup |
+| Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 29, 2026: 83 tests across setup, desktop Chromium, and iPhone WebKit projects |
+| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 41 desktop checks; the shared setup passed once |
+| Full Playwright matrix | `pnpm test:e2e` | Pass on July 29, 2026: 83/83 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
+| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 41 WebKit checks after the shared setup |
 | Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 29, 2026; no OpenAI, personal Agent, or JWT-shaped secret values found in built client output. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI |
 | Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 29, 2026; all medium-or-higher review findings remediated and independently rechecked before checkpoint |
 | Remote identity | local SHA equals GitHub branch SHA after push | Verified at the July 28 handoff; exact SHA is reported outside this self-referential file |
@@ -91,8 +91,8 @@ These replace the vulnerable versions otherwise selected by Next.js 16.2.12.
 They are intentional, tested security overrides, but both sit outside that
 Next.js release's declared dependency ranges (`postcss` 8.4.31 and
 `sharp` `^0.34.5`). The local proof is the exact locked install plus the
-0-finding production audit, lint, typecheck, 533-test suite, production build,
-81-test Playwright matrix, and a production-mode 200 response for an 828x552
+0-finding production audit, lint, typecheck, 537-test suite, production build,
+83-test Playwright matrix, and a production-mode 200 response for an 828x552
 WebP optimized through Next.js/Sharp. It is not an upstream compatibility
 guarantee and does not prove the production platform will install or execute
 the same native image path.
@@ -113,7 +113,7 @@ against the candidate release SHA before deployment.
 | Poster PDF | 24x36 inch page, raster inspection, decoder contract | final printer stock/crop/scan |
 | Counter PDF | 5x7 inch page, raster inspection, decoder contract | counter lighting and physical scan |
 | SVG variants | deterministic copy, dimensions, quiet zones, URLs | social-platform preview |
-| Food image | sanitized user-supplied real YGF home-page photo plus generated bowl media recorded in the ledger | brand-rights approval for the real photo and approval/replacement of remaining generated collateral |
+| Food media | silent WebM/MP4 cinematic hero plus eager poster and sanitized user-supplied supporting photo, all recorded in the media ledger | generated-media approval, brand-rights approval for the real photo, and physical-device network/autoplay review |
 | Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG plus full-page 300-DPI raster-only PDF review | physical registration, scratch layer, or store scan |
 | Private Agent Pass fixture | matching text/QR decoded from final PDF raster, ignored 0700/0600 no-overwrite renderer, reflected long-edge duplex sheets | real batch custody or physical fulfillment |
 | Safe check-in card | explicit SVG download with fixed public fields only | automatic social-platform upload or account identity |

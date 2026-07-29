@@ -22,13 +22,12 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   operationally correct.
 - [ ] Legal/communications owner approves the full promotional fine print,
   university disclaimer, terms, privacy notice, and creator disclosure.
-- [ ] Obtain brand-owner approval for the user-supplied real YGF home-page
-  photo represented by `public/media/ygf-fresh-bar-hero.jpg` and its source
-  `IMG_2135 2.JPG` in `南加大图片.zip`, plus the supporting
-  `public/media/ygf-user-photo.png`. Approve or replace
-  `public/media/malatang-hero.png` anywhere it remains in wallet/share or
-  generated collateral. Record source, permission, approver, and date in the
-  media ledger.
+- [ ] Approve the generated cinematic hero poster/WebM/MP4 as campaign media.
+  Obtain brand-owner approval for the supporting user-supplied
+  `public/media/ygf-user-photo.png` and any retained real-photo derivative.
+  Approve or replace `public/media/malatang-hero.png` anywhere it remains in
+  wallet/share or generated collateral. Record source, permission, approver,
+  and date in the media ledger.
 - [ ] Regenerate all assets after the photo or copy changes:
   `node scripts/render-campaign-assets.mts`.
 - [ ] For the final production origin, run the renderer and then the read-only

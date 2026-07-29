@@ -27,9 +27,10 @@ is never an API key. Provider credentials stay on the server.
   Russian) across redemption, wallet, tasks, results, history, sharing, auth,
   and customer-facing error states, with one persistent accessible language
   control
-- a numbered **01 Claim / 02 Connect my Agent** first-viewport path with
-  scoped GSAP timelines, ScrollTrigger reveals, fine-pointer depth, and a
-  static reduced-motion path
+- a numbered **Step 1 Claim / Step 2 Connect my Agent** first-viewport path
+  with a generated cinematic food loop, immediate poster fallback, scoped
+  GSAP timelines, ScrollTrigger reveals, fine-pointer depth, and static
+  reduced-motion/browser-reported data-saver paths
 - Supabase Auth/Postgres production adapter, RLS, and atomic ledger RPCs
 - deterministic local demo mode with the receipt code `BOWL7K2A`
 - fixed-endpoint OpenAI Chat Completions adapter plus deterministic demo provider

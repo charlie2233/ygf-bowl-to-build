@@ -23,16 +23,18 @@ CTA, then complete fine print. Avoid extra stacked microcopy.
 
 ## Web interaction and localization
 
-- The public first viewport presents **01 Claim Build Credits** as the primary
-  path and **02 Connect my Agent** as the secondary path. The Agent path is
+- The public first viewport presents **Step 1 Claim Build Credits** as the
+  primary path and **Step 2 Connect my Agent** as the secondary path. The Agent path is
   advanced and does not replace scan/code redemption.
 - English, Simplified Chinese, Spanish, French, and Russian share the same
   layout and typed content structure. The visible locale code and globe wrap
   a native language `select`; the document `lang` must follow the selection.
 - Use only subtle entrance, scroll-reveal, image-depth, and phone-tilt motion.
   The locally bundled GSAP layer uses scoped `useGSAP` timelines and
-  ScrollTrigger cleanup; do not add Three.js, Remotion, CDN scripts, pinned
-  scenes, or continuous loops solely for decorative movement.
+  ScrollTrigger cleanup; do not add Three.js, Remotion, CDN scripts, or pinned
+  scenes. The approved cinematic hero is the single continuous-loop
+  exception; it must remain muted, retain a visible localized Pause/Play
+  control, and preserve the static-poster policy below.
 - Disable pointer parallax on coarse/touch pointers. Under
   `prefers-reduced-motion: reduce`, render every section immediately and remove
   decorative transforms.
@@ -97,15 +99,20 @@ rather than scaling the current artwork.
 
 ## Photography and illustration
 
-The first viewport uses the optimized, sanitized derivative of the
-user-supplied real YGF fresh-ingredient wall at
-`public/media/ygf-fresh-bar-hero.jpg`. Keep its controlled cover crop, cream
-readability gradient, recognizable vegetables/noodles/toppings, and absence of
-people, private claim material, or university marks. The YANGGUOFU store
-wordmark is present in the uncropped source frame but is not required to remain
-visible in the responsive cover crop. The separate ingredient-counter PNG may
-appear below the fold, where it stays visually secondary to the campaign offer.
-Brand-rights confirmation is still required before public launch.
+The first viewport uses the generated cinematic bowl loop at
+`public/media/ygf-cinematic-hero.webm` with MP4 fallback and an eagerly loaded
+WebP poster. Keep the bowl weighted to the right, the left copy field calm,
+the cream readability gradient intact, and the frame free of embedded copy,
+people, private claim material, or university marks. The video is decorative
+and muted; reduced-motion, browser-reported data-saver/2G, autoplay-failure,
+and no-JavaScript paths must retain the complete poster experience without
+downloading an active video source. Browsers that do not expose the Network
+Information API cannot provide a reliable application-level Low Data Mode
+signal, so that case remains a physical-device verification gate. The
+separate real ingredient-counter PNG may appear below the fold, where it stays
+visually secondary to the campaign offer. Generated-media approval and
+brand-rights confirmation for the real supporting photo remain required
+before public launch.
 `public/media/malatang-hero.png` remains a generated beta image in wallet/share
 and rendered collateral; approve or replace it, update both ledgers, and
 regenerate every affected output.

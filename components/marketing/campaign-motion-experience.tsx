@@ -83,7 +83,7 @@ export function useCampaignMotionExperience({
       const documentRoot = document.documentElement;
       const hero = scope.querySelector<HTMLElement>("[data-motion-hero]");
       const heroImage = scope.querySelector<HTMLElement>(
-        ".marketing-hero__image",
+        ".marketing-hero__media",
       );
       const heroHeadlineLines = scope.querySelectorAll<HTMLElement>(
         "[data-motion-hero-copy] h1 span",

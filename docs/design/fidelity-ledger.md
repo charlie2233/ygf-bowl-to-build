@@ -35,8 +35,9 @@ proof, deployed-origin proof, or public-launch approval.
    differ slightly from the accepted concept's generated typography.
 4. Social formats reflow the composition instead of cropping the poster; every
    variant retains qualification, CTA, QR, and legal copy.
-5. The canonical beta URL is `https://build.ygf.example`. A production-domain
-   change requires regeneration, decoder verification, and new print proof.
+5. The canonical production URL is `https://malatangai.com`. Digital assets
+   must be regenerated and decoder-verified for this exact origin; the domain
+   change reopens physical print proof.
 
 ## Variant ledger
 
@@ -68,8 +69,8 @@ proof, deployed-origin proof, or public-launch approval.
   record permission.
 - Confirm current menu and prices and the participating location's $25+
   threshold.
-- Replace the example origin with the approved production origin, if
-  different, and regenerate/scan every QR.
+- Confirm `https://malatangai.com` is serving the approved release, then
+  regenerate and scan every final digital and physical QR.
 - Complete physical print and social-platform previews.
 - Complete the 10-20 person soft test, staff training, external account
   checks, privacy retention decision, and owner sign-offs in the launch

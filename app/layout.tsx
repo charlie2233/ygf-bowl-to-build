@@ -17,6 +17,7 @@ import {
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://malatangai.com"),
   title: {
     default: "YGF Bowl-to-Build",
     template: "%s | YGF Bowl-to-Build",

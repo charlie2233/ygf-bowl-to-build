@@ -21,7 +21,7 @@ import { renderCampaignAssets, renderPrivateClaimRowSvg, verifyCampaignAssetOrig
 
 const repositoryRoot = process.cwd();
 const expectedOrigin =
-  process.env.YGF_ASSET_ORIGIN ?? "https://build.ygf.example";
+  process.env.YGF_ASSET_ORIGIN ?? "https://malatangai.com";
 let generatedRoot = "";
 let campaignDirectory = "";
 let pdfDirectory = "";

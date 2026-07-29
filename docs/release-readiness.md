@@ -124,7 +124,8 @@ or page dimensions reopens the affected artifact gates.
 These require live account state and are intentionally not satisfied by this
 checkout:
 
-- [ ] Deploy the verified commit over HTTPS at the approved canonical origin.
+- [ ] Deploy the verified commit over HTTPS at the approved canonical origin,
+  `https://malatangai.com`.
 - [ ] Install the verified lockfile on the production build platform and
   recheck the scoped PostCSS/Sharp override record above. Confirm the platform
   build and a real optimized image request succeed; local build proof alone

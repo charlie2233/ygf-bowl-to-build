@@ -134,7 +134,8 @@ Create a development Supabase project, then provide:
   `YGF_TASK_FINGERPRINT_SECRET`, plus the independent Agent secrets
   `YGF_AGENT_API_KEY_DIGEST_SECRET` and
   `YGF_AGENT_REQUEST_FINGERPRINT_SECRET`
-- `NEXT_PUBLIC_APP_URL` and `YGF_PUBLIC_ORIGIN`
+- `NEXT_PUBLIC_APP_URL` and `YGF_PUBLIC_ORIGIN` set to the exact local
+  application origin (production uses `https://malatangai.com` for both)
 - a server-only `OPENAI_API_KEY`
 - optionally `YGF_ADMIN_EMAIL_ALLOWLIST`
 
@@ -162,11 +163,18 @@ are external state and are not completed merely by applying migrations.
 
 ## Mode 3: production
 
-Production uses the same Supabase and provider variables as Mode 2, with an
-approved HTTPS public origin. `YGF_DEMO_MODE=true` fails closed in production.
+Production uses the same Supabase and provider variables as Mode 2, with
+`https://malatangai.com` as the approved HTTPS public origin.
+`YGF_DEMO_MODE=true` fails closed in production.
 The public Agent provider path also fails closed unless
 `YGF_AGENT_GATEWAY_ENABLED=true`; leave it false until the provider, domain,
 retention, billing, and concurrency checks below are complete.
+
+```env
+NEXT_PUBLIC_APP_URL=https://malatangai.com
+YGF_PUBLIC_ORIGIN=https://malatangai.com
+```
+
 Deploy the application only after:
 
 - applying the migration to the intended production project;
@@ -220,7 +228,7 @@ but cannot create or rotate Agent keys. They must link Google or Apple to the
 same Supabase user first. Listing or revoking an existing key remains safe.
 
 ```env
-OPENAI_BASE_URL=https://<approved-production-origin>/v1
+OPENAI_BASE_URL=https://malatangai.com/v1
 OPENAI_API_KEY=ygf_<personal-secret>
 ```
 
@@ -341,16 +349,17 @@ Render all public variants for the reviewed origin:
 
 ```sh
 node scripts/render-campaign-assets.mts \
-  --origin https://<approved-production-origin>
+  --origin https://malatangai.com
 node scripts/render-campaign-assets.mts \
-  --origin https://<approved-production-origin> \
+  --origin https://malatangai.com \
   --verify-only
 ```
 
-Committed artwork uses the documented beta origin and generated food fallback.
+Committed artwork uses the `https://malatangai.com` production origin and
+generated food fallback.
 The second command verifies the already-rendered files without modifying them.
 Automated renderer tests use an isolated temporary directory and cannot
-silently restore the beta origin.
+silently restore another origin.
 Before printing, replace it with a manager-approved rights-cleared YGF food
 photo, regenerate, decode every final QR, and proof the PDFs at 100% scale.
 

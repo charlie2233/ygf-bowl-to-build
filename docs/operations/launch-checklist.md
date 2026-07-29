@@ -32,7 +32,7 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] For the final production origin, run the renderer and then the read-only
   exact deterministic verifier with the same reviewed `--origin` value:
   `node scripts/render-campaign-assets.mts --origin
-  https://<approved-production-origin> --verify-only`.
+  https://malatangai.com --verify-only`.
 - [ ] Review the 24x36 poster, 11x17 poster, 5x7 counter card, feed, story, and
   horizontal asset at final size. No clipping, hidden text, unintended logo,
   or unsupported USC mark.

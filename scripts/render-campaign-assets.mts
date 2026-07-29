@@ -100,7 +100,7 @@ type ParsedPng = Readonly<{
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repositoryRoot = path.resolve(path.dirname(scriptPath), "..");
-const PUBLIC_ORIGIN = "https://build.ygf.example";
+const PUBLIC_ORIGIN = "https://malatangai.com";
 const HERO_IMAGE_HREF = "../media/malatang-hero.png";
 const HERO_IMAGE_WIDTH = 1536;
 const HERO_IMAGE_HEIGHT = 1024;

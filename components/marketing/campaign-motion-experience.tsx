@@ -8,6 +8,7 @@ import type { RefObject } from "react";
 import type { CampaignLocale } from "@/lib/i18n/campaign";
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
+const mobilePhoneRotation = 2;
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP);
@@ -172,7 +173,7 @@ export function useCampaignMotionExperience({
           gsap.set(phone, {
             rotationX: isDesktop ? 7 : 0,
             rotationY: isDesktop ? -7 : 0,
-            rotationZ: isDesktop ? 11 : 5,
+            rotationZ: isDesktop ? 11 : mobilePhoneRotation,
             scale: 0.94,
             transformPerspective: 1000,
             y: 20,
@@ -241,7 +242,7 @@ export function useCampaignMotionExperience({
                 duration: isMobile ? 0.68 : 0.86,
                 rotationX: 0,
                 rotationY: 0,
-                rotationZ: isDesktop ? 8 : 5,
+                rotationZ: isDesktop ? 8 : mobilePhoneRotation,
                 scale: 1,
                 transformPerspective: 1000,
                 y: 0,

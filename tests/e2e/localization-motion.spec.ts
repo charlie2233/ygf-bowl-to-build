@@ -361,6 +361,68 @@ test("long translations stay inside a narrow mobile viewport", async ({
   }
 });
 
+test("mobile campaign phone stays centered and internally contained", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 800, width: 360 });
+  await page.goto("/");
+  const selector = page.locator(".language-selector select");
+
+  for (const locale of ["en", "zh", "es", "fr", "ru"] as const) {
+    await selector.selectOption(locale);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: translatedHeadings[locale],
+      }),
+    ).toBeVisible();
+
+    const phoneLayout = await page.evaluate(() => {
+      const hero = document.querySelector<HTMLElement>(".marketing-hero");
+      const copy = document.querySelector<HTMLElement>(
+        ".marketing-hero__copy",
+      );
+      const phone = document.querySelector<HTMLElement>(".campaign-phone");
+      const claim = document.querySelector<HTMLElement>(
+        ".campaign-phone__claim",
+      );
+      const wallet = document.querySelector<HTMLElement>(
+        ".campaign-phone__wallet",
+      );
+
+      if (!hero || !copy || !phone || !claim || !wallet) {
+        return null;
+      }
+
+      const heroBounds = hero.getBoundingClientRect();
+      const copyBounds = copy.getBoundingClientRect();
+      const phoneBounds = phone.getBoundingClientRect();
+
+      return {
+        claimOverflow: claim.scrollWidth - claim.clientWidth,
+        copyGap: phoneBounds.top - copyBounds.bottom,
+        horizontalCenterDelta: Math.abs(
+          phoneBounds.left +
+            phoneBounds.width / 2 -
+            (heroBounds.left + heroBounds.width / 2),
+        ),
+        phoneInsideHero:
+          phoneBounds.left >= heroBounds.left &&
+          phoneBounds.right <= heroBounds.right,
+        walletOverflow: wallet.scrollWidth - wallet.clientWidth,
+      };
+    });
+
+    expect(phoneLayout).not.toBeNull();
+    expect(phoneLayout?.claimOverflow).toBeLessThanOrEqual(1);
+    expect(phoneLayout?.walletOverflow).toBeLessThanOrEqual(1);
+    expect(phoneLayout?.horizontalCenterDelta).toBeLessThanOrEqual(2);
+    expect(phoneLayout?.copyGap).toBeGreaterThanOrEqual(16);
+    expect(phoneLayout?.phoneInsideHero).toBe(true);
+    await expectNoHorizontalOverflow(page, `home-phone-${locale}`);
+  }
+});
+
 test("mobile journey line and next action stay aligned", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 360 });
   await page.goto("/");

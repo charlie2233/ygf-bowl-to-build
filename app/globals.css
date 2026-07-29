@@ -2071,7 +2071,7 @@ textarea {
   }
 
   .campaign-phone {
-    --phone-rotate: 5deg;
+    --phone-rotate: 2deg;
     position: relative;
     right: auto;
     bottom: auto;
@@ -2179,7 +2179,20 @@ textarea {
 
   .campaign-phone {
     justify-self: center;
-    margin-right: -2rem;
+    margin: 0;
+  }
+
+  .campaign-phone__wallet {
+    padding-inline: 0.5rem;
+  }
+
+  .campaign-phone__claim {
+    gap: 0.35rem;
+  }
+
+  .campaign-phone__wallet strong {
+    font-size: 1rem;
+    letter-spacing: 0.02em;
   }
 
   .use-cases {

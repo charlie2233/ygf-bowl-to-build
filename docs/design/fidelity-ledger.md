@@ -105,7 +105,7 @@ fragment was removed before submission, and the rendered balance changed from
 | First-viewport composition | Editorial copy left, dominant bowl media, receipt/wallet phone at right | Same visual order and one dominant media frame; phone remains illustrative and explicitly says its claim is not live | Matched |
 | Typography and hierarchy | Large dark editorial H1 with restrained supporting copy | Bold system/Geist-compatible display scale, short line lengths, and quieter control type; one H1 per page | Matched |
 | Palette and surfaces | Warm cream, true white, burgundy, gold, teal/sage | Shared tokens use the locked values without university colors/marks; the real-photo hero has one cream readability gradient | Matched with accessible media overlay |
-| Media treatment | Overhead malatang hero with no embedded words or logos | The first viewport now uses an optimized derivative of the sanitized user-provided YGF ingredient-counter photo with localized alt text, controlled desktop/mobile crops, and a cream readability overlay; the source frame remains below the fold | Requested real-photo upgrade implemented; brand-rights confirmation pending |
+| Media treatment | Overhead malatang hero with no embedded words or logos | The first viewport now uses an optimized derivative of the user-provided YGF fresh-ingredient wall, with the store wordmark retained in the uncropped source, localized alt text, controlled desktop/mobile crops, and a cream readability overlay; the separate ingredient-counter frame remains below the fold | Requested authentic-photo upgrade implemented; brand-rights confirmation pending |
 | Container model | Open landing layout and bounded white workflow/result panels | Marketing stays open; wallet/task/admin use thin borders, 18px radii, restrained shadows, and stable wide containers | Matched |
 | Controls and icons | Clear rectangular actions and simple line metaphors | Semantic buttons/links, Lucide or code-native line icons, visible focus, and no model/provider jargon on the default path | Matched |
 | Language access | Not present in the accepted concept | Compact native selector adds English, Chinese, Spanish, French, and Russian; selection persists locally and updates document language | Intentional requested enhancement |
@@ -139,6 +139,48 @@ fragment was removed before submission, and the rendered balance changed from
    locked `gsap` and `@gsap/react` dependencies. The runtime is bundled
    locally with scoped cleanup and responsive/reduced-motion branches; no CDN,
    remote motion runtime, Three.js, or Remotion dependency is used.
+
+### July 29 authentic cover-photo verification
+
+The cover refresh was checked against both the previous rendered home page and
+the selected source image. The complete user archive was audited before the
+choice: 235 still images plus representative frames from every supplied video.
+No finished malatang bowl photograph was present, so the closest faithful,
+authentic option is `IMG_2135 2.JPG`, a wide YANGGUOFU fresh-ingredient wall.
+Its metadata-free runtime derivative is 2000 × 1500 and 550,163 bytes.
+
+Browser verification used the in-app Playwright browser against both the local
+Next development server and a successful `next build` / `next start`
+production server. The final desktop Chromium and iPhone WebKit matrix passed
+81/81 tests. Native CSS viewports were 1440 × 900 and 390 × 844. Production
+screenshots with no development badge are recorded as local-only review
+evidence at:
+
+- `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/cover-refresh/ygf-fresh-cover-production-desktop.png`
+- `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/cover-refresh/ygf-fresh-cover-production-mobile.png`
+
+Comparison ledger:
+
+| Check | Previous cover | Verified refresh |
+| --- | --- | --- |
+| Food focal point | Tight raw-marinated-meat trays dominated the visible right half | Broad rows of fresh greens, noodles, tofu, mushrooms, corn, and toppings establish the choose-a-bowl experience |
+| Copy contrast | Cream scrim protected the left copy | Same scrim and copy colors remain; headline, body, guidance, and actions stay immediately legible |
+| Phone separation | Dark phone edge crossed similarly dark/red food texture | Black phone frame stays distinct against pale cabbage, noodles, and stainless surfaces |
+| Desktop crop | `52% center` emphasized meat trays | `55% 40%` keeps ingredient variety across the 1440 × 900 first viewport |
+| Mobile crop | Faded meat texture was difficult to identify | `50% top` retains recognizable golden tofu balls and ingredient rows below the copy at 390 × 844 |
+| Responsive bounds | No overflow | `scrollWidth === innerWidth` at desktop/mobile and across all five localized home states |
+| Motion/accessibility | GSAP and reduced-motion wiring already accepted | Image still loads eagerly with localized alt; reduced motion returns `transform: none` for hero and phone |
+
+Above-the-fold copy diff: **none**. H1, $25+ offer, 3,000 Credits,
+14-day duration, Step 1 redemption, optional Step 2 Agent connection, special
+gift note, and USC non-endorsement text are unchanged in every locale.
+
+The remaining intentional deviation from the accepted generated concept is
+the absence of a finished overhead bowl in the supplied real photography.
+Using the authentic ingredient wall is preferable to misrepresenting the
+generated bowl as a real location. This is visually faithful to the
+choose-your-ingredients YGF experience, but brand-rights confirmation remains
+an external launch gate.
 
 ### July 28 GSAP visual verification
 

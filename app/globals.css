@@ -307,7 +307,7 @@ textarea {
 .marketing-hero__image {
   z-index: -2;
   object-fit: cover;
-  object-position: 52% center;
+  object-position: 55% 40%;
   transform: scale(1.035);
   transform-origin: center;
 }
@@ -2057,7 +2057,7 @@ textarea {
 
   .marketing-hero__image {
     opacity: 0.5;
-    object-position: 58% center;
+    object-position: 50% top;
   }
 
   .marketing-hero::after {

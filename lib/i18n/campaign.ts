@@ -108,7 +108,8 @@ export const campaignHomeCopy: Record<
       connectAgent: "Connect Agent (optional)",
       disclaimer:
         "For the USC community. Not affiliated with or endorsed by USC.",
-      imageAlt: "Real YGF ingredient counter with fresh malatang choices",
+      imageAlt:
+        "Fresh YANGGUOFU ingredient wall with vegetables, noodles, tofu, and toppings",
       phoneAriaLabel:
         "Illustration of an AI card with a private QR and printed code; example only, not live",
       receipt: {
@@ -223,7 +224,8 @@ export const campaignHomeCopy: Record<
       claimCredits: "扫码或输入兑换码",
       connectAgent: "连接 Agent（可选）",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
-      imageAlt: "真实的杨国福麻辣烫新鲜食材柜台",
+      imageAlt:
+        "杨国福门店内摆满蔬菜、粉面、豆制品和配菜的新鲜食材墙",
       phoneAriaLabel:
         "带私人二维码和纸质兑换码的 AI 算力卡示意图；仅作示例，并非真实兑换码",
       receipt: {
@@ -339,7 +341,8 @@ export const campaignHomeCopy: Record<
       connectAgent: "Agent (opcional)",
       disclaimer:
         "Para la comunidad de USC. No está afiliado ni respaldado por USC.",
-      imageAlt: "Mostrador real de YGF con ingredientes frescos de malatang",
+      imageAlt:
+        "Mural de ingredientes frescos de YANGGUOFU con verduras, fideos, tofu y acompañamientos",
       phoneAriaLabel:
         "Ilustración de una tarjeta de IA con QR privado y código impreso; es solo un ejemplo",
       receipt: {
@@ -456,7 +459,8 @@ export const campaignHomeCopy: Record<
       connectAgent: "Agent (facultatif)",
       disclaimer:
         "Pour la communauté USC. Sans affiliation ni approbation de l’USC.",
-      imageAlt: "Vrai comptoir YGF avec des ingrédients frais pour malatang",
+      imageAlt:
+        "Mur d’ingrédients frais YANGGUOFU avec légumes, nouilles, tofu et garnitures",
       phoneAriaLabel:
         "Illustration d’une carte IA avec QR privé et code imprimé ; exemple uniquement",
       receipt: {
@@ -573,7 +577,8 @@ export const campaignHomeCopy: Record<
       connectAgent: "Agent (необязательно)",
       disclaimer:
         "Для сообщества USC. Не связано с USC и не одобрено университетом.",
-      imageAlt: "Настоящая витрина YGF со свежими ингредиентами для малатана",
+      imageAlt:
+        "Свежая витрина YANGGUOFU с овощами, лапшой, тофу и добавками",
       phoneAriaLabel:
         "Иллюстрация AI-карты с личным QR и печатным кодом; только пример",
       receipt: {

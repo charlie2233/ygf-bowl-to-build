@@ -98,11 +98,13 @@ rather than scaling the current artwork.
 ## Photography and illustration
 
 The first viewport uses the optimized, sanitized derivative of the
-user-supplied real YGF ingredient-counter frame at
-`public/media/ygf-hero-background.jpg`. Keep its controlled cover crop, cream
-readability gradient, recognizable ingredients, and lack of embedded text,
-university marks, or third-party logos. The full PNG frame may appear below
-the fold, where it stays visually secondary to the campaign offer.
+user-supplied real YGF fresh-ingredient wall at
+`public/media/ygf-fresh-bar-hero.jpg`. Keep its controlled cover crop, cream
+readability gradient, recognizable vegetables/noodles/toppings, and absence of
+people, private claim material, or university marks. The YANGGUOFU store
+wordmark is present in the uncropped source frame but is not required to remain
+visible in the responsive cover crop. The separate ingredient-counter PNG may
+appear below the fold, where it stays visually secondary to the campaign offer.
 Brand-rights confirmation is still required before public launch.
 `public/media/malatang-hero.png` remains a generated beta image in wallet/share
 and rendered collateral; approve or replace it, update both ledgers, and

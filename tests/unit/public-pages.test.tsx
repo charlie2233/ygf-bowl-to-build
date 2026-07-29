@@ -46,7 +46,9 @@ describe("public campaign pages", () => {
       '[data-campaign-handoff] a[href="/redeem"]',
     );
     const heroImage = Array.from(body.querySelectorAll("img")).find((image) =>
-      /real ygf ingredient counter/i.test(image.getAttribute("alt") ?? ""),
+      /fresh yangguofu ingredient wall/i.test(
+        image.getAttribute("alt") ?? "",
+      ),
     );
     const realYgfImage = Array.from(body.querySelectorAll("img")).find(
       (image) =>
@@ -78,7 +80,7 @@ describe("public campaign pages", () => {
     expect(heroImage?.getAttribute("loading")).toBe("eager");
     expect(
       decodeURIComponent(heroImage?.getAttribute("src") ?? ""),
-    ).toContain("/media/ygf-hero-background.jpg");
+    ).toContain("/media/ygf-fresh-bar-hero.jpg");
     expect(
       decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
     ).toContain(

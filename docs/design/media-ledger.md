@@ -21,8 +21,8 @@ licenses or permissions that have not been supplied.
 - Runtime use: this sanitized PNG is the supporting photo in the below-fold
   “From checkout to build mode” section. The home page loads it lazily; the
   standalone offer page may load it eagerly because that section appears
-  immediately after the offer introduction. A separately optimized derivative
-  is used for the home-page hero.
+  immediately after the offer introduction. A separately sourced and
+  optimized fresh-bar frame is used for the home-page hero.
 - Rights status: **user-provided; pending brand-rights confirmation**. Receipt
   of the archive is not treated as a license or a representation that the
   photo is rights-cleared.
@@ -38,10 +38,38 @@ licenses or permissions that have not been supplied.
   4:2:0 JPEG at 677 KiB, and exported without format metadata. The dedicated
   filename lets the hero load eagerly without changing the below-fold image's
   lazy-loading contract.
-- Runtime use: real-photo home-page background with controlled cover crops
-  and a cream readability overlay on desktop and mobile.
+- Runtime use: superseded home-page background retained as an auditable
+  derivative; it is no longer referenced by the runtime after the July 29
+  fresh-bar cover update.
 - Rights status and launch gate: identical to the source photo above; a
   derived file does not create or imply usage permission.
+
+### `public/media/ygf-fresh-bar-hero.jpg`
+
+- Source: user-provided archive `南加大图片.zip`, original
+  `IMG_2135 2.JPG`. The frame was selected after reviewing all 235 supplied
+  still images plus representative frames from the supplied videos. It shows
+  the real store's YANGGUOFU wordmark above a broad, colorful wall of
+  vegetables, noodles, tofu, and toppings.
+- Processing: auto-oriented and resized from 5712 × 4284 to 2000 × 1500,
+  encoded as a progressive 4:2:0 JPEG at 550,163 bytes, and exported by Sharp
+  without source EXIF, IPTC, XMP, GPS, device, timestamp, or comment metadata.
+- Visual inspection: no people, faces, USC mark, private QR, redemption code,
+  API key, email, or other account data is visible. The full derivative
+  retains the YANGGUOFU store wordmark and small ingredient labels as
+  authentic location context; responsive cover crops may place the wordmark
+  outside the visible viewport.
+- Runtime use: eager, priority-loaded home-page background with controlled
+  desktop/mobile cover crops and a cream readability overlay. The dedicated
+  filename prevents an old optimized-image cache entry from masking the
+  cover change.
+- Rights status: **user-provided; pending brand-rights confirmation**.
+  Receipt of the archive is not treated as a license or as public-use
+  approval.
+- Launch gate: the brand owner must approve this exact source frame and
+  derivative before public campaign use. If approval is not obtained, replace
+  it and repeat responsive crop, accessibility, performance, and deployment
+  checks.
 
 ## Agent Pass production inspection
 

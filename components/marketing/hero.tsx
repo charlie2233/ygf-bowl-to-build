@@ -38,7 +38,7 @@ export function Hero({
         loading="eager"
         priority
         sizes="100vw"
-        src="/media/ygf-hero-background.jpg"
+        src="/media/ygf-fresh-bar-hero.jpg"
       />
 
       <div className="marketing-hero__inner container">

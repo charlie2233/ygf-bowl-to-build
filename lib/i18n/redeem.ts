@@ -6,6 +6,7 @@ export type RedeemErrorKey =
   | "codeUnavailable"
   | "generic"
   | "qrInvalid"
+  | "redemptionPaused"
   | "serviceUnavailable"
   | "termsRequired"
   | "validationThrottled";
@@ -101,6 +102,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Too many checks were made. Wait a few minutes, then try again.",
         serviceUnavailable:
           "Claims are temporarily unavailable. Your saved claim is safe—try again shortly.",
+        redemptionPaused:
+          "Claims are temporarily paused. Your saved claim is safe—please try again later.",
         anonymousUnavailable:
           "Quick guest access is unavailable. Your secured claim is still ready; use account sign-in instead.",
         generic: "We couldn’t complete the claim. Please try again.",
@@ -150,6 +153,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
         qrInvalid: "此私人二维码无效。请改为输入卡片上印刷的兑换码。",
         validationThrottled: "检查次数过多。请等待几分钟后重试。",
         serviceUnavailable: "兑换服务暂时不可用。已保存的权益仍然安全，请稍后重试。",
+        redemptionPaused: "兑换功能暂时暂停。已保存的权益仍然安全，请稍后再试。",
         anonymousUnavailable:
           "访客模式暂时不可用。您的权益仍已安全保存，请改用账户登录。",
         generic: "暂时无法完成兑换，请重试。",
@@ -208,6 +212,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Se hicieron demasiadas comprobaciones. Espera unos minutos e inténtalo de nuevo.",
         serviceUnavailable:
           "El canje no está disponible temporalmente. Tu solicitud guardada está segura; inténtalo más tarde.",
+        redemptionPaused:
+          "Los canjes están temporalmente en pausa. Tu solicitud guardada está segura; inténtalo más tarde.",
         anonymousUnavailable:
           "El acceso rápido para invitados no está disponible. Tu solicitud está protegida; usa el inicio de sesión.",
         generic: "No pudimos completar el canje. Inténtalo de nuevo.",
@@ -267,6 +273,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Trop de vérifications ont été effectuées. Attendez quelques minutes et réessayez.",
         serviceUnavailable:
           "L’activation est temporairement indisponible. Votre demande enregistrée reste protégée ; réessayez plus tard.",
+        redemptionPaused:
+          "Les activations sont temporairement suspendues. Votre demande enregistrée reste protégée ; réessayez plus tard.",
         anonymousUnavailable:
           "L’accès invité rapide est indisponible. Votre demande reste protégée ; utilisez la connexion au compte.",
         generic: "Nous n’avons pas pu terminer l’activation. Réessayez.",
@@ -325,6 +333,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Слишком много проверок. Подождите несколько минут и повторите попытку.",
         serviceUnavailable:
           "Активация временно недоступна. Сохранённая заявка защищена — повторите попытку позже.",
+        redemptionPaused:
+          "Активация временно приостановлена. Сохранённая заявка защищена — повторите попытку позже.",
         anonymousUnavailable:
           "Быстрый гостевой доступ недоступен. Ваша заявка защищена — войдите в аккаунт.",
         generic: "Не удалось завершить активацию. Повторите попытку.",

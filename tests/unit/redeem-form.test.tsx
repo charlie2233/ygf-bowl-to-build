@@ -24,6 +24,8 @@ import {
   redemptionErrorDestination,
   type RedeemFormSubmission,
 } from "@/components/redeem-form";
+import { campaignLocales } from "@/lib/i18n/campaign";
+import { redeemCopy } from "@/lib/i18n/redeem";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
@@ -382,6 +384,51 @@ describe("RedeemForm", () => {
     expect(document.activeElement).toBe(codeInput);
   });
 
+  it.each(campaignLocales)(
+    "maps a paused validation response to explicit localized guidance in %s",
+    async (locale) => {
+      const createAnonymousSession = vi.fn(async () => undefined);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn<typeof fetch>(async () =>
+          Response.json(
+            { eligible: false, error: "REDEMPTION_PAUSED" },
+            { status: 503 },
+          ),
+        ),
+      );
+
+      await act(async () => {
+        root.render(
+          <CampaignLanguageProvider initialLocale={locale}>
+            <RedeemForm
+              createAnonymousSession={createAnonymousSession}
+            />
+          </CampaignLanguageProvider>,
+        );
+      });
+      await act(async () => {
+        container
+          .querySelector<HTMLInputElement>(
+            'input[name="termsAccepted"]',
+          )
+          ?.click();
+        container.querySelector("form")?.dispatchEvent(
+          new SubmitEvent("submit", {
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(createAnonymousSession).not.toHaveBeenCalled();
+      expect(container.textContent).toContain(
+        redeemCopy[locale].form.errors.redemptionPaused,
+      );
+    },
+  );
+
   it("preserves the secured claim and shows manual sign-in only when anonymous auth is unavailable", async () => {
     const createAnonymousSession = vi.fn(async () => {
       throw new Error("ANONYMOUS_AUTH_UNAVAILABLE");
@@ -569,6 +616,35 @@ describe("RedeemForm", () => {
         code: "BOWL7K2A",
         termsAccepted: true,
       }),
+    );
+  });
+
+  it("shows an explicit paused-claims message without redirecting a pending claim", async () => {
+    const confirmPendingClaim = vi.fn(async () => {
+      throw new Error("REDEMPTION_PAUSED");
+    });
+    await act(async () => {
+      root.render(
+        <RedeemForm
+          confirmPendingClaim={confirmPendingClaim}
+          pendingClaimReady
+        />,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(confirmPendingClaim).toHaveBeenCalledOnce();
+    expect(container.textContent).toContain(
+      "Claims are temporarily paused",
     );
   });
 });

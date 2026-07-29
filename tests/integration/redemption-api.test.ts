@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { hashCode } from "@/lib/campaign/code";
 import type { RedemptionAttemptOutcome } from "@/lib/campaign/redemption-admission";
 import { createRedemptionHandler } from "@/lib/http/redeem-route";
+import { createRedemptionRouteHandler } from "@/app/api/redeem/route";
 import {
   MemoryCampaignRepository,
 } from "@/lib/repositories/memory-campaign-repository";
@@ -100,6 +101,61 @@ function createHarness({
 }
 
 describe("redemption API boundary", () => {
+  it("fails closed before cookies, sessions, admissions, or mutations when redemption is paused", async () => {
+    const downstream = vi.fn(async () =>
+      async () => Response.json({ shouldNot: "run" }),
+    );
+    const handler = createRedemptionRouteHandler({
+      createHandler: downstream,
+      environment: {
+        YGF_PUBLIC_ORIGIN: "https://build.ygf.example",
+      },
+      nodeEnvironment: "production",
+    });
+
+    const response = await handler(
+      new Request("https://build.ygf.example/api/redeem", {
+        headers: { origin: "https://build.ygf.example" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    await expect(response.json()).resolves.toEqual({
+      error: "REDEMPTION_PAUSED",
+    });
+    expect(downstream).not.toHaveBeenCalled();
+  });
+
+  it("allows an explicitly enabled production redemption route", async () => {
+    const downstreamHandler = vi.fn(async () =>
+      Response.json({ ready: true }),
+    );
+    const createHandler = vi.fn(async () => downstreamHandler);
+    const handler = createRedemptionRouteHandler({
+      createHandler,
+      environment: {
+        YGF_PUBLIC_ORIGIN: "https://build.ygf.example",
+        YGF_REDEMPTION_ENABLED: "true",
+      },
+      nodeEnvironment: "production",
+    });
+
+    const response = await handler(
+      new Request("https://build.ygf.example/api/redeem", {
+        headers: { origin: "https://build.ygf.example" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(createHandler).toHaveBeenCalledOnce();
+    expect(downstreamHandler).toHaveBeenCalledOnce();
+  });
+
   it("redeems once and initializes a 14-day wallet", async () => {
     const { finish, redeem } = createHarness();
     const response = await redeem();

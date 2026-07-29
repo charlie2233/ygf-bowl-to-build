@@ -21,6 +21,7 @@ import { getTaskProvider } from "@/lib/providers";
 import { resolveModel } from "@/lib/providers/model-catalog";
 import { getTaskWorkflowRepository } from "@/lib/repositories/task-workflow-repository";
 import { fingerprintClientIdempotencyKey } from "@/lib/agent/idempotency";
+import { isWebTasksEnabled } from "@/lib/operations/readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ interface AuthenticatedUser {
 
 interface TaskHandlerDependencies {
   environment?: Readonly<Record<string, string | undefined>>;
+  nodeEnvironment?: string;
   getUser: () => Promise<AuthenticatedUser | null>;
   runTask: (input: RunTaskInput) => Promise<RunTaskResult>;
   saveTask?: (input: {
@@ -92,6 +94,10 @@ function taskResponse(body: unknown, status: number) {
     },
     status,
   });
+}
+
+function webTasksPausedResponse() {
+  return taskResponse({ error: "WEB_TASKS_PAUSED" }, 503);
 }
 
 function isPlainRecord(
@@ -180,10 +186,14 @@ function browserTaskResult(result: RunTaskResult) {
 
 export function createTaskHandler({
   environment = process.env,
+  nodeEnvironment = process.env.NODE_ENV,
   getUser,
   runTask,
 }: TaskHandlerDependencies) {
   return async function handleTask(request: Request) {
+    if (!isWebTasksEnabled(environment, nodeEnvironment)) {
+      return webTasksPausedResponse();
+    }
     if (!isSameOriginMutation(request, environment)) {
       return taskResponse({ error: "ORIGIN_FORBIDDEN" }, 403);
     }
@@ -285,10 +295,14 @@ export function createTaskHandler({
 
 export function createSaveTaskHandler({
   environment = process.env,
+  nodeEnvironment = process.env.NODE_ENV,
   getUser,
   saveTask,
 }: TaskHandlerDependencies) {
   return async function handleSaveTask(request: Request) {
+    if (!isWebTasksEnabled(environment, nodeEnvironment)) {
+      return webTasksPausedResponse();
+    }
     if (!isSameOriginMutation(request, environment)) {
       return taskResponse({ error: "ORIGIN_FORBIDDEN" }, 403);
     }
@@ -375,9 +389,15 @@ function productionDependencies(): TaskHandlerDependencies {
 }
 
 export async function POST(request: Request) {
+  if (!isWebTasksEnabled()) {
+    return webTasksPausedResponse();
+  }
   return createTaskHandler(productionDependencies())(request);
 }
 
 export async function PATCH(request: Request) {
+  if (!isWebTasksEnabled()) {
+    return webTasksPausedResponse();
+  }
   return createSaveTaskHandler(productionDependencies())(request);
 }

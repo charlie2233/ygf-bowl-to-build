@@ -4,11 +4,12 @@ import {
   expectNoAccessibilityViolations,
   expectNoHorizontalOverflow,
 } from "./a11y";
+import { gotoApp } from "./navigation";
 
 test("establishes the single demo claim and first useful result", async ({
   page,
 }) => {
-  await page.goto("/redeem#code=BOWL7K2A");
+  await gotoApp(page, "/redeem#code=BOWL7K2A");
 
   await expect(page.getByLabel("8-character card code")).toHaveValue(
     "BOWL7K2A",
@@ -52,7 +53,7 @@ test("establishes the single demo claim and first useful result", async ({
     page.getByText("3,000", { exact: true }),
   ).toBeVisible();
 
-  await page.goto("/task/study");
+  await gotoApp(page, "/task/study");
   await page
     .getByLabel("What are you working on?")
     .fill("Explain active recall and create five flashcards.");
@@ -90,7 +91,7 @@ test("establishes the single demo claim and first useful result", async ({
     page.getByText("Connect my Agent"),
   ).toBeVisible();
 
-  await page.goto("/connect/agent");
+  await gotoApp(page, "/connect/agent");
   await expect(
     page.getByRole("heading", { name: "Connect your own Agent" }),
   ).toBeVisible();
@@ -134,7 +135,7 @@ test("establishes the single demo claim and first useful result", async ({
     ),
   ).toBeVisible();
 
-  await page.goto("/share");
+  await gotoApp(page, "/share");
   await expect(page.getByText("First build: Study")).toBeVisible();
   await expect(page.locator(".share-builder select")).toHaveCount(0);
   const downloadPromise = page.waitForEvent("download");

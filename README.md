@@ -200,10 +200,39 @@ Claude gift. Production gift URLs are entered through the authenticated admin
 workflow after the matching code inventory exists; they do not come from demo
 environment variables.
 
+The first safe production posture is intentionally narrow: enable claiming
+only after a private code batch exists, and keep both forms of paid inference
+off until their own staging proof is recorded. This is a target configuration,
+not evidence that an environment is already configured or live:
+
 ```env
 NEXT_PUBLIC_APP_URL=https://malatangai.com
 YGF_PUBLIC_ORIGIN=https://malatangai.com
+YGF_REDEMPTION_ENABLED=true
+YGF_WEB_TASKS_ENABLED=false
+YGF_AGENT_GATEWAY_ENABLED=false
+CRON_SECRET=<independent-random-server-secret>
 ```
+
+`www.malatangai.com` is redirected permanently to the apex origin while
+preserving path and query. Use only the apex URL in QR artwork, callbacks, and
+Agent configuration. The homepage emits the apex canonical URL as well.
+
+`YGF_REDEMPTION_ENABLED` and `YGF_WEB_TASKS_ENABLED` are server-only kill
+switches. Production requires the exact value `true`; a missing or any other
+value pauses the relevant mutation before authentication, wallet mutation, or
+provider work. Set either value to `false`, then redeploy/roll out the changed
+environment to stop new work. The UI shows a localized retry-later state; it
+does not expose an operational value. They do not enable the Agent gateway:
+that remains separately guarded by `YGF_AGENT_GATEWAY_ENABLED`.
+
+The checked-in `vercel.json` schedules one daily `04:00 UTC` request to
+`/api/internal/maintenance`. That route accepts only
+`Authorization: Bearer <CRON_SECRET>`, returns no-store responses, and invokes
+the service-role-only bounded maintenance RPC. It has no user-controlled
+parameters. Install a distinct `CRON_SECRET` in the production host and prove
+one authorized run after deploying; do not call the route with a secret in a
+browser URL.
 
 Deploy the application only after:
 
@@ -215,6 +244,12 @@ Deploy the application only after:
   CAPTCHA/Turnstile, edge rate limiting, and anonymous-user cleanup;
 - setting both independent Agent HMAC secrets and explicitly enabling the
   gateway only after one real provider request, refund, and cost-cap smoke;
+- setting `YGF_REDEMPTION_ENABLED=true` only after inventory is ready, while
+  initially keeping `YGF_WEB_TASKS_ENABLED=false` and
+  `YGF_AGENT_GATEWAY_ENABLED=false` until their real provider staging proofs;
+- installing an independent `CRON_SECRET`, applying the bounded-maintenance
+  migration, and proving the daily authorized maintenance run against the
+  production database;
 - setting provider usage and billing alerts;
 - rendering public QRs with the real production origin;
 - completing the manager, photo, print, training, and soft-test gates in
@@ -464,8 +499,11 @@ test, or approve launch. Those gates are tracked in
   explicit save.
 - Successful Agent response payloads are stored in Postgres for a logical
   15-minute replay window and may echo request text. The raw request prompt is
-  not a separate column. Physical tombstoning is lazy; a reviewed indexed,
-  bounded scheduled cleanup remains a launch gate.
+  not a separate column. Physical cleanup is bounded and service-only: the
+  scheduled maintenance pass tombstones expired Agent replay bodies, settles
+  stale web/Agent reservations with existing accounting rules, and deletes
+  expired admission attempts and retained events. Its live deployment and
+  indexed execution remain a launch gate.
 - A check-in task label comes only from the server’s earliest successful task
   history. `/api/share-card` accepts only `{}` and records at most one
   generation signal per wallet.

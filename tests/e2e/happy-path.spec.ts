@@ -4,6 +4,7 @@ import {
   expectNoAccessibilityViolations,
   expectNoHorizontalOverflow,
 } from "./a11y";
+import { gotoApp } from "./navigation";
 
 const TASK_ROUTES = [
   { path: "/task/study", title: "Study help" },
@@ -15,7 +16,7 @@ const TASK_ROUTES = [
 test("redeemed wallet is reusable, accessible, and responsive", async ({
   page,
 }) => {
-  await page.goto("/wallet");
+  await gotoApp(page, "/wallet");
   await expect(
     page.getByRole("heading", {
       name: "What will you build first?",
@@ -35,7 +36,7 @@ for (const taskRoute of TASK_ROUTES) {
   test(`${taskRoute.path} is reusable, accessible, and responsive`, async ({
     page,
   }) => {
-    await page.goto(taskRoute.path);
+    await gotoApp(page, taskRoute.path);
     await expect(
       page.getByRole("heading", {
         level: 1,
@@ -54,7 +55,7 @@ for (const taskRoute of TASK_ROUTES) {
 test("saved history is reusable, accessible, and responsive", async ({
   page,
 }) => {
-  await page.goto("/history");
+  await gotoApp(page, "/history");
   await expect(
     page.getByRole("heading", { level: 1, name: "Build history" }),
   ).toBeVisible();
@@ -78,7 +79,7 @@ test("saved history is reusable, accessible, and responsive", async ({
 test("legacy OpenRouter route redirects to the YGF Agent setup", async ({
   page,
 }) => {
-  await page.goto("/connect/openrouter");
+  await gotoApp(page, "/connect/openrouter");
   await expect(page).toHaveURL(/\/connect\/agent$/);
   await expect(
     page.getByRole("heading", {
@@ -92,7 +93,7 @@ test("legacy OpenRouter route redirects to the YGF Agent setup", async ({
 test("Agent setup is reusable, accessible, and responsive", async ({
   page,
 }) => {
-  await page.goto("/connect/agent");
+  await gotoApp(page, "/connect/agent");
   await expect(
     page.getByRole("heading", {
       level: 1,
@@ -115,7 +116,7 @@ test("Agent setup is reusable, accessible, and responsive", async ({
 test("safe check-in card is reusable, accessible, and responsive", async ({
   page,
 }) => {
-  await page.goto("/share");
+  await gotoApp(page, "/share");
   await expect(
     page.getByRole("heading", {
       level: 1,

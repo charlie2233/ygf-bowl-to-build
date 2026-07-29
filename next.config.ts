@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        destination: "https://malatangai.com/:path*",
+        has: [{ type: "host", value: "www.malatangai.com" }],
+        permanent: true,
+        source: "/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {

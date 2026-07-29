@@ -58,8 +58,9 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 
 ## Product and security gates
 
-- [ ] Production deployment is reachable over HTTPS and canonical links use
-  the approved public origin.
+- [ ] Production deployment is reachable over HTTPS, canonical links use
+  `https://malatangai.com`, and `www.malatangai.com` redirects permanently to
+  the apex without losing path or query.
 - [ ] The release SHA retains the reviewed `pnpm-workspace.yaml` overrides
   `next>postcss=8.5.18` and `next>sharp=0.35.3`, and a frozen production
   install, `pnpm audit --prod`, and `pnpm build` are recorded for that SHA.
@@ -130,6 +131,12 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   reviewed without raw prompts, claims, keys, or IPs.
 - [ ] Provider budgets, per-user limits, global kill switch, error alerts, and
   cost dashboard are set.
+- [ ] Install and rehearse the three distinct server-only operational states:
+  `YGF_REDEMPTION_ENABLED=true` only after private inventory is ready,
+  `YGF_WEB_TASKS_ENABLED=false` until a real web-provider staging smoke, and
+  `YGF_AGENT_GATEWAY_ENABLED=false` until its separate Agent smoke. Verify a
+  switch set to `false` returns a safe unavailable response before auth,
+  ledger mutation, or provider work.
 - [ ] Privacy owner approves a technically enforced retention/deletion
   schedule. “Credits expire after 14 days” is not a deletion schedule.
 
@@ -146,12 +153,13 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Approve and schedule anonymous-user cleanup. Deleting unlinked anonymous
   users is not automatic, and clearing browser data makes their wallets
   unrecoverable.
-- [ ] Schedule the service-role-only
-  `tombstone_expired_agent_responses(500, null)` Agent replay-tombstone RPC
-  and prove its indexed, bounded execution while the gateway is idle. Run live
-  `EXPLAIN` for both wallet and global branches and verify their respective
-  partial indexes. The RPC is in the migration; the live pg_cron/Supabase
-  schedule is not.
+- [ ] Apply `20260729060005_global_bounded_maintenance.sql`, set an
+  independent `CRON_SECRET`, and deploy the host's daily
+  `/api/internal/maintenance` schedule. Confirm an unauthorized request is
+  rejected without detail, an authorized run emits count-only bounded results,
+  and the route cannot receive a caller-controlled batch size. Run live
+  `EXPLAIN` for the wallet and global maintenance branches; the source config
+  is not proof that the host schedule is active.
 
 - [ ] Each external account has a named YGF owner, least-privilege access,
   recovery method, and billing/usage alert. Do not put secrets in this
@@ -218,8 +226,11 @@ broken claim QRs, incorrect public terms/prices, or sustained
 redemption/task/Agent errors.
 
 1. Remove or cover physical campaign assets and pause social distribution.
-2. Disable new redemption and AI task execution with the approved server-side
-   controls; keep a clear customer-safe status message.
+2. Set `YGF_REDEMPTION_ENABLED=false` and/or
+   `YGF_WEB_TASKS_ENABLED=false` in the server environment, roll out the
+   changed configuration, and verify the localized customer-safe unavailable
+   state. Keep `YGF_AGENT_GATEWAY_ENABLED=false` unless an approved incident
+   procedure requires a separate Agent stop.
 3. Quarantine unused claim rows. Revoke a compromised batch through the
    audited manager workflow. Revoke affected personal keys; rotate the
    server-side Agent digest secret only through the approved global incident

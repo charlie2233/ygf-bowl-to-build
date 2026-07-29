@@ -12,6 +12,7 @@ import {
 import { serverSecret } from "@/lib/auth/runtime";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { normalizeCode } from "@/lib/campaign/code";
+import { isRedemptionEnabled } from "@/lib/operations/readiness";
 import { getCampaignRepository } from "@/lib/repositories";
 import { getPublicValidationAdmission } from "@/lib/repositories/public-validation-admission";
 import {
@@ -28,6 +29,12 @@ interface ValidationBody {
 
 const MAX_VALIDATION_BODY_BYTES = 512;
 
+interface ValidationRouteDependencies {
+  handle: (request: Request) => Promise<Response>;
+  environment?: Readonly<Record<string, string | undefined>>;
+  nodeEnvironment?: string;
+}
+
 function validationResponse(
   eligible: boolean,
   status = 200,
@@ -41,7 +48,30 @@ function validationResponse(
   );
 }
 
-export async function POST(request: Request) {
+function validationPausedResponse() {
+  return NextResponse.json(
+    { eligible: false, error: "REDEMPTION_PAUSED" },
+    {
+      headers: { "cache-control": "private, no-store" },
+      status: 503,
+    },
+  );
+}
+
+export function createValidationRouteHandler({
+  handle,
+  environment = process.env,
+  nodeEnvironment = process.env.NODE_ENV,
+}: ValidationRouteDependencies) {
+  return async function handleValidationRoute(request: Request) {
+    if (!isRedemptionEnabled(environment, nodeEnvironment)) {
+      return validationPausedResponse();
+    }
+    return handle(request);
+  };
+}
+
+async function handleValidation(request: Request) {
   if (!isSameOriginMutation(request)) {
     return validationResponse(false, 403);
   }
@@ -131,4 +161,10 @@ export async function POST(request: Request) {
   } catch {
     return validationResponse(false, 503);
   }
+}
+
+export async function POST(request: Request) {
+  return createValidationRouteHandler({
+    handle: handleValidation,
+  })(request);
 }

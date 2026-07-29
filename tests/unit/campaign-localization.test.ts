@@ -8,6 +8,7 @@ import {
   campaignLocales,
 } from "@/lib/i18n/campaign";
 import { redeemCopy } from "@/lib/i18n/redeem";
+import { workspaceCopy } from "@/lib/i18n/workspace";
 
 const rewardContextExpectations = {
   en: {
@@ -61,6 +62,14 @@ function normalizedText(element: Element | undefined) {
 }
 
 describe("campaign localization contract", () => {
+  it.each(campaignLocales)(
+    "includes explicit operational-pause guidance in %s",
+    (locale) => {
+      expect(redeemCopy[locale].form.errors.redemptionPaused).toBeTruthy();
+      expect(workspaceCopy[locale].task.errors.tasksPaused).toBeTruthy();
+    },
+  );
+
   it("ships the five requested languages", () => {
     expect(campaignLocales).toEqual(["en", "zh", "es", "fr", "ru"]);
     expect(campaignLanguageOptions.map(({ locale }) => locale)).toEqual(

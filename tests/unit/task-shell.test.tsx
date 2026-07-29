@@ -18,6 +18,7 @@ import {
   type TaskSubmission,
 } from "@/components/task/task-shell";
 import { getTaskDefinition } from "@/lib/content/tasks";
+import { campaignLocales } from "@/lib/i18n/campaign";
 import { workspaceCopy } from "@/lib/i18n/workspace";
 import { modelChoicesForTask } from "@/lib/providers/model-catalog";
 
@@ -131,6 +132,126 @@ describe("TaskShell", () => {
     expect(submitTask.mock.calls[0]?.[0]).not.toHaveProperty("userId");
     expect(submitTask.mock.calls[0]?.[0]).not.toHaveProperty("model");
   });
+
+  it.each(campaignLocales)(
+    "shows the localized paused-web-AI message without consuming credits in %s",
+    async (locale) => {
+      languageState.locale = locale;
+      const submitTask = vi.fn(async () => {
+        throw new Error("WEB_TASKS_PAUSED");
+      });
+      await act(async () => {
+        root.render(
+          <TaskShell
+            initialCredits={3_000}
+            modelChoices={modelChoicesForTask("study")}
+            submitTask={submitTask}
+            task={getTaskDefinition("study")}
+          />,
+        );
+      });
+      await act(async () => {
+        Array.from(container.querySelectorAll("button"))
+          .find(
+            (button) =>
+              button.textContent ===
+              workspaceCopy[locale].task.tasks.study.presets[0],
+          )
+          ?.click();
+      });
+      await act(async () => {
+        container.querySelector("form")?.dispatchEvent(
+          new SubmitEvent("submit", {
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        await Promise.resolve();
+      });
+
+      expect(submitTask).toHaveBeenCalledOnce();
+      expect(container.textContent).toContain(
+        workspaceCopy[locale].task.errors.tasksPaused,
+      );
+    },
+  );
+
+  it.each(campaignLocales)(
+    "maps a paused save response to localized pause guidance in %s",
+    async (locale) => {
+      languageState.locale = locale;
+      const fetchMock = vi.fn<typeof fetch>(
+        async (_input, init) => {
+          if (init?.method === "PATCH") {
+            return Response.json(
+              { error: "WEB_TASKS_PAUSED" },
+              { status: 503 },
+            );
+          }
+          return Response.json({
+            friendlyModel: "Balanced guide",
+            output: {
+              sections: [
+                { heading: "Result", items: ["Ready"] },
+              ],
+              title: "Saved result",
+            },
+            remainingCredits: 2_880,
+            sessionId: "paused-save-session",
+            status: "completed",
+          });
+        },
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      await act(async () => {
+        root.render(
+          <TaskShell
+            initialCredits={3_000}
+            modelChoices={modelChoicesForTask("study")}
+            task={getTaskDefinition("study")}
+          />,
+        );
+      });
+      await act(async () => {
+        Array.from(container.querySelectorAll("button"))
+          .find(
+            (button) =>
+              button.textContent ===
+              workspaceCopy[locale].task.tasks.study.presets[0],
+          )
+          ?.click();
+      });
+      await act(async () => {
+        container.querySelector("form")?.dispatchEvent(
+          new SubmitEvent("submit", {
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        await Promise.resolve();
+      });
+      await act(async () => {
+        const save = Array.from(
+          container.querySelectorAll("button"),
+        ).find(
+          (button) =>
+            button.textContent ===
+            workspaceCopy[locale].task.result.save,
+        );
+        expect(save).toBeTruthy();
+        save?.click();
+        await Promise.resolve();
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/tasks",
+        expect.objectContaining({ method: "PATCH" }),
+      );
+      expect(container.textContent).toContain(
+        workspaceCopy[locale].task.errors.tasksPaused,
+      );
+    },
+  );
 
   it("submits on private-LAN HTTP when crypto.randomUUID is unavailable", async () => {
     vi.stubGlobal("crypto", {

@@ -47,13 +47,15 @@ export function ResultPanel({
   output: TaskOutput;
 }) {
   const { locale } = useCampaignLanguage();
-  const resultCopy = workspaceCopy[locale].task.result;
+  const taskCopy = workspaceCopy[locale].task;
+  const resultCopy = taskCopy.result;
   const [copyState, setCopyState] = useState<
     "idle" | "copied" | "error"
   >("idle");
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [savePaused, setSavePaused] = useState(false);
 
   async function copyResult() {
     try {
@@ -66,10 +68,15 @@ export function ResultPanel({
 
   async function save() {
     setSaveState("saving");
+    setSavePaused(false);
     try {
       await onSave();
       setSaveState("saved");
-    } catch {
+    } catch (error) {
+      setSavePaused(
+        error instanceof Error &&
+          error.message === "WEB_TASKS_PAUSED",
+      );
       setSaveState("error");
     }
   }
@@ -121,7 +128,7 @@ export function ResultPanel({
 
       {saveState === "error" ? (
         <p className="result-panel__save-error" role="alert">
-          {resultCopy.saveError}
+          {savePaused ? taskCopy.errors.tasksPaused : resultCopy.saveError}
         </p>
       ) : null}
 

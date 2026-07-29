@@ -344,12 +344,13 @@ instead of redispatched. No database transaction can include an external
 provider. Agent admission tombstones at most 20 expired replay bodies from its
 own wallet, using a wallet-leading partial index and a static wallet-only
 query branch; it never walks the global expiry index on a user request. A
-separate invocation of `tombstone_expired_agent_responses(500, null)` uses a
-global expiry-leading partial index and `FOR UPDATE SKIP LOCKED` for a bounded
-idle-time pass. Installing and exercising that scheduler, proving both query
-plans with live Supabase `EXPLAIN`, plus concurrency, correlation/log tracing,
-and failure-injection smoke against Supabase and OpenAI remain deployment
-gates.
+service-role-only global maintenance pass calls
+`tombstone_expired_agent_responses(100, null)` through an expiry-leading
+partial index and `FOR UPDATE SKIP LOCKED`, alongside the other bounded
+idle-time categories. Installing and exercising the host schedule, proving
+both query plans with live Supabase `EXPLAIN`, plus concurrency,
+correlation/log tracing, and failure-injection smoke against Supabase and
+OpenAI remain deployment gates.
 
 Demo mode intentionally uses a bounded in-memory limiter/result cache behind
 the same `runTask` contract. Production always selects the Supabase execution
@@ -412,11 +413,53 @@ for 15 minutes. It can contain provider text that repeats submitted input.
 After expiry it is replaced with a generic tombstone. Admission processes no
 more than 20 expired rows from its own wallet through the
 `(wallet_id, result_expires_at, id)` partial index; the service-role-only global
-cleanup RPC processes no more than 500 rows through the
+maintenance RPC processes no more than 100 replay bodies through the
 `(result_expires_at, id)` partial index per scheduled pass with
-`FOR UPDATE SKIP LOCKED`. The scheduler remains an external production gate so
-idle traffic cannot delay physical replacement. The idempotency and accounting
-proof remains.
+`FOR UPDATE SKIP LOCKED`, plus the other independently capped categories. The
+host scheduler remains an external production gate so idle traffic cannot delay
+physical replacement. The idempotency and accounting proof remains.
+
+## Operational controls and bounded maintenance
+
+Production mutation paths have independent server-only fail-closed switches.
+`YGF_REDEMPTION_ENABLED` gates public code validation and claim redemption.
+`YGF_WEB_TASKS_ENABLED` gates ordinary web-task generation and result-saving
+mutations. In production each must be exactly `true`; an absent, malformed, or
+`false` value returns a localized unavailable response before authentication,
+a ledger reservation, claim-state creation, result storage, or provider work.
+Local development and test preserve their normal behavior unless a switch is
+explicitly `false`. The Agent gateway stays independently disabled unless
+`YGF_AGENT_GATEWAY_ENABLED=true`; a web-task switch never enables `/v1`
+traffic.
+
+The checked-in host schedule calls `GET /api/internal/maintenance` daily. The
+route has no public or caller-controlled batch size, requires a constant-time
+comparison of `Authorization: Bearer <CRON_SECRET>`, emits no-store responses,
+and refuses any non-Supabase runtime. It invokes only the service-role-only
+`public.run_bounded_global_maintenance(100)` RPC. The RPC limits every
+category independently to 100 rows, uses existing terminal settlement
+invariants for stale task reservations, preserves wallet-to-key lock order for
+stale Agent reservations, tombstones expired Agent replay bodies, and deletes
+expired public-validation attempts, redemption attempts, and retained events.
+Candidate selection and deletion use indexed expiry ordering and
+`FOR UPDATE SKIP LOCKED` where concurrent maintenance could contend. A failed
+or repeated scheduler request is therefore bounded and idempotent rather than
+a customer-path cleanup dependency.
+
+The source contains this scheduler contract; it does not prove a host has the
+cron active, the migration applied, or an authorized production run. Before a
+launch, install an independent `CRON_SECRET`, apply the migration, execute one
+authorized zero/fixture-safe run, inspect its count-only result, and verify
+the host schedule and database query plans.
+
+## Canonical public origin
+
+The public origin is `https://malatangai.com`. The application redirects
+`www.malatangai.com` permanently to the apex while preserving path and query,
+and the homepage emits the apex canonical metadata URL. This protects
+same-origin mutation checks from a parallel public host. DNS, TLS, deployed
+redirect behavior, and canonical-header inspection are external release
+checks; QR and callback artwork must use the apex origin regardless.
 
 Keys are limited to three active rows and ten creates/replacements per wallet
 per rolling 24 hours. The RPM counter is a single row per key, so over-limit
@@ -524,10 +567,11 @@ rejected. Persisted signals have an explicit expiry and can be deleted by a
 retention job without retaining the originating value.
 
 Agent request rows retain a successful response payload for a logical
-15-minute idempotent replay window; the payload may echo submitted input.
-The shipped RPC physically tombstones a bounded indexed batch, but this
-repository does not claim a live scheduler is installed. That job and an
-approved broader retention/deletion schedule are production gates.
+15-minute idempotent replay window; the payload may echo submitted input. The
+shipped service-only maintenance RPC physically tombstones a bounded indexed
+batch and the checked-in host schedule invokes it daily. Neither source file
+claims that a live host schedule is installed or that a broader
+retention/deletion policy is approved; those remain production gates.
 
 History stores task type, title, model, usage, status, provider-cost integer,
 and timestamps. Submitted task text is not part of the repository interface.

@@ -14,6 +14,7 @@ export type WorkspaceTaskErrorKey =
   | "providerUnavailable"
   | "replayExpired"
   | "retryConflict"
+  | "tasksPaused"
   | "throttled"
   | "walletExpired";
 
@@ -230,6 +231,8 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
           "This retry no longer matches the original request. Start another task.",
         providerUnavailable:
           "AI is temporarily unavailable. Your 120 credits were not consumed if the provider failed.",
+        tasksPaused:
+          "YGF web AI is temporarily paused. No Build Credits were used.",
         generic: "We couldn’t generate this result. Try again shortly.",
       },
       empty: {
@@ -420,6 +423,7 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
           "这次重试与原请求不一致。请开始一个新任务。",
         providerUnavailable:
           "AI 服务暂时不可用。如果服务商调用失败，你的 120 Credits 不会被扣除。",
+        tasksPaused: "杨国福网页 AI 暂时暂停。不会扣除 Build Credits。",
         generic: "暂时无法生成结果，请稍后重试。",
       },
       empty: {
@@ -604,6 +608,8 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
           "Este reintento ya no coincide con la solicitud original. Inicia otra tarea.",
         providerUnavailable:
           "La IA no está disponible temporalmente. Si falló el proveedor, no se consumieron tus 120 créditos.",
+        tasksPaused:
+          "La IA web de YGF está temporalmente en pausa. No se usaron créditos de Build.",
         generic:
           "No pudimos generar el resultado. Inténtalo de nuevo en breve.",
       },
@@ -799,6 +805,8 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
           "Cette nouvelle tentative ne correspond plus à la demande initiale. Lancez une autre tâche.",
         providerUnavailable:
           "L’IA est temporairement indisponible. Si le fournisseur a échoué, vos 120 crédits n’ont pas été utilisés.",
+        tasksPaused:
+          "L’IA web YGF est temporairement suspendue. Aucun crédit Build n’a été utilisé.",
         generic:
           "Impossible de générer le résultat. Réessayez dans un instant.",
       },
@@ -994,6 +1002,8 @@ export const workspaceCopy: Record<CampaignLocale, WorkspaceCopy> = {
           "Повтор больше не соответствует исходному запросу. Начните новую задачу.",
         providerUnavailable:
           "ИИ временно недоступен. Если провайдер завершился с ошибкой, 120 кредитов не были списаны.",
+        tasksPaused:
+          "Веб-ИИ YGF временно приостановлен. Build Credits не были использованы.",
         generic:
           "Не удалось создать результат. Повторите попытку чуть позже.",
       },

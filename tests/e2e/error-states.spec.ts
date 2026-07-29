@@ -4,6 +4,7 @@ import {
   expectNoAccessibilityViolations,
   expectNoHorizontalOverflow,
 } from "./a11y";
+import { gotoApp } from "./navigation";
 
 const TERMINAL_STATES = [
   {
@@ -27,7 +28,7 @@ const TERMINAL_STATES = [
 test("invalid private QR is removed from the URL and offers printed-code recovery", async ({
   page,
 }) => {
-  await page.goto("/redeem#code=BOWL7K2A&next=/wallet");
+  await gotoApp(page, "/redeem#code=BOWL7K2A&next=/wallet");
 
   await expect
     .poll(() => new URL(page.url()).hash)
@@ -43,7 +44,8 @@ test("invalid private QR is removed from the URL and offers printed-code recover
 test("legacy query claims are scrubbed without trusting query consent", async ({
   page,
 }) => {
-  await page.goto(
+  await gotoApp(
+    page,
     "/redeem?code=BOWL7K2A&termsAccepted=on&source=legacy",
   );
 
@@ -63,7 +65,7 @@ test("legacy query claims are scrubbed without trusting query consent", async ({
 test("reviewing legal terms keeps a scanned private code on the redeem page", async ({
   page,
 }) => {
-  await page.goto("/redeem#code=BOWL7K2A");
+  await gotoApp(page, "/redeem#code=BOWL7K2A");
   const codeInput = page.getByLabel("8-character card code");
   await expect(codeInput).toHaveValue("BOWL7K2A");
   await expect
@@ -87,7 +89,7 @@ test("reviewing legal terms keeps a scanned private code on the redeem page", as
 test("claim form explains missing consent, missing code, and an unavailable code", async ({
   page,
 }) => {
-  await page.goto("/redeem");
+  await gotoApp(page, "/redeem");
 
   const codeInput = page.getByLabel("8-character card code");
   const submit = page.getByRole("button", {
@@ -143,7 +145,7 @@ test("redemption terminal states remain actionable and privacy safe", async ({
   page,
 }) => {
   for (const state of TERMINAL_STATES) {
-    await page.goto(state.path);
+    await gotoApp(page, state.path);
     await expect(
       page.getByRole("heading", { level: 1, name: state.title }),
     ).toBeVisible();

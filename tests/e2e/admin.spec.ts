@@ -4,11 +4,12 @@ import {
   expectNoAccessibilityViolations,
   expectNoHorizontalOverflow,
 } from "./a11y";
+import { gotoApp } from "./navigation";
 
 test("demo administrator can inspect campaign metrics and code operations", async ({
   page,
 }) => {
-  await page.goto("/admin/dashboard");
+  await gotoApp(page, "/admin/dashboard");
   await expect(
     page.getByRole("heading", { level: 1, name: "Beta funnel" }),
   ).toBeVisible();

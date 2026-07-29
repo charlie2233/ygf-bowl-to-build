@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET as getBalance } from "@/app/api/balance/route";
-import { POST as validateCode } from "@/app/api/code/validate/route";
+import {
+  createValidationRouteHandler,
+  POST as validateCode,
+} from "@/app/api/code/validate/route";
 import {
   readPendingClaim,
 } from "@/lib/auth/pending-claim";
@@ -76,6 +79,29 @@ describe("Task 4 route composition in demo mode", () => {
     );
     expect(await invalid.json()).toEqual({ eligible: false });
     expect(invalid.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("pauses public validation before claim-state or admission work", async () => {
+    const downstream = vi.fn(async () =>
+      Response.json({ eligible: true }),
+    );
+    const handler = createValidationRouteHandler({
+      environment: { YGF_REDEMPTION_ENABLED: "false" },
+      handle: downstream,
+      nodeEnvironment: "test",
+    });
+
+    const response = await handler(validationRequest("BOWL7K2A"));
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    await expect(response.json()).resolves.toEqual({
+      eligible: false,
+      error: "REDEMPTION_PAUSED",
+    });
+    expect(downstream).not.toHaveBeenCalled();
   });
 
   it("rejects cross-origin, unexpected, and oversized validation requests", async () => {

@@ -24,21 +24,23 @@ A checked local row never implies the later rows are complete.
 ## Local source and automated evidence
 
 The final release operator records the exact date, command, result, and commit
-for each row. Until that final run is recorded, the status remains pending.
+for each row. The July 29 rows below are the current pre-commit release
+candidate evidence; the immutable GitHub SHA is reported in the final handoff
+after this document is committed.
 
 | Gate | Required command or evidence | Status |
 | --- | --- | --- |
-| Lint | `pnpm lint` | Pass on July 28, 2026 |
-| TypeScript | `pnpm typecheck` | Pass on July 28, 2026 |
-| Unit/integration/security contracts | `pnpm test` | Pass on July 28, 2026: 54 files, 401 tests |
-| Production compilation | `pnpm build` | Pass on July 28, 2026: optimized build, page generation, and dynamic route manifest |
-| Production dependency audit | `pnpm audit --prod` | Pass on July 28, 2026: 0 known vulnerabilities |
-| Browser test discovery | `pnpm exec playwright test --list` | Pass on July 28, 2026: 61 tests across setup, desktop Chromium, and iPhone WebKit projects |
-| Desktop Chromium and axe | `pnpm exec playwright test --project=desktop-chromium` | Pass in the July 28 full matrix: 30 desktop checks; the shared setup passed once |
-| Full Playwright matrix | `pnpm test:e2e` | Pass on July 28, 2026: 61/61 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
-| iPhone WebKit and axe | `pnpm exec playwright test --project=iphone-webkit` | Pass in the July 28 full matrix: 30 WebKit checks after the shared setup |
-| Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 27, 2026; no server secret variable names found in client output |
-| Complete working-tree release review | deterministic 47-file worklist and focused validation | Pass on July 27, 2026; three low findings and one defense-in-depth item remediated before checkpoint |
+| Lint | `pnpm lint` | Pass on July 29, 2026 |
+| TypeScript | `pnpm typecheck` | Pass on July 29, 2026 |
+| Unit/integration/security contracts | `pnpm test` | Pass on July 29, 2026: 71 files, 533 tests |
+| Production compilation | `pnpm build` | Pass on July 29, 2026: optimized build, page generation, and dynamic route manifest |
+| Production dependency audit | `pnpm audit --prod` | Pass on July 29, 2026: 0 known vulnerabilities |
+| Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 29, 2026: 81 tests across setup, desktop Chromium, and iPhone WebKit projects |
+| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 40 desktop checks; the shared setup passed once |
+| Full Playwright matrix | `pnpm test:e2e` | Pass on July 29, 2026: 81/81 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
+| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 40 WebKit checks after the shared setup |
+| Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 29, 2026; no OpenAI, personal Agent, or JWT-shaped secret values found in built client output. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI |
+| Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 29, 2026; all medium-or-higher review findings remediated and independently rechecked before checkpoint |
 | Remote identity | local SHA equals GitHub branch SHA after push | Verified at the July 28 handoff; exact SHA is reported outside this self-referential file |
 
 Required behavioral evidence:
@@ -89,8 +91,8 @@ These replace the vulnerable versions otherwise selected by Next.js 16.2.12.
 They are intentional, tested security overrides, but both sit outside that
 Next.js release's declared dependency ranges (`postcss` 8.4.31 and
 `sharp` `^0.34.5`). The local proof is the exact locked install plus the
-0-finding production audit, lint, typecheck, 401-test suite, production build,
-61-test Playwright matrix, and a production-mode 200 response for an 828x552
+0-finding production audit, lint, typecheck, 533-test suite, production build,
+81-test Playwright matrix, and a production-mode 200 response for an 828x552
 WebP optimized through Next.js/Sharp. It is not an upstream compatibility
 guarantee and does not prove the production platform will install or execute
 the same native image path.
@@ -125,7 +127,9 @@ These require live account state and are intentionally not satisfied by this
 checkout:
 
 - [ ] Deploy the verified commit over HTTPS at the approved canonical origin,
-  `https://malatangai.com`.
+  `https://malatangai.com`; verify `www.malatangai.com` redirects permanently
+  to the apex with path/query preserved and that the deployed HTML has the
+  apex canonical URL.
 - [ ] Install the verified lockfile on the production build platform and
   recheck the scoped PostCSS/Sharp override record above. Confirm the platform
   build and a real optimized image request succeed; local build proof alone
@@ -142,13 +146,14 @@ checkout:
 - [ ] Enable manual identity linking and prove Google/Apple upgrades preserve
   the same wallet. Configure CAPTCHA/Turnstile, edge limits, and an approved
   anonymous-user cleanup policy; none is claimed as applied by this checkout.
-- [ ] Schedule the service-role-only
-  `tombstone_expired_agent_responses(500, null)` RPC and prove its indexed,
-  bounded idle-time execution. Logical 15-minute expiry alone is not physical
-  deletion proof; this checkout does not claim pg_cron/Supabase scheduling is
-  installed. Use live `EXPLAIN` to verify the wallet branch uses the
-  wallet-leading partial index and the global branch uses the expiry-leading
-  partial index.
+- [ ] Apply `20260729060005_global_bounded_maintenance.sql`, install an
+  independent host `CRON_SECRET`, and deploy the checked-in daily
+  `/api/internal/maintenance` schedule. Prove an authorized run returns only
+  bounded count fields and an unauthenticated request returns no data. This
+  source does not claim the host schedule is installed or exercised.
+- [ ] Use live `EXPLAIN` to verify the wallet Agent replay branch uses the
+  wallet-leading partial index and the global maintenance branches use their
+  expiry/lease indexes. Logical expiry alone is not physical deletion proof.
 - [ ] Install independent production claim-cookie, abuse-signal, and task
   fingerprint secrets.
 - [ ] Install independent Agent key-digest and request-fingerprint secrets;
@@ -161,8 +166,11 @@ checkout:
   rate/concurrency limit, and wallet-wide $3.00 cap smoke all pass.
 - [ ] Confirm production logs contain no plaintext claim, raw IP, submitted
   prompt, provider credential, service-role value, or full provider payload.
-- [ ] Verify alerting and a server-side stop path for redemption and provider
-  execution.
+- [ ] Verify alerting and the server-side stop paths: production requires
+  exact `true` for `YGF_REDEMPTION_ENABLED` and `YGF_WEB_TASKS_ENABLED`, and
+  keeps `YGF_AGENT_GATEWAY_ENABLED=false` until its own staging proof. Rehearse
+  setting each relevant value to `false` and rolling it out without a wallet
+  mutation or provider call.
 - [ ] Confirm the OpenAI API data controls for the production project.
   `store:false` is not zero retention: default abuse-monitoring logs may retain
   content for up to 30 days. Treat Zero Data Retention as a separate external

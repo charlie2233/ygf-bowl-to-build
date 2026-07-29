@@ -93,6 +93,13 @@ export function CampaignLanguageProvider({
     getServerSnapshot,
   );
 
+  useEffect(() => {
+    document.documentElement.dataset.campaignLanguageReady = "true";
+    return () => {
+      delete document.documentElement.dataset.campaignLanguageReady;
+    };
+  }, []);
+
   const setLocale = useCallback(
     (nextLocale: SiteLocale) => {
       if (lockedLocale) {

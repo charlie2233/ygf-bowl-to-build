@@ -27,7 +27,11 @@ into the test log. Use a non-secret fixture/row identifier.
   rows were produced by the release process.
 - Terms, privacy, offer copy, menu and prices, and the $25+ threshold have
   owner approval.
-- The manager can pause redemption and task execution immediately.
+- The manager and engineering owner can set the server-only
+  `YGF_REDEMPTION_ENABLED` and `YGF_WEB_TASKS_ENABLED` switches to `false`,
+  roll out the configuration, and confirm the localized unavailable response
+  occurs before an auth, ledger, or provider mutation. Agent traffic remains
+  independently disabled unless its staging gate has passed.
 
 ## Participant scenarios
 
@@ -52,6 +56,7 @@ times.
 | 14 | Use keyboard-only navigation and 200% zoom | Focus, labels, errors, and controls remain usable without clipped content |
 | 15 | Try a sensitive prompt and a food/allergen question | Warnings are visible; no claim of medical or allergen certainty |
 | 16 | Manager rehearses recovery/reissue | Original is reviewed/revoked, new row is audited, staff never records plaintext |
+| 17 | Engineering rehearses each paused server-side switch | A new redemption or web task receives a clear retry-later state with no wallet/provider mutation; the Agent gateway stays separately disabled |
 
 Include at least one iPhone/Safari participant, one Android/Chrome participant,
 one desktop participant, one participant using manual entry, and one

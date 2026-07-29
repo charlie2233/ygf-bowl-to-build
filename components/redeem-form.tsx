@@ -53,6 +53,9 @@ async function defaultConfirmPendingClaim() {
       window.location.assign(destination);
       return;
     }
+    if (body.error === "REDEMPTION_PAUSED") {
+      throw new Error("REDEMPTION_PAUSED");
+    }
     throw new Error("REDEMPTION_UNAVAILABLE");
   }
   window.location.assign("/redeem/success");
@@ -78,12 +81,19 @@ async function defaultSubmitClaim(
   });
   const validationBody = await readOptionalJson<{
     eligible?: boolean;
+    error?: string;
     next?: string;
     requiresAnonymousSession?: boolean;
   }>(validation);
 
   if (validation.status === 429) {
     throw new Error("VALIDATION_THROTTLED");
+  }
+  if (
+    validation.status === 503 &&
+    validationBody.error === "REDEMPTION_PAUSED"
+  ) {
+    throw new Error("REDEMPTION_PAUSED");
   }
   if (validation.status >= 500) {
     throw new Error("SERVICE_UNAVAILABLE");
@@ -133,6 +143,9 @@ function userFacingErrorKey(error: unknown): RedeemErrorKey {
       error.message === "REDEMPTION_UNAVAILABLE"
     ) {
       return "serviceUnavailable";
+    }
+    if (error.message === "REDEMPTION_PAUSED") {
+      return "redemptionPaused";
     }
     if (error.message === "ANONYMOUS_AUTH_UNAVAILABLE") {
       return "anonymousUnavailable";

@@ -106,7 +106,7 @@ describe("post-redemption workspace localization", () => {
       expect(copy.task.result.copy).toBeTruthy();
       expect(copy.task.result.startAnother).toBeTruthy();
       expect(copy.task.partner.title).toBeTruthy();
-      expect(Object.keys(copy.task.errors)).toHaveLength(9);
+      expect(Object.keys(copy.task.errors)).toHaveLength(10);
       expect(Object.keys(copy.task.tasks)).toEqual([
         "study",
         "coding",

@@ -2,6 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { metadata } from "@/app/layout";
+import { metadata as homeMetadata } from "@/app/(marketing)/page";
+import nextConfig from "@/next.config";
+
 const repositoryRoot = process.cwd();
 
 function readJson(path: string) {
@@ -99,6 +103,20 @@ describe("bootstrap configuration", () => {
       );
       expect(nextEnv).toContain('import "./.next/types/routes.d.ts";');
     }
+  });
+
+  it("keeps every public route on the apex production origin", async () => {
+    const redirects = await nextConfig.redirects?.();
+
+    expect(redirects).toContainEqual({
+      destination: "https://malatangai.com/:path*",
+      has: [{ type: "host", value: "www.malatangai.com" }],
+      permanent: true,
+      source: "/:path*",
+    });
+    expect(metadata.metadataBase?.toString()).toBe("https://malatangai.com/");
+    expect(metadata.alternates).toBeUndefined();
+    expect(homeMetadata.alternates?.canonical).toBe("/");
   });
 
   it("uses a focus token with at least 3:1 contrast on campaign surfaces", () => {

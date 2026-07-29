@@ -82,6 +82,24 @@ async function defaultSaveTask(sessionId: string) {
     method: "PATCH",
   });
   if (!response.ok) {
+    try {
+      const body: unknown = await response.json();
+      if (
+        body &&
+        typeof body === "object" &&
+        "error" in body &&
+        body.error === "WEB_TASKS_PAUSED"
+      ) {
+        throw new Error("WEB_TASKS_PAUSED");
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "WEB_TASKS_PAUSED"
+      ) {
+        throw error;
+      }
+    }
     throw new Error("RESULT_NO_LONGER_AVAILABLE");
   }
 }
@@ -103,6 +121,8 @@ function taskErrorKey(error: unknown): WorkspaceTaskErrorKey {
         return "replayExpired";
       case "TASK_IDEMPOTENCY_CONFLICT":
         return "retryConflict";
+      case "WEB_TASKS_PAUSED":
+        return "tasksPaused";
       case "PROVIDER_UNAVAILABLE":
       case "TASK_UNAVAILABLE":
         return "providerUnavailable";

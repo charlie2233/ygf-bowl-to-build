@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createSaveTaskHandler,
   createTaskHandler,
 } from "@/app/api/tasks/route";
 import { createHistoryHandler } from "@/app/api/history/route";
@@ -13,6 +14,84 @@ const TASK_ENVIRONMENT = {
 };
 
 describe("task API boundary", () => {
+  it("fails closed before authentication, request parsing, or provider work when web tasks are paused", async () => {
+    const getUser = vi.fn(async () => ({ id: "server-user" }));
+    const runTask = vi.fn();
+    const handler = createTaskHandler({
+      environment: { YGF_WEB_TASKS_ENABLED: "false" },
+      getUser,
+      nodeEnvironment: "test",
+      runTask,
+    });
+
+    const response = await handler(
+      new Request("https://ygf.example/api/tasks", {
+        body: "not JSON",
+        headers: { origin: "https://ygf.example" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    await expect(response.json()).resolves.toEqual({
+      error: "WEB_TASKS_PAUSED",
+    });
+    expect(getUser).not.toHaveBeenCalled();
+    expect(runTask).not.toHaveBeenCalled();
+  });
+
+  it("requires an explicit production web-task enablement", async () => {
+    const getUser = vi.fn(async () => ({ id: "server-user" }));
+    const runTask = vi.fn();
+    const handler = createTaskHandler({
+      environment: TASK_ENVIRONMENT,
+      getUser,
+      nodeEnvironment: "production",
+      runTask,
+    });
+
+    const response = await handler(
+      new Request("https://ygf.example/api/tasks", {
+        headers: { origin: "https://ygf.example" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(getUser).not.toHaveBeenCalled();
+    expect(runTask).not.toHaveBeenCalled();
+  });
+
+  it("pauses saved-result mutations before authentication or storage work", async () => {
+    const getUser = vi.fn(async () => ({ id: "server-user" }));
+    const saveTask = vi.fn();
+    const handler = createSaveTaskHandler({
+      environment: { YGF_WEB_TASKS_ENABLED: "false" },
+      getUser,
+      nodeEnvironment: "test",
+      runTask: vi.fn(),
+      saveTask,
+    });
+
+    const response = await handler(
+      new Request("https://ygf.example/api/tasks", {
+        body: "not JSON",
+        headers: { origin: "https://ygf.example" },
+        method: "PATCH",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "WEB_TASKS_PAUSED",
+    });
+    expect(getUser).not.toHaveBeenCalled();
+    expect(saveTask).not.toHaveBeenCalled();
+  });
+
   it("derives identity server-side and returns a privacy-safe task DTO", async () => {
     const runTask = vi.fn(async (input: RunTaskInput) => {
       void input;

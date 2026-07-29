@@ -4,6 +4,7 @@ import { campaignHomeCopy } from "@/lib/i18n/campaign";
 import { redeemCopy } from "@/lib/i18n/redeem";
 
 import { expectNoHorizontalOverflow } from "./a11y";
+import { gotoApp } from "./navigation";
 
 const translatedHeadings = {
   en: "Buy a bowl. Build with AI.",
@@ -27,7 +28,7 @@ test("campaign home switches all requested languages and remembers the choice", 
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto("/");
+  await gotoApp(page, "/");
   const selector = page.locator(".language-selector select");
   await expect(selector).toHaveValue("en");
 
@@ -88,7 +89,7 @@ test("campaign home switches all requested languages and remembers the choice", 
 test("language follows the user from the home page into redemption", async ({
   page,
 }) => {
-  await page.goto("/");
+  await gotoApp(page, "/");
   const homeSelector = page.locator(
     ".site-header .language-selector select",
   );
@@ -134,13 +135,13 @@ test("language follows the user from the home page into redemption", async ({
 test("English-only admin pages preserve the customer language preference", async ({
   page,
 }) => {
-  await page.goto("/");
+  await gotoApp(page, "/");
   await page
     .getByRole("combobox", { name: "Language" })
     .selectOption("zh");
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
 
-  await page.goto("/admin/dashboard");
+  await gotoApp(page, "/admin/dashboard");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("combobox")).toHaveCount(0);
 
@@ -163,7 +164,7 @@ test("long public navigation stays inside a tablet viewport", async ({
   page,
 }) => {
   await page.setViewportSize({ height: 900, width: 700 });
-  await page.goto("/");
+  await gotoApp(page, "/");
   await page
     .getByRole("combobox", { name: "Language" })
     .selectOption("ru");
@@ -179,7 +180,7 @@ test("long public navigation stays inside a tablet viewport", async ({
 
 test("campaign motion honors reduced-motion preferences", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await gotoApp(page, "/");
 
   await expect(page.locator("html")).toHaveAttribute(
     "data-campaign-motion",
@@ -265,7 +266,7 @@ test("campaign motion initializes the bundled GSAP experience", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await gotoApp(page, "/");
 
   await expect(page.locator("html")).toHaveAttribute(
     "data-campaign-motion",
@@ -323,7 +324,7 @@ test("translated reveal targets are rebuilt and preseeded before scroll", async 
 }) => {
   await page.setViewportSize({ height: 700, width: 1_200 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await gotoApp(page, "/");
   await expect(page.locator(".campaign-home")).toHaveAttribute(
     "data-motion-ready",
     "true",
@@ -371,7 +372,7 @@ test("translated reveal targets are rebuilt and preseeded before scroll", async 
 test("mobile motion releases temporary compositor hints", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await gotoApp(page, "/");
   await expect(page.locator(".campaign-home")).toHaveAttribute(
     "data-motion-ready",
     "true",
@@ -394,7 +395,7 @@ test("long translations stay inside a narrow mobile viewport", async ({
   page,
 }) => {
   await page.setViewportSize({ height: 800, width: 360 });
-  await page.goto("/");
+  await gotoApp(page, "/");
   const selector = page.locator(".language-selector select");
 
   for (const locale of ["fr", "ru"] as const) {
@@ -414,7 +415,7 @@ test("hero actions stay ahead of reward detail on narrow phones", async ({
 }) => {
   await page.setViewportSize({ height: 800, width: 360 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await gotoApp(page, "/");
   const selector = page.locator(".language-selector select");
 
   for (const locale of ["en", "zh", "es", "fr", "ru"] as const) {
@@ -494,7 +495,7 @@ test("mobile campaign phone stays centered and internally contained", async ({
   page,
 }) => {
   await page.setViewportSize({ height: 800, width: 360 });
-  await page.goto("/");
+  await gotoApp(page, "/");
   const selector = page.locator(".language-selector select");
 
   for (const locale of ["en", "zh", "es", "fr", "ru"] as const) {
@@ -554,7 +555,7 @@ test("mobile campaign phone stays centered and internally contained", async ({
 
 test("mobile journey line and next action stay aligned", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 360 });
-  await page.goto("/");
+  await gotoApp(page, "/");
 
   const journey = page.locator("[data-motion-journey]");
   const progress = page.locator("[data-motion-journey-progress]");
@@ -587,7 +588,7 @@ test("mobile journey line and next action stay aligned", async ({ page }) => {
 test("tablet journey keeps the horizontal progress axis", async ({ page }) => {
   await page.setViewportSize({ height: 900, width: 768 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await gotoApp(page, "/");
   await expect(page.locator(".campaign-home")).toHaveAttribute(
     "data-motion-ready",
     "true",
@@ -620,7 +621,7 @@ test("workspace navigation avoids translated-label collisions at tablet width", 
   page,
 }) => {
   await page.setViewportSize({ height: 900, width: 700 });
-  await page.goto("/wallet");
+  await gotoApp(page, "/wallet");
 
   const mobileSelector = page.locator(
     ".workspace-menu > .language-selector select",

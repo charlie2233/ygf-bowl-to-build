@@ -664,14 +664,14 @@ are installed.
 - Create: `tests/unit/agent-policy.test.ts`
 - Create: `tests/integration/agent-migration.test.ts`
 
-- [ ] Add `agent_api_keys`, `agent_requests`, and bounded aggregate usage
+- [x] Add `agent_api_keys`, `agent_requests`, and bounded aggregate usage
   fields/indexes with forced RLS and explicit grants.
-- [ ] Add atomic create/list/revoke/rotate authorization and gateway admission
+- [x] Add atomic create/list/revoke/rotate authorization and gateway admission
   contracts. Key creation binds the authenticated user to that user's wallet.
-- [ ] Add atomic reservation and terminal settlement using request
+- [x] Add atomic reservation and terminal settlement using request
   idempotency, actual provider micro-USD cost, configurable conversion, and
   the existing wallet-wide provider cap.
-- [ ] Prove no serialized row, event, fixture snapshot, or error contains
+- [x] Prove no serialized row, event, fixture snapshot, or error contains
   plaintext key material.
 
 ### Task 10: Implement personal key management APIs
@@ -683,12 +683,12 @@ are installed.
 - Create: `lib/agent/key-service.ts`
 - Create: `tests/integration/agent-key-api.test.ts`
 
-- [ ] `POST /api/keys` creates one key and returns plaintext once.
-- [ ] `GET /api/keys` returns only safe descriptors, usage, expiry, and
+- [x] `POST /api/keys` creates one key and returns plaintext once.
+- [x] `GET /api/keys` returns only safe descriptors, usage, expiry, and
   remaining credits.
-- [ ] `DELETE /api/keys/[id]` revokes only the authenticated user's key.
-- [ ] Rotation atomically revokes the old key and returns one new secret.
-- [ ] All mutations require same-origin authenticated browser requests,
+- [x] `DELETE /api/keys/[id]` revokes only the authenticated user's key.
+- [x] Rotation atomically revokes the old key and returns one new secret.
+- [x] All mutations require same-origin authenticated browser requests,
   bounded JSON, and wallet eligibility.
 
 ### Task 11: Implement the OpenAI-compatible Agent gateway
@@ -701,17 +701,17 @@ are installed.
 - Create: `lib/agent/openai-contract.ts`
 - Create: `tests/integration/agent-gateway.test.ts`
 
-- [ ] `GET /v1/models` exposes only the server allowlist.
-- [ ] `POST /v1/chat/completions` accepts a bounded, non-streaming MVP subset
+- [x] `GET /v1/models` exposes only the server allowlist.
+- [x] `POST /v1/chat/completions` accepts a bounded, non-streaming MVP subset
   of the OpenAI-compatible contract.
-- [ ] Valid keys can complete one demo request; invalid, expired, revoked, and
+- [x] Valid keys can complete one demo request; invalid, expired, revoked, and
   rotated keys receive generic authentication errors.
-- [ ] Reject models outside the allowlist and browser/URL credentials.
-- [ ] Enforce per-key RPM and concurrency plus wallet-wide concurrency and
+- [x] Reject models outside the allowlist and browser/URL credentials.
+- [x] Enforce per-key RPM and concurrency plus wallet-wide concurrency and
   provider-cost ceilings.
-- [ ] Reserve estimated credits/cost before the provider call, commit actual
+- [x] Reserve estimated credits/cost before the provider call, commit actual
   usage on success, and refund on every failure path.
-- [ ] Duplicate and concurrent idempotency requests return one terminal result
+- [x] Duplicate and concurrent idempotency requests return one terminal result
   and one charge.
 
 ### Task 12: Build the ordinary-user and Agent setup experiences
@@ -724,12 +724,12 @@ are installed.
 - Create: `tests/unit/agent-setup.test.tsx`
 - Update: `tests/e2e/happy-path.spec.ts`
 
-- [ ] Preserve the 30-second ordinary path with **Use AI now** as the dominant
+- [x] Preserve the 30-second ordinary path with **Use AI now** as the dominant
   action and no model/API vocabulary.
-- [ ] Add create, copy-once, revoke, rotate, balance, usage, and expiry states.
-- [ ] Add copy actions for Base URL, `.env`, JSON config, and a local test
+- [x] Add create, copy-once, revoke, rotate, balance, usage, and expiry states.
+- [x] Add copy actions for Base URL, `.env`, JSON config, and a local test
   command without placing the key in a URL, analytics, or server log.
-- [ ] Add a demo connection test and clear warnings against GitHub, public
+- [x] Add a demo connection test and clear warnings against GitHub, public
   chat, and frontend-code exposure.
 
 ### Task 13: Add explicit, secret-free digital check-in cards
@@ -741,12 +741,12 @@ are installed.
 - Create: `tests/unit/share-card.test.tsx`
 - Create: `tests/e2e/share-card.spec.ts`
 
-- [ ] Generate and download a user-triggered share image containing the YGF
+- [x] Generate and download a user-triggered share image containing the YGF
   bowl visual, public campaign identity, 3,000 unlocked credits, and the first
   task type.
-- [ ] Never include a claim, private QR, API key, email, user ID, or exact
+- [x] Never include a claim, private QR, API key, email, user ID, or exact
   remaining balance.
-- [ ] Do not auto-post. Sharing or downloading requires an explicit user
+- [x] Do not auto-post. Sharing or downloading requires an explicit user
   action.
 
 ### Task 14: Produce the collectible physical Agent Pass system
@@ -759,14 +759,14 @@ are installed.
 - Update: `tests/integration/campaign-assets.test.ts`
 - Create: `tests/integration/agent-pass-assets.test.ts`
 
-- [ ] Produce Study, Coding, Career, and Pick My Bowl fronts at 85.6×54 mm,
+- [x] Produce Study, Coding, Career, and Pick My Bowl fronts at 85.6×54 mm,
   plus a shared no-secret back template.
-- [ ] Keep public fronts photo-forward, collectible, free of private claims,
+- [x] Keep public fronts photo-forward, collectible, free of private claims,
   private QR, API keys, and USC marks; retain the non-endorsement notice.
-- [ ] Generate private per-row overlays only under ignored `private/`, using
+- [x] Generate private per-row overlays only under ignored `private/`, using
   the existing CSV as source of truth. Text and QR must carry the same claim.
-- [ ] Keep private output `0600`, no-overwrite, and secret-free stdout.
-- [ ] Produce SVG/PDF, Letter/A4 imposition sheets, decoder tests, PDF raster
+- [x] Keep private output `0600`, no-overwrite, and secret-free stdout.
+- [x] Produce SVG/PDF, Letter/A4 imposition sheets, decoder tests, PDF raster
   previews, and manual visual inspection evidence.
 
 ### Task 15: Complete analytics, documentation, and release proof
@@ -781,10 +781,10 @@ are installed.
 - Update: `docs/operations/launch-checklist.md`
 - Create: `docs/security/agent-gateway-review.md`
 
-- [ ] Add issued, redeemed, first-use, key-created, first-Agent-call, seven-day
+- [x] Add issued, redeemed, first-use, key-created, first-Agent-call, seven-day
   return, per-card provider cost, model distribution, error/anomaly, and
   share-card generation metrics without raw prompts, keys, claims, or IPs.
-- [ ] Document demo, production-disabled, provider-enabled, deployed, and
+- [x] Document demo, production-disabled, provider-enabled, deployed, and
   physically proofed states separately.
 - [ ] Run unit/integration, lint, typecheck, production build, desktop/mobile
   E2E, axe, deterministic asset verification, decoder checks, secret scan,
@@ -856,6 +856,42 @@ rewriting the historical task record above.
 - [ ] Keep `YGF_AGENT_GATEWAY_ENABLED=false` until the live success,
   conservative-failure settlement, replay, rate/concurrency, and exact `$3`
   wallet-boundary smokes pass.
+
+## July 29, 2026 addendum — operational safety completion
+
+This source-level completion closes the remaining repository implementation
+gaps without claiming an external rollout. It preserves the ordinary
+scan/code-first experience and keeps paid inference opt-in by operations.
+
+- [x] Add independent production fail-closed switches for code
+  validation/redemption and web-task generation/result-saving mutations.
+  Production requires exact `true`; local development and tests remain usable
+  unless a switch is explicitly `false`.
+- [x] Keep the Agent gateway independent: neither new switch enables `/v1`,
+  and the safe initial production target remains redemption enabled with web
+  AI and Agent traffic disabled until real provider staging proof.
+- [x] Add a service-role-only, bounded global maintenance RPC plus an
+  authenticated no-store host route and checked-in daily schedule. It settles
+  stale web/Agent reservations with existing accounting invariants, tombstones
+  expired Agent replay bodies, and removes expired admissions/events without a
+  caller-selected batch size.
+- [x] Add source canonicalization from `www.malatangai.com` to
+  `https://malatangai.com`, preserving path/query and emitting apex homepage
+  canonical metadata.
+- [x] Update environment, architecture, security, launch, and soft-test
+  documentation with the switch, maintenance, canonical-origin, and rollback
+  contracts.
+- [ ] Apply the new migration, set the independent `CRON_SECRET`, deploy the
+  schedule, and prove an authorized production run. Source presence is not
+  deployment proof.
+- [ ] Verify the deployed www-to-apex redirect and canonical metadata, then
+  rehearse the paused redemption/web-task responses on the actual host.
+- [ ] Run a real OpenAI staging success/refund/idempotency smoke before setting
+  `YGF_WEB_TASKS_ENABLED=true` or `YGF_AGENT_GATEWAY_ENABLED=true`.
+- [x] Run the final local implementation gates: lint, typecheck, 533
+  unit/integration/security contracts, production build, zero-finding
+  production dependency audit, and the 81-check desktop Chromium/iPhone
+  WebKit browser matrix.
 
 ## July 28, 2026 addendum — localized home and Agent step 02
 

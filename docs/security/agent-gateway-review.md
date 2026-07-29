@@ -15,6 +15,8 @@ physical-print proof.
   concurrency, stale leases, replay retention, and refunds;
 - provider endpoint, redirects, response validation, model allowlist, and
   production enablement;
+- production mutation pause switches, service-only scheduled maintenance, and
+  canonical public-origin boundaries;
 - horizontal access, RLS, service-role RPC grants, and client-bundle
   boundaries;
 - analytics, check-in cards, collectible public cards, and private print
@@ -34,9 +36,12 @@ physical-print proof.
 | Provider failure evades provider cap | Ceiling is reserved before provider work; provider/validation failures and stale reserved leases refund user Credits while conservatively committing the reserved provider ceiling. Later same-user task admission drains a bounded `SKIP LOCKED` batch first and throttles while any older reserved stale row remains. |
 | Arbitrary model or provider request | Friendly server allowlist maps to four fixed OpenAI snapshots; bounded non-streaming message contract; redirects are rejected and response bytes/content/usage/cost are validated. |
 | SSRF or credential forwarding | The only live destination is the fixed OpenAI Chat Completions HTTPS endpoint; no base-URL override exists; `redirect: "error"`, server-only Authorization, and fixed request fields prevent key forwarding. |
-| Prompt or response over-retention | The raw request prompt is not a separate column. A successful response payload is stored in Postgres for a logical 15-minute replay window and can echo input. Admission tombstones at most 20 expired responses through a wallet-leading partial index; the service-role-only global branch uses a separate expiry-leading partial index plus `FOR UPDATE SKIP LOCKED` and is capped at 500 rows per scheduled pass. |
+| Prompt or response over-retention | The raw request prompt is not a separate column. A successful response payload is stored in Postgres for a logical 15-minute replay window and can echo input. Admission tombstones at most 20 expired responses through a wallet-leading partial index; the service-role-only global maintenance branch uses a separate expiry-leading partial index plus `FOR UPDATE SKIP LOCKED` and caps replay cleanup at 100 rows per scheduled pass. |
 | RLS or direct-client bypass | Agent tables have enabled and forced RLS, no public/anon/authenticated table grants, and explicit service-role-only function grants. |
 | Production accidentally serves demo/provider traffic | Demo mode is refused in production; provider-backed Agent traffic also requires explicit `YGF_AGENT_GATEWAY_ENABLED=true` plus server credentials. |
+| Unreviewed production change starts claim or web-provider work | Production redemption and web tasks each require an exact server-only enablement flag. A paused route returns before auth, reservation, or provider dispatch; neither flag enables the Agent gateway. |
+| Idle stale reservations or short-lived data never receive customer traffic | A service-role-only, count-bounded maintenance RPC settles stale web/Agent requests with the normal accounting invariants, tombstones expired replays, and removes expired admissions/events. The scheduled route accepts only a constant-time checked `CRON_SECRET`. |
+| Split-brain public origin weakens same-origin controls | `www` is permanently redirected to the apex origin and the homepage emits an apex canonical URL; deployed DNS/TLS/header behavior still needs verification. |
 | Secret-bearing physical output escapes | Private renderer accepts only direct ignored `private/` files, verifies the ignore rule and restrictive directory/source permissions, refuses overwrite, emits mode 0600, and keeps claims out of stdout. |
 
 ## Privacy-safe operations
@@ -82,6 +87,10 @@ handoff:
 8. provider cost accounting now uses validated prompt/cached/completion token
    counts with exact integer ceiling arithmetic; cached input changes cost
    without introducing a new prompt-retention column.
+9. production operations lacked distinct stop controls and idle-time cleanup;
+   redemption and web tasks now fail closed without their exact enablement
+   flags, while a bounded service-only daily-maintenance contract handles idle
+   stale reservations and expiry work without accepting a public batch size.
 
 ## Local evidence
 
@@ -104,6 +113,9 @@ Dedicated unit and integration contracts cover:
 - safe share-card schema and fixed server-owned generation analytics;
 - public/private card separation, exact dimensions, restrictive private paths,
   no overwrite, QR/text parity, and decoder checks.
+- production switch defaults, paused-route short circuit behavior,
+  maintenance-route authentication/no-store responses, bounded result schema,
+  service-role-only grants, stale reservation settlement, and expiry cleanup.
 
 The final full-suite counts, build, E2E/axe results, artifact verification,
 commit, and remote SHA are recorded in `docs/release-readiness.md` only after
@@ -118,16 +130,13 @@ the final commands complete.
 - Enable and test Supabase anonymous sign-in, CAPTCHA/Turnstile, manual
   Google/Apple identity linking, and anonymous cleanup. Until linking, clearing
   browser data permanently loses access to the guest wallet.
-- Schedule and exercise `public.tombstone_expired_agent_responses(500, null)`
-  through a service-role job (for example, approved Supabase scheduling) while
-  the gateway is idle. The bounded RPC and both partial indexes are shipped,
-  but no live pg_cron/Supabase schedule or idle-system deletion proof is
-  claimed. Use live `EXPLAIN` to prove the wallet branch selects
-  `agent_requests_wallet_result_expiry_idx` and the null/global branch selects
-  `agent_requests_result_expiry_idx`.
-- Add and exercise a scheduled bounded global stale-reservation cleanup. The
-  request-time same-user sweep prevents new spend on later traffic, but cannot
-  settle a wallet that never sends another request.
+- Apply the global-maintenance migration, install an independent host
+  `CRON_SECRET`, and exercise the checked-in daily maintenance route while the
+  gateway is idle. The source does not claim a live host schedule, an
+  authorized production run, or production query-plan proof. Use live
+  `EXPLAIN` to prove the wallet Agent replay branch selects
+  `agent_requests_wallet_result_expiry_idx` and the global maintenance branches
+  select their expiry/lease indexes.
 - Install independent production HMAC secrets and exercise the documented
   global key-invalidation/rotation incident process.
 - Keep the Agent gateway disabled until the OpenAI project billing/limits,

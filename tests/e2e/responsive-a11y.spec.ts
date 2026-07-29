@@ -4,6 +4,7 @@ import {
   expectNoAccessibilityViolations,
   expectNoHorizontalOverflow,
 } from "./a11y";
+import { gotoApp } from "./navigation";
 
 const PUBLIC_ROUTES = [
   {
@@ -44,7 +45,7 @@ for (const route of PUBLIC_ROUTES) {
   test(`${route.path} is accessible and does not overflow`, async ({
     page,
   }) => {
-    await page.goto(route.path);
+    await gotoApp(page, route.path);
     await expect(
       page.getByRole("heading", {
         level: 1,
@@ -79,7 +80,7 @@ for (const path of REAL_PHOTO_ROUTES) {
       }
     });
 
-    await page.goto(path);
+    await gotoApp(page, path);
     const image = page.getByRole("img", { name: REAL_PHOTO_ALT });
     await image.scrollIntoViewIfNeeded();
     await expect(image).toBeVisible();
@@ -107,7 +108,7 @@ test("keyboard users can bypass navigation and reach main content", async ({
   browserName,
   page,
 }) => {
-  await page.goto("/");
+  await gotoApp(page, "/");
   await page.keyboard.press(
     browserName === "webkit" ? "Alt+Tab" : "Tab",
   );

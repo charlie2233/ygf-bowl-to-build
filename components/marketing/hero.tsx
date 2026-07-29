@@ -56,20 +56,24 @@ export function Hero({
           <div className="marketing-hero__actions">
             <ButtonLink
               className="marketing-hero__cta marketing-hero__cta--step"
-              data-step="01"
+              data-step="1"
               href="/redeem"
             >
-              <span className="marketing-hero__step-number">01</span>
+              <span className="marketing-hero__step-number">
+                {copy.stepOne}
+              </span>
               {" "}
               <span>{copy.claimCredits}</span>
             </ButtonLink>
             <ButtonLink
               className="marketing-hero__cta marketing-hero__cta--step marketing-hero__cta--secondary"
-              data-step="02"
+              data-step="2"
               href="/connect/agent"
               variant="secondary"
             >
-              <span className="marketing-hero__step-number">02</span>
+              <span className="marketing-hero__step-number">
+                {copy.stepTwo}
+              </span>
               {" "}
               <span>{copy.connectAgent}</span>
             </ButtonLink>

@@ -48,6 +48,8 @@ export type CampaignHomeCopy = Readonly<{
     imageAlt: string;
     phoneAriaLabel: string;
     rewardContext: string;
+    stepOne: string;
+    stepTwo: string;
     receipt: Readonly<{
       exampleOnly: string;
       expires: string;
@@ -98,9 +100,11 @@ export const campaignHomeCopy: Record<
       subhead:
         "Spend $25+ at YGF, get an AI card at checkout, then scan or enter its private code to unlock 3,000 AI Credits for 14 days.",
       guidance:
-        "New here? Start with 01. Agent setup is optional after redemption.",
+        "New here? Start with Step 1. Agent setup is optional after redemption.",
       rewardContext:
         "Every valid code adds 3,000 AI Credits. Selected special codes may also include a Claude Pro gift.",
+      stepOne: "Step 1",
+      stepTwo: "Step 2",
       claimCredits: "Scan or enter my code",
       connectAgent: "Connect Agent (optional)",
       disclaimer:
@@ -212,9 +216,11 @@ export const campaignHomeCopy: Record<
       titleLineTwo: "用 AI 开始创造。",
       subhead:
         "在杨国福单笔消费满 $25，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 杨国福 AI Credits，有效 14 天。",
-      guidance: "第一次使用？从 01 开始。Agent 连接是兑换后的可选功能。",
+      guidance: "第一次使用？从步骤 1 开始。Agent 连接是兑换后的可选功能。",
       rewardContext:
         "每个有效兑换码均可获得 3,000 杨国福 AI Credits；部分特别兑换码还可能附带一份 Claude Pro 礼赠。",
+      stepOne: "步骤 1",
+      stepTwo: "步骤 2",
       claimCredits: "扫码或输入兑换码",
       connectAgent: "连接 Agent（可选）",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
@@ -325,9 +331,11 @@ export const campaignHomeCopy: Record<
       subhead:
         "Gasta $25+ en YGF, recibe una tarjeta de IA en caja y escanea o escribe su código privado para desbloquear 3,000 AI Credits durante 14 días.",
       guidance:
-        "¿Es tu primera vez? Empieza por 01. Conectar un Agent es opcional después del canje.",
+        "¿Es tu primera vez? Empieza por el Paso 1. Conectar un Agent es opcional después del canje.",
       rewardContext:
         "Cada código válido añade 3,000 créditos de IA. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro.",
+      stepOne: "Paso 1",
+      stepTwo: "Paso 2",
       claimCredits: "Escanear o escribir código",
       connectAgent: "Agent (opcional)",
       disclaimer:
@@ -440,9 +448,11 @@ export const campaignHomeCopy: Record<
       subhead:
         "Dépensez 25 $ ou plus chez YGF, recevez une carte IA en caisse, puis scannez ou saisissez son code privé pour débloquer 3,000 AI Credits pendant 14 jours.",
       guidance:
-        "Première visite ? Commencez par 01. La connexion d’un Agent est facultative après l’activation.",
+        "Première visite ? Commencez par l’Étape 1. La connexion d’un Agent est facultative après l’activation.",
       rewardContext:
         "Chaque code valide ajoute 3 000 crédits IA. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro.",
+      stepOne: "Étape 1",
+      stepTwo: "Étape 2",
       claimCredits: "Scanner ou saisir le code",
       connectAgent: "Agent (facultatif)",
       disclaimer:
@@ -555,9 +565,11 @@ export const campaignHomeCopy: Record<
       subhead:
         "Потратьте в YGF от $25, получите AI-карту на кассе и отсканируйте или введите её личный код, чтобы открыть 3,000 AI Credits на 14 дней.",
       guidance:
-        "Впервые здесь? Начните с 01. Подключение Agent — необязательный шаг после активации.",
+        "Впервые здесь? Начните с шага 1. Подключение Agent — необязательный шаг после активации.",
       rewardContext:
         "Каждый действительный код добавляет 3 000 AI Credits. Некоторые специальные коды также могут включать подарок Claude Pro.",
+      stepOne: "Шаг 1",
+      stepTwo: "Шаг 2",
       claimCredits: "Сканировать или ввести код",
       connectAgent: "Agent (необязательно)",
       disclaimer:

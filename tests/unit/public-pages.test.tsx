@@ -37,10 +37,10 @@ describe("public campaign pages", () => {
     const body = renderPage(<HomePage />);
     const heading = body.querySelector("h1");
     const claimLink = body.querySelector<HTMLAnchorElement>(
-      'a[data-step="01"]',
+      'a[data-step="1"]',
     );
     const agentLink = body.querySelector<HTMLAnchorElement>(
-      'a[data-step="02"]',
+      'a[data-step="2"]',
     );
     const handoffLink = body.querySelector<HTMLAnchorElement>(
       '[data-campaign-handoff] a[href="/redeem"]',
@@ -54,14 +54,16 @@ describe("public campaign pages", () => {
     );
 
     expect(normalizedText(heading)).toBe("Buy a bowl. Build with AI.");
-    expect(normalizedText(claimLink)).toBe("01 Scan or enter my code");
-    expect(normalizedText(agentLink)).toBe("02 Connect Agent (optional)");
+    expect(normalizedText(claimLink)).toBe("Step 1 Scan or enter my code");
+    expect(normalizedText(agentLink)).toBe("Step 2 Connect Agent (optional)");
     expect(body.querySelectorAll("h1")).toHaveLength(1);
     expect(claimLink?.getAttribute("href")).toBe("/redeem");
     expect(agentLink?.getAttribute("href")).toBe("/connect/agent");
-    expect(claimLink?.getAttribute("data-step")).toBe("01");
-    expect(agentLink?.getAttribute("data-step")).toBe("02");
-    expect(normalizedText(handoffLink)).toBe("01 Scan or enter my code");
+    expect(claimLink?.getAttribute("data-step")).toBe("1");
+    expect(agentLink?.getAttribute("data-step")).toBe("2");
+    expect(normalizedText(handoffLink)).toBe(
+      "Step 1 Scan or enter my code",
+    );
     expect(body.querySelector("[data-motion-journey]")).toBeTruthy();
     expect(body.querySelectorAll("[data-motion-journey-step]")).toHaveLength(
       3,
@@ -70,7 +72,7 @@ describe("public campaign pages", () => {
     expect(normalizedText(body)).toMatch(/3,000 AI Credits/i);
     expect(normalizedText(body)).toMatch(/\$25\+/);
     expect(normalizedText(body)).not.toMatch(/\$16\+/);
-    expect(normalizedText(body)).toMatch(/start with 01/i);
+    expect(normalizedText(body)).toMatch(/start with step 1/i);
     expect(normalizedText(body)).toMatch(/agent setup is optional/i);
     expect(heroImage).toBeTruthy();
     expect(heroImage?.getAttribute("loading")).toBe("eager");

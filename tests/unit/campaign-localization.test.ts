@@ -30,6 +30,14 @@ const rewardContextExpectations = {
   },
 } as const;
 
+const stepLabelExpectations = {
+  en: ["Step 1", "Step 2"],
+  zh: ["步骤 1", "步骤 2"],
+  es: ["Paso 1", "Paso 2"],
+  fr: ["Étape 1", "Étape 2"],
+  ru: ["Шаг 1", "Шаг 2"],
+} as const;
+
 describe("campaign localization contract", () => {
   it("ships the five requested languages", () => {
     expect(campaignLocales).toEqual(["en", "zh", "es", "fr", "ru"]);
@@ -55,7 +63,12 @@ describe("campaign localization contract", () => {
       expect(copy.hero.subhead).toContain("14");
       expect(copy.hero.rewardContext).toMatch(/Claude Pro/i);
       expect(copy.howItWorks.description).toContain("25");
-      expect(copy.hero.guidance).toMatch(/01/);
+      expect(copy.hero.guidance).toContain("1");
+      expect([copy.hero.stepOne, copy.hero.stepTwo]).toEqual(
+        stepLabelExpectations[locale],
+      );
+      expect(copy.hero.stepOne).not.toMatch(/^0/);
+      expect(copy.hero.stepTwo).not.toMatch(/^0/);
       expect(copy.hero.imageAlt).toBeTruthy();
       expect(copy.hero.disclaimer).toMatch(/USC/i);
       expect(copy.useCases.items).toHaveLength(4);

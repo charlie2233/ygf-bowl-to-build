@@ -47,7 +47,7 @@ export function HowItWorks({
   eagerImage?: boolean;
   handoff?: Pick<
     CampaignHomeCopy["hero"],
-    "claimCredits" | "guidance"
+    "claimCredits" | "guidance" | "stepOne"
   >;
 } = {}) {
   return (
@@ -124,7 +124,7 @@ export function HowItWorks({
                 aria-hidden="true"
                 className="campaign-handoff__step-number"
               >
-                01
+                {handoff.stepOne}
               </span>
               {" "}
               <span>{handoff.claimCredits}</span>

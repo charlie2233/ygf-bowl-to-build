@@ -389,22 +389,21 @@ textarea {
 }
 
 .marketing-hero__cta--step {
-  position: relative;
-  padding-left: 3.25rem;
+  gap: 0.65rem;
 }
 
 .marketing-hero__step-number {
-  position: absolute;
-  left: 1.1rem;
-  display: grid;
-  width: 1.6rem;
+  display: inline-flex;
   height: 1.6rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.52rem;
   border: 1px solid rgb(255 255 255 / 52%);
-  border-radius: 50%;
+  border-radius: 999px;
   font-size: 0.64rem;
   font-weight: 850;
   letter-spacing: 0.04em;
-  place-items: center;
+  white-space: nowrap;
 }
 
 .marketing-hero__cta--secondary .marketing-hero__step-number {
@@ -816,13 +815,15 @@ textarea {
 }
 
 .campaign-handoff__step-number {
-  display: grid;
-  width: 1.75rem;
+  display: inline-flex;
   height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.55rem;
   border: 1px solid rgb(255 255 255 / 58%);
-  border-radius: 50%;
+  border-radius: 999px;
   font-size: 0.72rem;
-  place-items: center;
+  white-space: nowrap;
 }
 
 .busy-week {

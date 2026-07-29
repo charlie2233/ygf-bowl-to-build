@@ -30,6 +30,7 @@ export function MarketingHome() {
         handoff={{
           claimCredits: copy.hero.claimCredits,
           guidance: copy.hero.guidance,
+          stepOne: copy.hero.stepOne,
         }}
       />
       <section

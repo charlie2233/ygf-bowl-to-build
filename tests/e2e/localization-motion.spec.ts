@@ -52,7 +52,7 @@ test("campaign home switches all requested languages and remembers the choice", 
       "true",
     );
     await expect(
-      page.locator('a[data-step="02"][href="/connect/agent"]'),
+      page.locator('a[data-step="2"][href="/connect/agent"]'),
     ).toBeVisible();
     await expect(
       page.getByText(campaignHomeCopy[locale].hero.guidance, {
@@ -94,7 +94,7 @@ test("language follows the user from the home page into redemption", async ({
   );
 
   await homeSelector.selectOption("zh");
-  await page.locator('a[data-step="01"][href="/redeem"]').click();
+  await page.locator('a[data-step="1"][href="/redeem"]').click();
 
   await expect(page).toHaveURL(/\/redeem$/);
   await expect(
@@ -232,19 +232,19 @@ test("campaign motion initializes the bundled GSAP experience", async ({
     "true",
   );
   await expect(
-    page.locator('a[data-step="01"][href="/redeem"]'),
+    page.locator('a[data-step="1"][href="/redeem"]'),
   ).toBeVisible();
   await expect(
-    page.locator('a[data-step="02"][href="/connect/agent"]'),
+    page.locator('a[data-step="2"][href="/connect/agent"]'),
   ).toBeVisible();
   await expect(
     page.locator("[data-motion-journey-progress]"),
   ).not.toHaveCSS("transform", "none");
   await page
-    .locator('a[data-step="01"][href="/redeem"]')
+    .locator('a[data-step="1"][href="/redeem"]')
     .click({ trial: true });
   await page
-    .locator('a[data-step="02"][href="/connect/agent"]')
+    .locator('a[data-step="2"][href="/connect/agent"]')
     .click({ trial: true });
   await expect(page.locator('[class*="gsap-marker"]')).toHaveCount(0);
 

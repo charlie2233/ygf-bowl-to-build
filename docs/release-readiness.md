@@ -41,7 +41,7 @@ after this document is committed.
 | iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 41 WebKit checks after the shared setup |
 | Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 29, 2026; no OpenAI, personal Agent, or JWT-shaped secret values found in built client output. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI |
 | Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 29, 2026; all medium-or-higher review findings remediated and independently rechecked before checkpoint |
-| Remote identity | local SHA equals GitHub branch SHA after push | Verified at the July 28 handoff; exact SHA is reported outside this self-referential file |
+| Remote identity | local SHA equals GitHub branch SHA after push | Verified for the code-bearing cinematic-hero SHA `a782560380579378e087f8d1b5f200e2c2d18909`; local, upstream, `ls-remote`, and Vercel deployment metadata matched |
 
 Required behavioral evidence:
 
@@ -123,17 +123,22 @@ or page dimensions reopens the affected artifact gates.
 
 ## External engineering gates
 
-These require live account state and are intentionally not satisfied by this
-checkout:
+The checked production-hosting items were satisfied on July 29, 2026. The
+remaining items still require live account or operator state and are not
+satisfied by this checkout.
 
-- [ ] Deploy the verified commit over HTTPS at the approved canonical origin,
-  `https://malatangai.com`; verify `www.malatangai.com` redirects permanently
-  to the apex with path/query preserved and that the deployed HTML has the
-  apex canonical URL.
-- [ ] Install the verified lockfile on the production build platform and
+- [x] Deploy code-bearing SHA
+  `a782560380579378e087f8d1b5f200e2c2d18909` over HTTPS at
+  `https://malatangai.com` as Vercel production deployment
+  `dpl_9tLeXnwsDJF9uiMWMyXWWamojh8W`. The deployment reported `READY`;
+  `www.malatangai.com` returned a permanent redirect to the apex with
+  path/query preserved; and the deployed HTML declared the apex canonical
+  URL.
+- [x] Install the verified lockfile on the production build platform and
   recheck the scoped PostCSS/Sharp override record above. Confirm the platform
-  build and a real optimized image request succeed; local build proof alone
-  does not satisfy this gate.
+  build and a real optimized image request succeed. Vercel installed with
+  `pnpm install --frozen-lockfile`, completed the Next.js production build,
+  and returned a successful 1280 × 720 optimized image response.
 - [ ] Apply the migration to a disposable/staging Supabase project and run
   concurrent redemption, task lease, spend, refund, and replay smoke tests.
 - [ ] Apply the reviewed migration to production and verify RLS with separate
@@ -170,7 +175,9 @@ checkout:
   exact `true` for `YGF_REDEMPTION_ENABLED` and `YGF_WEB_TASKS_ENABLED`, and
   keeps `YGF_AGENT_GATEWAY_ENABLED=false` until its own staging proof. Rehearse
   setting each relevant value to `false` and rolling it out without a wallet
-  mutation or provider call.
+  mutation or provider call. The July 29 production smoke confirmed
+  `REDEMPTION_PAUSED`, `WEB_TASKS_PAUSED`, and `gateway_not_enabled`; alerting
+  and the controlled rollout rehearsal remain open.
 - [ ] Confirm the OpenAI API data controls for the production project.
   `store:false` is not zero retention: default abuse-monitoring logs may retain
   content for up to 30 days. Treat Zero Data Retention as a separate external

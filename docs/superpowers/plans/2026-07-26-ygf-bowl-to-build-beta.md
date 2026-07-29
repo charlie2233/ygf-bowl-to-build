@@ -983,5 +983,5 @@ production safety switches unchanged.
 - [x] Add deterministic preference tests, real playback-advance and
   pause/resume checks, source-failure fallback coverage, five-language control
   checks, and desktop Chromium/iPhone WebKit visual verification.
-- [ ] Re-run the complete release matrix, commit, push, deploy the candidate,
+- [x] Re-run the complete release matrix, commit, push, deploy the candidate,
   and verify the production deployment and GitHub SHA.

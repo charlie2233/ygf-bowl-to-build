@@ -171,6 +171,16 @@ evidence at:
 - `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/desktop-playing-iab.png`
 - `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/iphone-playing-iab.png`
 
+The July 29 production deployment was then inspected at
+`https://malatangai.com`. Both viewports loaded the preferred WebM, reached
+`readyState=4`, advanced playback time, paused without time drift, resumed,
+and had `scrollWidth === innerWidth`. The mobile motion control ended at
+124 px and the headline began at 140 px, leaving a visible non-overlapping
+gap. Accepted production captures are retained at:
+
+- `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/production-desktop-playing.png`
+- `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/production-iphone-playing.png`
+
 ### July 29 authentic cover-photo verification
 
 The cover refresh was checked against both the previous rendered home page and

@@ -361,6 +361,87 @@ test("long translations stay inside a narrow mobile viewport", async ({
   }
 });
 
+test("hero actions stay ahead of reward detail on narrow phones", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 800, width: 360 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const selector = page.locator(".language-selector select");
+
+  for (const locale of ["en", "zh", "es", "fr", "ru"] as const) {
+    await selector.selectOption(locale);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: translatedHeadings[locale],
+      }),
+    ).toBeVisible();
+
+    const actions = page.locator(".marketing-hero__actions");
+    const stepOne = actions.locator('a[data-step="1"]');
+    const stepTwo = actions.locator('a[data-step="2"]');
+    const rewardNote = page.locator(".marketing-hero__reward-note");
+
+    await expect(stepOne).toBeVisible();
+    await expect(stepTwo).toBeVisible();
+    await expect(rewardNote).toBeVisible();
+    await expect(rewardNote).toHaveText(
+      campaignHomeCopy[locale].hero.rewardContext,
+    );
+
+    const actionLayout = await page.evaluate(() => {
+      const actionsElement = document.querySelector<HTMLElement>(
+        ".marketing-hero__actions",
+      );
+      const stepOneElement = actionsElement?.querySelector<HTMLElement>(
+        'a[data-step="1"]',
+      );
+      const stepTwoElement = actionsElement?.querySelector<HTMLElement>(
+        'a[data-step="2"]',
+      );
+      const rewardElement = document.querySelector<HTMLElement>(
+        ".marketing-hero__reward-note",
+      );
+
+      if (
+        !actionsElement ||
+        !stepOneElement ||
+        !stepTwoElement ||
+        !rewardElement
+      ) {
+        return null;
+      }
+
+      const stepOneBounds = stepOneElement.getBoundingClientRect();
+      const stepTwoBounds = stepTwoElement.getBoundingClientRect();
+      const rewardBounds = rewardElement.getBoundingClientRect();
+
+      return {
+        actionsBeforeReward: Boolean(
+          actionsElement.compareDocumentPosition(rewardElement) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+        rewardAfterActions:
+          rewardBounds.top >= stepTwoBounds.bottom,
+        stepOneBottom: stepOneBounds.bottom,
+        stepOneHeight: stepOneBounds.height,
+        stepTwoBottom: stepTwoBounds.bottom,
+        stepTwoHeight: stepTwoBounds.height,
+      };
+    });
+
+    expect(actionLayout).not.toBeNull();
+    expect(actionLayout?.actionsBeforeReward).toBe(true);
+    expect(actionLayout?.rewardAfterActions).toBe(true);
+    expect(actionLayout?.stepOneBottom).toBeLessThanOrEqual(600);
+    expect(actionLayout?.stepTwoBottom).toBeLessThanOrEqual(720);
+    expect(actionLayout?.stepOneHeight).toBeGreaterThanOrEqual(60);
+    expect(actionLayout?.stepTwoHeight).toBeGreaterThanOrEqual(60);
+    await expectNoHorizontalOverflow(page, `home-actions-${locale}`);
+  }
+});
+
 test("mobile campaign phone stays centered and internally contained", async ({
   page,
 }) => {

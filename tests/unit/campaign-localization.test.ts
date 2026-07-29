@@ -1,5 +1,7 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { Hero } from "@/components/marketing/hero";
 import {
   campaignHomeCopy,
   campaignLanguageOptions,
@@ -38,6 +40,14 @@ const stepLabelExpectations = {
   ru: ["Шаг 1", "Шаг 2"],
 } as const;
 
+const guidanceExpectations = {
+  en: "Start with Step 1. Agent setup is optional.",
+  zh: "请从步骤 1 开始；Agent 连接为可选功能。",
+  es: "Empieza por el Paso 1. Conectar un Agent es opcional.",
+  fr: "Commencez par l’Étape 1. La connexion Agent est facultative.",
+  ru: "Начните с шага 1. Подключение Agent необязательно.",
+} as const;
+
 describe("campaign localization contract", () => {
   it("ships the five requested languages", () => {
     expect(campaignLocales).toEqual(["en", "zh", "es", "fr", "ru"]);
@@ -64,6 +74,7 @@ describe("campaign localization contract", () => {
       expect(copy.hero.rewardContext).toMatch(/Claude Pro/i);
       expect(copy.howItWorks.description).toContain("25");
       expect(copy.hero.guidance).toContain("1");
+      expect(copy.hero.guidance).toBe(guidanceExpectations[locale]);
       expect([copy.hero.stepOne, copy.hero.stepTwo]).toEqual(
         stepLabelExpectations[locale],
       );
@@ -86,6 +97,27 @@ describe("campaign localization contract", () => {
       const expectation = rewardContextExpectations[locale];
       const offerContext = campaignHomeCopy[locale].hero.rewardContext;
       const redeemContext = redeemCopy[locale].next.description;
+      const hero = document.createElement("div");
+
+      hero.innerHTML = renderToStaticMarkup(
+        Hero({
+          copy: campaignHomeCopy[locale].hero,
+        }),
+      );
+
+      const actions = hero.querySelector(".marketing-hero__actions");
+      const rewardNote = hero.querySelector(
+        ".marketing-hero__reward-note",
+      );
+
+      expect(actions).toBeTruthy();
+      expect(rewardNote).toBeTruthy();
+      expect(actions?.querySelectorAll("a[data-step]")).toHaveLength(2);
+      expect(
+        actions?.compareDocumentPosition(rewardNote as Node) ??
+          Node.DOCUMENT_POSITION_PRECEDING,
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(rewardNote?.textContent).toBe(offerContext);
 
       for (const context of [offerContext, redeemContext]) {
         expect(context).toContain(expectation.credits);

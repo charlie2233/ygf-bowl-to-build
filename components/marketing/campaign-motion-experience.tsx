@@ -97,6 +97,9 @@ export function useCampaignMotionExperience({
       const heroActions = scope.querySelectorAll<HTMLElement>(
         ".marketing-hero__actions a",
       );
+      const heroRewardNote = scope.querySelector<HTMLElement>(
+        ".marketing-hero__reward-note",
+      );
       const heroDisclaimer = scope.querySelector<HTMLElement>(
         ".marketing-hero__disclaimer",
       );
@@ -131,13 +134,18 @@ export function useCampaignMotionExperience({
             : "enhanced";
 
           if (reduceMotion) {
+            if (heroImage) {
+              gsap.set(heroImage, {
+                clearProps: "transform,willChange",
+              });
+            }
             gsap.set(
               [
-                heroImage,
                 ...heroHeadlineLines,
                 heroSubhead,
                 heroGuidance,
                 ...heroActions,
+                heroRewardNote,
                 heroDisclaimer,
                 phone,
                 ...phoneSections,
@@ -167,8 +175,11 @@ export function useCampaignMotionExperience({
           gsap.set(heroActions, {
             y: 16,
           });
-          gsap.set(heroDisclaimer, {
+          gsap.set(heroRewardNote, {
             y: 12,
+          });
+          gsap.set(heroDisclaimer, {
+            y: 10,
           });
           gsap.set(phone, {
             rotationX: isDesktop ? 7 : 0,
@@ -230,11 +241,18 @@ export function useCampaignMotionExperience({
               "intro+=0.3",
             )
             .to(
-              heroDisclaimer,
+              heroRewardNote,
               {
                 y: 0,
               },
               "intro+=0.42",
+            )
+            .to(
+              heroDisclaimer,
+              {
+                y: 0,
+              },
+              "intro+=0.49",
             )
             .to(
               phone,

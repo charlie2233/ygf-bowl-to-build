@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
 import { AuthPanel } from "@/components/auth-panel";
+import {
+  getOAuthProviderAvailability,
+  NO_OAUTH_PROVIDERS,
+} from "@/lib/auth/provider-availability";
 import { safeAuthNextPath } from "@/lib/auth/redirect";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
 import { getAuthenticatedUser } from "@/lib/auth/user";
@@ -31,7 +35,15 @@ export default async function AuthPage({
 }) {
   const parameters = await searchParams;
   const runtime = resolveAuthRuntime();
-  const user = await getAuthenticatedUser();
+  const [user, providerAvailability] = await Promise.all([
+    getAuthenticatedUser(),
+    runtime.mode === "supabase"
+      ? getOAuthProviderAvailability({
+          publishableKey: runtime.publishableKey,
+          url: runtime.url,
+        })
+      : Promise.resolve(NO_OAUTH_PROVIDERS),
+  ]);
   const error = singleParameter(parameters.error);
   const initialMessageKey: AuthMessageKey | undefined =
     error === "callback"
@@ -47,6 +59,7 @@ export default async function AuthPage({
         isAnonymous={runtime.mode === "supabase" && user?.isAnonymous === true}
         mode={runtime.mode}
         nextPath={safeAuthNextPath(parameters.next)}
+        providerAvailability={providerAvailability}
       />
     </section>
   );

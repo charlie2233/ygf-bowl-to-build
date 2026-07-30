@@ -110,6 +110,7 @@ describe("site language UI", () => {
 
     const selector = container.querySelector<HTMLSelectElement>("select");
     expect(selector).toBeTruthy();
+    expect(selector?.disabled).toBe(false);
 
     await act(async () => {
       if (selector) {
@@ -196,6 +197,9 @@ describe("site language UI", () => {
 
     expect(markup).toContain('<html data-scroll-behavior="smooth" lang="fr">');
     expect(markup).toContain('aria-label="Navigation principale"');
+    expect(markup).toMatch(
+      /<select[^>]*aria-label="Langue"[^>]*disabled=""/u,
+    );
   });
 
   it("keeps English-only admin routes tagged as English without changing the saved preference", async () => {

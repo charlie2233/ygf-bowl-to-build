@@ -11,11 +11,24 @@ const navigationMocks = vi.hoisted(() => ({
 const taskWorkflowMocks = vi.hoisted(() => ({
   getEarliestCompletedTask: vi.fn(),
 }));
+const providerAvailabilityMocks = vi.hoisted(() => ({
+  getOAuthProviderAvailability: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => navigationMocks);
 vi.mock("@/lib/auth/runtime", () => ({
   resolveAuthRuntime: vi.fn(),
 }));
+vi.mock("@/lib/auth/provider-availability", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/auth/provider-availability")
+  >("@/lib/auth/provider-availability");
+  return {
+    ...actual,
+    getOAuthProviderAvailability:
+      providerAvailabilityMocks.getOAuthProviderAvailability,
+  };
+});
 vi.mock("@/lib/auth/server", () => ({
   createAuthServerClient: vi.fn(),
 }));
@@ -82,6 +95,10 @@ describe("authentication pages", () => {
       auth: { exchangeCodeForSession },
     } as never);
     vi.mocked(resolveAuthRuntime).mockReturnValue({ mode: "demo" });
+    providerAvailabilityMocks.getOAuthProviderAvailability.mockReset();
+    providerAvailabilityMocks.getOAuthProviderAvailability.mockResolvedValue(
+      { apple: false, google: false },
+    );
     vi.mocked(getCampaignRepository).mockReturnValue({
       getPartnerReward,
       getWallet,
@@ -354,7 +371,46 @@ describe("authentication pages", () => {
     expect(html).toContain("clearing this browser");
     expect(html).toContain("Link Google");
     expect(html).toContain("Link Apple");
+    expect(html).toContain("Google and Apple linking aren’t available yet");
     expect(html).not.toContain("Email me a sign-in link");
+  });
+
+  it("passes public provider availability to the client panel without a secret", async () => {
+    const runtime = {
+      mode: "supabase" as const,
+      publishableKey: "publishable",
+      serviceKey: "private-service-key",
+      url: "https://project.supabase.co",
+    };
+    vi.mocked(resolveAuthRuntime).mockReturnValue(runtime);
+    vi.mocked(getAuthenticatedUser).mockResolvedValue(null);
+    providerAvailabilityMocks.getOAuthProviderAvailability.mockResolvedValue(
+      { apple: false, google: true },
+    );
+
+    const page = await AuthPage({
+      searchParams: Promise.resolve({ next: "/wallet" }),
+    });
+    const panel = page.props.children as ReactElement<{
+      providerAvailability: {
+        apple: boolean;
+        google: boolean;
+      };
+    }>;
+
+    expect(
+      providerAvailabilityMocks.getOAuthProviderAvailability,
+    ).toHaveBeenCalledWith({
+      publishableKey: runtime.publishableKey,
+      url: runtime.url,
+    });
+    expect(panel.props.providerAvailability).toEqual({
+      apple: false,
+      google: true,
+    });
+    expect(JSON.stringify(panel.props)).not.toContain(
+      runtime.serviceKey,
+    );
   });
 
   it("gates share cards to an active wallet while allowing anonymous wallet users", async () => {

@@ -171,8 +171,14 @@ describe("remaining customer-page localization", () => {
       expect(demoAuth).toContain(copy.auth.demo.continue);
       expect(anonymousAuth).toContain(copy.auth.anonymous.title);
       expect(anonymousAuth).toContain(copy.auth.anonymous.google);
+      expect(anonymousAuth).toContain(
+        copy.auth.providerAvailability.anonymous.both,
+      );
       expect(recoveryAuth).toContain(copy.auth.recovery.title);
       expect(recoveryAuth).toContain(copy.auth.recovery.emailSubmit);
+      expect(recoveryAuth).toContain(
+        copy.auth.providerAvailability.recovery.both,
+      );
 
       const history = renderToStaticMarkup(
         <HistoryPageView

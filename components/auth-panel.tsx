@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { useCampaignLanguage } from "@/components/campaign-language";
 import { createAuthBrowserClient } from "@/lib/auth/client";
+import type { OAuthProviderAvailability } from "@/lib/auth/provider-availability";
 import { safeAuthNextPath } from "@/lib/auth/redirect";
 import {
   customerPagesCopy,
@@ -15,7 +16,13 @@ interface AuthPanelProps {
   isAnonymous?: boolean;
   mode: "demo" | "supabase";
   nextPath: string;
+  providerAvailability?: OAuthProviderAvailability;
 }
+
+const NO_OAUTH_PROVIDERS: OAuthProviderAvailability = {
+  apple: false,
+  google: false,
+};
 
 function callbackUrl(nextPath: string) {
   const url = new URL("/auth/callback", window.location.origin);
@@ -28,6 +35,7 @@ export function AuthPanel({
   isAnonymous = false,
   mode,
   nextPath,
+  providerAvailability = NO_OAUTH_PROVIDERS,
 }: AuthPanelProps) {
   const { locale } = useCampaignLanguage();
   const copy = customerPagesCopy[locale].auth;
@@ -40,8 +48,27 @@ export function AuthPanel({
   );
   const [busy, setBusy] = useState(false);
   const message = messageKey ? copy.messages[messageKey] : null;
+  const unavailableProviderKey =
+    !providerAvailability.google && !providerAvailability.apple
+      ? "both"
+      : !providerAvailability.google
+        ? "google"
+        : !providerAvailability.apple
+          ? "apple"
+          : null;
+  const providerStatus = unavailableProviderKey
+    ? copy.providerAvailability[
+        isAnonymous ? "anonymous" : "recovery"
+      ][unavailableProviderKey]
+    : null;
+  const providerStatusId = providerStatus
+    ? "auth-provider-availability"
+    : undefined;
 
   async function signInWithProvider(provider: "apple" | "google") {
+    if (!providerAvailability[provider]) {
+      return;
+    }
     setBusy(true);
     setMessageKey(null);
     setMessageKind("status");
@@ -124,22 +151,42 @@ export function AuthPanel({
         </p>
         <div className="auth-panel__providers">
           <button
+            aria-describedby={
+              providerAvailability.google
+                ? undefined
+                : providerStatusId
+            }
             className="button button--secondary button--medium"
-            disabled={busy}
+            disabled={busy || !providerAvailability.google}
             onClick={() => void signInWithProvider("google")}
             type="button"
           >
             {copy.anonymous.google}
           </button>
           <button
+            aria-describedby={
+              providerAvailability.apple
+                ? undefined
+                : providerStatusId
+            }
             className="button button--secondary button--medium"
-            disabled={busy}
+            disabled={busy || !providerAvailability.apple}
             onClick={() => void signInWithProvider("apple")}
             type="button"
           >
             {copy.anonymous.apple}
           </button>
         </div>
+        {providerStatus ? (
+          <p
+            aria-live="polite"
+            className="auth-panel__provider-status"
+            id={providerStatusId}
+            role="status"
+          >
+            {providerStatus}
+          </p>
+        ) : null}
         {messageElement}
       </div>
     );
@@ -151,22 +198,38 @@ export function AuthPanel({
       <p>{copy.recovery.description}</p>
       <div className="auth-panel__providers">
         <button
+          aria-describedby={
+            providerAvailability.google ? undefined : providerStatusId
+          }
           className="button button--secondary button--medium"
-          disabled={busy}
+          disabled={busy || !providerAvailability.google}
           onClick={() => void signInWithProvider("google")}
           type="button"
         >
           {copy.recovery.google}
         </button>
         <button
+          aria-describedby={
+            providerAvailability.apple ? undefined : providerStatusId
+          }
           className="button button--secondary button--medium"
-          disabled={busy}
+          disabled={busy || !providerAvailability.apple}
           onClick={() => void signInWithProvider("apple")}
           type="button"
         >
           {copy.recovery.apple}
         </button>
       </div>
+      {providerStatus ? (
+        <p
+          aria-live="polite"
+          className="auth-panel__provider-status"
+          id={providerStatusId}
+          role="status"
+        >
+          {providerStatus}
+        </p>
+      ) : null}
       <div aria-hidden="true" className="auth-panel__divider">
         <span />
         {copy.recovery.or}

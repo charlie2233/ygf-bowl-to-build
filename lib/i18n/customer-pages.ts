@@ -31,6 +31,12 @@ type CustomerPagesCopy = Readonly<{
       title: string;
     }>;
     messages: Readonly<Record<AuthMessageKey, string>>;
+    providerAvailability: Readonly<
+      Record<
+        "anonymous" | "recovery",
+        Readonly<Record<"apple" | "both" | "google", string>>
+      >
+    >;
     recovery: Readonly<{
       apple: string;
       description: string;
@@ -144,6 +150,24 @@ export const customerPagesCopy = {
         magicLinkError:
           "We couldn’t send the sign-in link. Check the email and try again.",
         magicLinkSent: "Check your email for a secure sign-in link.",
+      },
+      providerAvailability: {
+        anonymous: {
+          both:
+            "Google and Apple linking aren’t available yet. Your guest wallet remains safe and usable while setup is completed.",
+          google:
+            "Google linking isn’t available yet. You can link Apple instead, and your guest wallet remains safe and usable.",
+          apple:
+            "Apple linking isn’t available yet. You can link Google instead, and your guest wallet remains safe and usable.",
+        },
+        recovery: {
+          both:
+            "Google and Apple sign-in aren’t available yet. Use the email Magic Link below.",
+          google:
+            "Google sign-in isn’t available yet. Continue with Apple or use the email Magic Link below.",
+          apple:
+            "Apple sign-in isn’t available yet. Continue with Google or use the email Magic Link below.",
+        },
       },
       demo: {
         title: "Continue to your Build Credits",
@@ -268,6 +292,24 @@ export const customerPagesCopy = {
         providerError: "无法开始登录，请尝试其他方式。",
         magicLinkError: "无法发送登录链接，请检查邮箱后重试。",
         magicLinkSent: "请查收邮箱中的安全登录链接。",
+      },
+      providerAvailability: {
+        anonymous: {
+          both:
+            "Google 和 Apple 账号关联暂未开放。配置完成前，你的访客钱包仍可安全正常使用。",
+          google:
+            "Google 账号关联暂未开放，你仍可关联 Apple，访客钱包也可安全正常使用。",
+          apple:
+            "Apple 账号关联暂未开放，你仍可关联 Google，访客钱包也可安全正常使用。",
+        },
+        recovery: {
+          both:
+            "Google 和 Apple 登录暂未开放，请使用下方邮箱 Magic Link。",
+          google:
+            "Google 登录暂未开放，请使用 Apple 或下方邮箱 Magic Link。",
+          apple:
+            "Apple 登录暂未开放，请使用 Google 或下方邮箱 Magic Link。",
+        },
       },
       demo: {
         title: "继续使用你的 Build Credits",
@@ -394,6 +436,24 @@ export const customerPagesCopy = {
           "No pudimos enviar el enlace. Revisa el correo e inténtalo de nuevo.",
         magicLinkSent:
           "Revisa tu correo para encontrar el enlace seguro de acceso.",
+      },
+      providerAvailability: {
+        anonymous: {
+          both:
+            "La vinculación con Google y Apple aún no está disponible. Tu saldo de invitado sigue seguro y listo para usar mientras finaliza la configuración.",
+          google:
+            "La vinculación con Google aún no está disponible. Puedes vincular Apple y tu saldo de invitado sigue seguro y listo para usar.",
+          apple:
+            "La vinculación con Apple aún no está disponible. Puedes vincular Google y tu saldo de invitado sigue seguro y listo para usar.",
+        },
+        recovery: {
+          both:
+            "El acceso con Google y Apple aún no está disponible. Usa el enlace por correo de abajo.",
+          google:
+            "El acceso con Google aún no está disponible. Continúa con Apple o usa el enlace por correo de abajo.",
+          apple:
+            "El acceso con Apple aún no está disponible. Continúa con Google o usa el enlace por correo de abajo.",
+        },
       },
       demo: {
         title: "Continúa a tus Build Credits",
@@ -524,6 +584,24 @@ export const customerPagesCopy = {
         magicLinkSent:
           "Consultez votre messagerie pour ouvrir le lien sécurisé.",
       },
+      providerAvailability: {
+        anonymous: {
+          both:
+            "L’association avec Google et Apple n’est pas encore disponible. Votre solde invité reste sécurisé et utilisable pendant la finalisation de la configuration.",
+          google:
+            "L’association avec Google n’est pas encore disponible. Vous pouvez associer Apple et votre solde invité reste sécurisé et utilisable.",
+          apple:
+            "L’association avec Apple n’est pas encore disponible. Vous pouvez associer Google et votre solde invité reste sécurisé et utilisable.",
+        },
+        recovery: {
+          both:
+            "La connexion avec Google et Apple n’est pas encore disponible. Utilisez le lien par e-mail ci-dessous.",
+          google:
+            "La connexion avec Google n’est pas encore disponible. Continuez avec Apple ou utilisez le lien par e-mail ci-dessous.",
+          apple:
+            "La connexion avec Apple n’est pas encore disponible. Continuez avec Google ou utilisez le lien par e-mail ci-dessous.",
+        },
+      },
       demo: {
         title: "Accédez à vos Build Credits",
         description:
@@ -650,6 +728,24 @@ export const customerPagesCopy = {
         magicLinkError:
           "Не удалось отправить ссылку. Проверьте адрес и повторите попытку.",
         magicLinkSent: "Проверьте почту и откройте безопасную ссылку для входа.",
+      },
+      providerAvailability: {
+        anonymous: {
+          both:
+            "Привязка Google и Apple пока недоступна. До завершения настройки гостевой баланс остаётся защищённым и доступным.",
+          google:
+            "Привязка Google пока недоступна. Можно привязать Apple, а гостевой баланс остаётся защищённым и доступным.",
+          apple:
+            "Привязка Apple пока недоступна. Можно привязать Google, а гостевой баланс остаётся защищённым и доступным.",
+        },
+        recovery: {
+          both:
+            "Вход через Google и Apple пока недоступен. Используйте ссылку по электронной почте ниже.",
+          google:
+            "Вход через Google пока недоступен. Продолжите через Apple или используйте ссылку по электронной почте ниже.",
+          apple:
+            "Вход через Apple пока недоступен. Продолжите через Google или используйте ссылку по электронной почте ниже.",
+        },
       },
       demo: {
         title: "Перейдите к своим Build Credits",

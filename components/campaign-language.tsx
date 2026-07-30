@@ -63,6 +63,18 @@ function writeBrowserLocaleCookie(locale: SiteLocale) {
   document.cookie = `${SITE_LOCALE_COOKIE}=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
 }
 
+function subscribeToHydration() {
+  return () => undefined;
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getServerHydratedSnapshot() {
+  return false;
+}
+
 export function CampaignLanguageProvider({
   children,
   initialLocale = "en",
@@ -157,6 +169,11 @@ export function CampaignLanguageSelector({
   label,
 }: Readonly<{ label: string }>) {
   const { locale, setLocale } = useCampaignLanguage();
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
   const current =
     siteLanguageOptions.find((option) => option.locale === locale) ??
     siteLanguageOptions[0];
@@ -170,6 +187,7 @@ export function CampaignLanguageSelector({
       <span className="visually-hidden">{label}</span>
       <select
         aria-label={label}
+        disabled={!hydrated}
         onChange={(event) => {
           const nextLocale = event.currentTarget.value;
           if (isSiteLocale(nextLocale)) {

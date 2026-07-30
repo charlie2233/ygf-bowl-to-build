@@ -22,6 +22,11 @@ declare global {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+const ENABLED_PROVIDERS = {
+  apple: true,
+  google: true,
+} as const;
+
 describe("AuthPanel anonymous upgrade", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -63,6 +68,7 @@ describe("AuthPanel anonymous upgrade", () => {
           isAnonymous
           mode="supabase"
           nextPath="/connect/agent"
+          providerAvailability={ENABLED_PROVIDERS}
         />,
       );
     });
@@ -97,6 +103,7 @@ describe("AuthPanel anonymous upgrade", () => {
           <AuthPanel
             mode="supabase"
             nextPath="/connect/agent"
+            providerAvailability={ENABLED_PROVIDERS}
           />,
         );
       });
@@ -125,6 +132,7 @@ describe("AuthPanel anonymous upgrade", () => {
         <AuthPanel
           mode="supabase"
           nextPath="//attacker.example"
+          providerAvailability={ENABLED_PROVIDERS}
         />,
       );
     });
@@ -156,6 +164,7 @@ describe("AuthPanel anonymous upgrade", () => {
         <AuthPanel
           mode="supabase"
           nextPath="/connect/agent"
+          providerAvailability={ENABLED_PROVIDERS}
         />,
       );
     });
@@ -178,5 +187,102 @@ describe("AuthPanel anonymous upgrade", () => {
         (button) => !button.disabled,
       ),
     ).toBe(true);
+  });
+
+  it("fails closed with visible provider buttons and an accessible Magic Link fallback", async () => {
+    await act(async () => {
+      root.render(
+        <AuthPanel mode="supabase" nextPath="/wallet" />,
+      );
+    });
+
+    const google = Array.from(
+      container.querySelectorAll("button"),
+    ).find(
+      (candidate) =>
+        candidate.textContent === "Continue with Google",
+    );
+    const apple = Array.from(
+      container.querySelectorAll("button"),
+    ).find(
+      (candidate) =>
+        candidate.textContent === "Continue with Apple",
+    );
+    const status = container.querySelector('[role="status"]');
+
+    expect(google?.disabled).toBe(true);
+    expect(apple?.disabled).toBe(true);
+    expect(google?.getAttribute("aria-describedby")).toBe(
+      status?.id,
+    );
+    expect(apple?.getAttribute("aria-describedby")).toBe(
+      status?.id,
+    );
+    expect(status?.textContent).toMatch(
+      /email Magic Link below/i,
+    );
+    expect(container.querySelector('input[type="email"]')).not.toBeNull();
+    expect(authMocks.signInWithOAuth).not.toHaveBeenCalled();
+  });
+
+  it("does not offer Magic Link as a guest-wallet linking fallback", async () => {
+    await act(async () => {
+      root.render(
+        <AuthPanel
+          isAnonymous
+          mode="supabase"
+          nextPath="/connect/agent"
+        />,
+      );
+    });
+
+    expect(container.querySelector('[role="status"]')?.textContent).toMatch(
+      /guest wallet remains safe and usable/i,
+    );
+    expect(container.textContent).not.toMatch(/Magic Link/i);
+    expect(container.querySelector('input[type="email"]')).toBeNull();
+  });
+
+  it("disables only the unavailable provider and leaves enabled OAuth behavior unchanged", async () => {
+    await act(async () => {
+      root.render(
+        <AuthPanel
+          mode="supabase"
+          nextPath="/wallet"
+          providerAvailability={{ apple: true, google: false }}
+        />,
+      );
+    });
+
+    const google = Array.from(
+      container.querySelectorAll("button"),
+    ).find(
+      (candidate) =>
+        candidate.textContent === "Continue with Google",
+    );
+    const apple = Array.from(
+      container.querySelectorAll("button"),
+    ).find(
+      (candidate) =>
+        candidate.textContent === "Continue with Apple",
+    );
+
+    expect(google?.disabled).toBe(true);
+    expect(apple?.disabled).toBe(false);
+
+    await act(async () => {
+      apple?.click();
+      await Promise.resolve();
+    });
+
+    expect(authMocks.signInWithOAuth).toHaveBeenCalledWith({
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=%2Fwallet`,
+      },
+      provider: "apple",
+    });
+    expect(container.querySelector('[role="status"]')?.textContent).toMatch(
+      /Google sign-in isn’t available yet/i,
+    );
   });
 });

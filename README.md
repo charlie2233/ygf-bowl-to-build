@@ -195,6 +195,24 @@ installing its production keys, checking its analytics, edge rate limits,
 manual-linking behavior, anonymous cleanup, and a live upgrade test are
 external state and are not completed merely by applying migrations.
 
+Production checkpoint (2026-07-30): the managed Turnstile widget is restricted
+to `malatangai.com`, its public key and server-only secret are installed in
+Vercel Production, and `YGF_TURNSTILE_ENABLED=true` is deployed. A visible
+Safari session rendered the real widget as `Success!`; missing and deliberately
+invalid tokens both failed closed with HTTP 403, while production runtime logs
+contained no application errors or token values. A human-submitted valid-token
+request remains a separate release receipt because automated clients must not
+solve CAPTCHA challenges.
+
+Supabase Security Advisor currently has no `ERROR`. Its anonymous-access
+warnings are expected for the scan-first wallet because authenticated
+anonymous users must remain inside the same user-bound RLS paths; disabling
+anonymous sign-in would break redemption. Leaked-password protection remains a
+paid-plan gate: the 2026-07-30 Management API attempt returned HTTP 402.
+Supabase Auth CAPTCHA also remains off until the client has a second challenge
+token, because the application Turnstile token is single-use and is consumed by
+the redemption validation route.
+
 For production, the Supabase redirect allowlist must contain the exact URL
 `https://malatangai.com/auth/callback`; do not add a wildcard or the `www`
 host. Enable **Manual Linking** so an anonymous wallet upgrades through

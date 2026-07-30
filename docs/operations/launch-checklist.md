@@ -201,14 +201,25 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   anonymous user and wallet, makes the account non-anonymous, and only then
   unlocks Agent key creation/rotation; do not substitute a second-account
   OAuth sign-in.
-- [ ] Create a hostname-restricted Cloudflare Turnstile widget, set
-  `YGF_TURNSTILE_ENABLED=true`, install the public site key and server-only
-  secret, and verify exact `redeem-code` action/`malatangai.com` hostname,
-  expired-or-duplicate rejection, five-second outage behavior, and analytics.
-  Confirm production rejects all official dummy keys and undersized
-  placeholders, explicit rendering resets/removes the exact widget ID, all
-  five languages render, and tokens never enter logs, cookies, database rows,
-  or analytics.
+- [x] Create a managed Cloudflare Turnstile widget restricted to
+  `malatangai.com`, install its public site key and server-only secret in
+  Vercel Production, set `YGF_TURNSTILE_ENABLED=true`, and redeploy. Production
+  deployment `dpl_CWKRz8EvJ6ZhSLreyZ17T7fM66WC` rendered the real widget as
+  `Success!` in Safari; missing and deliberately invalid tokens returned HTTP
+  403, and the checked runtime window contained no application errors or token
+  values.
+- [ ] Record one human-submitted valid-token/invalid-code receipt to prove the
+  exact `redeem-code` action and `malatangai.com` hostname through Siteverify,
+  then verify expired-or-duplicate rejection, five-second outage behavior, and
+  Turnstile analytics. Automated clients must not solve the challenge. Keep the
+  existing production-key rejection tests, exact widget reset/removal, five
+  languages, and no-token-in-logs assertions in the release suite.
+- [ ] Enable Supabase leaked-password protection after an explicit Pro-or-higher
+  plan decision. The 2026-07-30 Management API attempt returned HTTP 402, so
+  the advisor warning remains. Do not disable anonymous sign-in to silence its
+  11 design warnings: scan-first wallets require authenticated anonymous users
+  constrained by user-bound/admin-guarded RLS. Do not enable Supabase Auth
+  CAPTCHA until a separate client challenge token is implemented.
 - [ ] Configure hosting-edge limits and redact `code`, `claim`, and `token`
   query values from access logs. The application redirects legacy query
   claims without consuming them and declares `no-referrer`, but cannot erase a

@@ -177,6 +177,19 @@ satisfied by this checkout.
   non-anonymous, and only then unlocks Agent key creation/rotation. Configure
   CAPTCHA/Turnstile, edge limits, and an approved anonymous-user cleanup
   policy; none is claimed as applied by this checkout.
+- [x] Install the managed, `malatangai.com`-restricted Turnstile widget and all
+  three Vercel Production variables, then deploy the enabled boundary.
+  Production deployment `dpl_CWKRz8EvJ6ZhSLreyZ17T7fM66WC` showed a real
+  Safari `Success!` widget; missing and deliberately invalid tokens failed
+  closed with HTTP 403, with no application errors in the checked runtime-log
+  window.
+- [ ] Complete the human valid-token/invalid-code submission receipt and the
+  expired/duplicate, outage, and analytics checks. Supabase leaked-password
+  protection is also pending an explicit Pro-or-higher plan decision after the
+  Management API returned HTTP 402 on 2026-07-30. Keep the 11 anonymous-access
+  warnings as reviewed scan-first/RLS design signals rather than disabling
+  anonymous redemption, and keep Supabase Auth CAPTCHA off until its second
+  challenge-token flow exists.
 - [ ] Apply `20260729060005_global_bounded_maintenance.sql`, install an
   independent host `CRON_SECRET`, and deploy the checked-in daily
   `/api/internal/maintenance` schedule. Prove an authorized run returns only

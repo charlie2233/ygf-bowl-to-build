@@ -4,7 +4,10 @@ Owner: YGF store manager
 
 Audience: counter staff and shift leads
 
-Applies to: the limited 300-pass beta only
+Applies to: controlled distribution from the approved 500-credential
+production inventory batch recorded on 2026-07-30. Activation does not by
+itself authorize printing or distribution; the launch checklist still
+requires physical proof, staff training, and manager release sign-off.
 
 ## Before the shift
 

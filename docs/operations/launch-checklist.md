@@ -254,15 +254,23 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   provider redemption and customer-support path have named owners. Use the
   YGF admin gift-revocation form with the row reference; never paste a gift
   URL or reward UUID as a manager selector.
-- [ ] Generate only the approved beta quantity. Count, secure, and reconcile
-  printed claim rows without copying codes into an operations sheet.
-- [ ] A manager creates a pending batch in the admin UI and saves its one-time
-  CSV directly into ignored `private/`. Set the CSV to mode 0600, then run
-  `node scripts/render-private-claims.mts --input
-  private/<admin-download>.csv --out private/<batch>.claims.html`. Confirm the
-  renderer did not overwrite an existing file, the CSV and HTML are both mode
-  0600, and the rows match the pending inventory. Only then activate the batch
-  in the admin UI and print at 100% with browser headers/footers disabled.
+- [x] Generate the explicitly approved 500-credential production quantity.
+  Batch `c0313939-a965-41a6-8e61-67ba37db0c2c` is active with 500 eligible
+  rows. Its create and activate phases used persisted request IDs, were replayed
+  idempotently, and left zero admin profiles at rest. The plaintext CSV,
+  63-page Letter HTML/PDF, and immutable receipts remain ignored under a 0700
+  `private/` root with 0600 files. Database hash parity, HTML QR decode, and
+  final-PDF raster QR decode each passed 500/500. See
+  [the non-secret production receipt](./production-batch-2026-07-30.md).
+- [ ] Do not print or distribute that active inventory until a manager approves
+  the physical release. Print at 100% with browser headers/footers disabled,
+  conceal both credential forms, scan every imposition position, reconcile the
+  physical count without copying codes, and close the printer, rights, soft
+  test, training, and custody gates in the production receipt.
+- [ ] For future batches, use the named-manager admin workflow to create a
+  pending durable batch and save its one-time CSV directly into ignored
+  `private/`. Set the CSV to mode 0600, render and verify the matching private
+  artifact, and activate only after exact database/CSV/QR reconciliation.
 - [ ] For collectible cards, run
   `node scripts/render-private-agent-pass-batch.mts --input
   private/<admin-download>.csv --out private/<agent-pass-batch>.html` under the

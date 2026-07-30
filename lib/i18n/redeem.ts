@@ -9,7 +9,9 @@ export type RedeemErrorKey =
   | "redemptionPaused"
   | "serviceUnavailable"
   | "termsRequired"
-  | "validationThrottled";
+  | "validationThrottled"
+  | "verificationRequired"
+  | "verificationUnavailable";
 
 export type RedeemCopy = Readonly<{
   backToOffer: string;
@@ -33,6 +35,7 @@ export type RedeemCopy = Readonly<{
     submit: string;
     submitting: string;
     termsLabel: string;
+    verificationLabel: string;
   }>;
   intro: string;
   next: Readonly<{
@@ -76,6 +79,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
         "Code scanned ✓ — review the terms, then unlock your credits.",
       consentPrefix: "I agree to the",
       termsLabel: "promotional terms",
+      verificationLabel: "Security verification",
       consentAnd: "and",
       privacyLabel: "privacy notice",
       opensInNewTab: "opens in a new tab",
@@ -100,6 +104,10 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "That private QR is not valid. Enter the code printed on your card.",
         validationThrottled:
           "Too many checks were made. Wait a few minutes, then try again.",
+        verificationRequired:
+          "Complete the security check, then try again.",
+        verificationUnavailable:
+          "Security verification is temporarily unavailable. Please try again shortly.",
         serviceUnavailable:
           "Claims are temporarily unavailable. Your saved claim is safe—try again shortly.",
         redemptionPaused:
@@ -133,6 +141,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       scannedStatus: "已扫描兑换码 ✓ 请确认条款，然后解锁 Credits。",
       consentPrefix: "我同意",
       termsLabel: "活动条款",
+      verificationLabel: "安全验证",
       consentAnd: "和",
       privacyLabel: "隐私声明",
       opensInNewTab: "在新标签页打开",
@@ -152,6 +161,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
         termsRequired: "请同意活动条款和隐私声明后继续。",
         qrInvalid: "此私人二维码无效。请改为输入卡片上印刷的兑换码。",
         validationThrottled: "检查次数过多。请等待几分钟后重试。",
+        verificationRequired: "请先完成安全验证，然后重试。",
+        verificationUnavailable: "安全验证暂时不可用，请稍后重试。",
         serviceUnavailable: "兑换服务暂时不可用。已保存的权益仍然安全，请稍后重试。",
         redemptionPaused: "兑换功能暂时暂停。已保存的权益仍然安全，请稍后再试。",
         anonymousUnavailable:
@@ -185,6 +196,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
         "Código escaneado ✓ Revisa los términos y desbloquea tus créditos.",
       consentPrefix: "Acepto los",
       termsLabel: "términos de la promoción",
+      verificationLabel: "Verificación de seguridad",
       consentAnd: "y el",
       privacyLabel: "aviso de privacidad",
       opensInNewTab: "se abre en una pestaña nueva",
@@ -210,6 +222,10 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Ese QR privado no es válido. Escribe el código impreso en tu tarjeta.",
         validationThrottled:
           "Se hicieron demasiadas comprobaciones. Espera unos minutos e inténtalo de nuevo.",
+        verificationRequired:
+          "Completa la verificación de seguridad y vuelve a intentarlo.",
+        verificationUnavailable:
+          "La verificación de seguridad no está disponible temporalmente. Inténtalo de nuevo pronto.",
         serviceUnavailable:
           "El canje no está disponible temporalmente. Tu solicitud guardada está segura; inténtalo más tarde.",
         redemptionPaused:
@@ -246,6 +262,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
         "Code scanné ✓ Vérifiez les conditions, puis débloquez vos crédits.",
       consentPrefix: "J’accepte les",
       termsLabel: "conditions de la promotion",
+      verificationLabel: "Vérification de sécurité",
       consentAnd: "et la",
       privacyLabel: "politique de confidentialité",
       opensInNewTab: "s’ouvre dans un nouvel onglet",
@@ -271,6 +288,10 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Ce QR privé n’est pas valide. Saisissez le code imprimé sur votre carte.",
         validationThrottled:
           "Trop de vérifications ont été effectuées. Attendez quelques minutes et réessayez.",
+        verificationRequired:
+          "Effectuez la vérification de sécurité, puis réessayez.",
+        verificationUnavailable:
+          "La vérification de sécurité est temporairement indisponible. Réessayez bientôt.",
         serviceUnavailable:
           "L’activation est temporairement indisponible. Votre demande enregistrée reste protégée ; réessayez plus tard.",
         redemptionPaused:
@@ -306,6 +327,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
         "Код отсканирован ✓ Проверьте условия и получите Credits.",
       consentPrefix: "Я принимаю",
       termsLabel: "условия акции",
+      verificationLabel: "Проверка безопасности",
       consentAnd: "и",
       privacyLabel: "уведомление о конфиденциальности",
       opensInNewTab: "откроется в новой вкладке",
@@ -331,6 +353,10 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
           "Этот приватный QR недействителен. Введите код, напечатанный на карте.",
         validationThrottled:
           "Слишком много проверок. Подождите несколько минут и повторите попытку.",
+        verificationRequired:
+          "Пройдите проверку безопасности и повторите попытку.",
+        verificationUnavailable:
+          "Проверка безопасности временно недоступна. Повторите попытку позже.",
         serviceUnavailable:
           "Активация временно недоступна. Сохранённая заявка защищена — повторите попытку позже.",
         redemptionPaused:

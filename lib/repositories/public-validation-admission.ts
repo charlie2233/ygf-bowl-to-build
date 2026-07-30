@@ -1,13 +1,22 @@
 import { createServiceRoleClient } from "@/lib/auth/server";
 import { resolveAuthRuntime } from "@/lib/auth/runtime";
-import type { AbuseSignal } from "@/lib/campaign/rate-limit";
-import type { PublicValidationAdmission } from "@/lib/campaign/public-validation-admission";
+import type {
+  PublicValidationAdmission,
+  PublicValidationAdmissionInput,
+} from "@/lib/campaign/public-validation-admission";
 
-const PUBLIC_VALIDATION_LIMIT = 30;
+const SIGNAL_VALIDATION_LIMIT = 300;
+const SESSION_VALIDATION_LIMIT = 12;
+const CODE_VALIDATION_LIMIT = 20;
+const ACCOUNT_VALIDATION_LIMIT = 10;
 
 interface CountEntry {
   count: number;
   expiresAt: number;
+}
+
+function validDigest(value: string | undefined) {
+  return value === undefined || /^[0-9a-f]{64}$/u.test(value);
 }
 
 export class MemoryPublicValidationAdmission
@@ -20,7 +29,12 @@ export class MemoryPublicValidationAdmission
     this.#now = now;
   }
 
-  async admit(signal: AbuseSignal) {
+  async admit({
+    accountDigest,
+    codeDigest,
+    sessionDigest,
+    signal,
+  }: PublicValidationAdmissionInput) {
     const now = this.#now().getTime();
     for (const [key, entry] of this.#counts) {
       if (entry.expiresAt <= now) {
@@ -29,20 +43,49 @@ export class MemoryPublicValidationAdmission
     }
 
     const expiresAt = new Date(signal.expiresAt).getTime();
-    if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+    if (
+      !Number.isFinite(expiresAt) ||
+      expiresAt <= now ||
+      !validDigest(signal.digest) ||
+      !validDigest(sessionDigest) ||
+      !validDigest(codeDigest) ||
+      !validDigest(accountDigest)
+    ) {
       return false;
     }
-    const key =
+    const signalKey =
       `${signal.version}:${signal.purpose}:` +
       `${signal.digest}:${signal.bucket}`;
-    const prior = this.#counts.get(key);
-    if ((prior?.count ?? 0) >= PUBLIC_VALIDATION_LIMIT) {
+    const sessionKey = `session:${sessionDigest}:${signal.bucket}`;
+    const codeKey = codeDigest
+      ? `code:${codeDigest}:${signal.bucket}`
+      : null;
+    const accountKey = accountDigest
+      ? `account:${accountDigest}:${signal.bucket}`
+      : null;
+    const dimensions = [
+      { key: signalKey, limit: SIGNAL_VALIDATION_LIMIT },
+      { key: sessionKey, limit: SESSION_VALIDATION_LIMIT },
+      ...(codeKey
+        ? [{ key: codeKey, limit: CODE_VALIDATION_LIMIT }]
+        : []),
+      ...(accountKey
+        ? [{ key: accountKey, limit: ACCOUNT_VALIDATION_LIMIT }]
+        : []),
+    ];
+    if (
+      dimensions.some(
+        ({ key, limit }) => (this.#counts.get(key)?.count ?? 0) >= limit,
+      )
+    ) {
       return false;
     }
-    this.#counts.set(key, {
-      count: (prior?.count ?? 0) + 1,
-      expiresAt,
-    });
+    for (const { key } of dimensions) {
+      this.#counts.set(key, {
+        count: (this.#counts.get(key)?.count ?? 0) + 1,
+        expiresAt,
+      });
+    }
     return true;
   }
 }
@@ -50,11 +93,19 @@ export class MemoryPublicValidationAdmission
 export class SupabasePublicValidationAdmission
   implements PublicValidationAdmission
 {
-  async admit(signal: AbuseSignal) {
+  async admit({
+    accountDigest,
+    codeDigest,
+    sessionDigest,
+    signal,
+  }: PublicValidationAdmissionInput) {
     const client = createServiceRoleClient();
     const { data, error } = await client.rpc(
-      "admit_campaign_public_validation",
+      "admit_campaign_public_validation_v2",
       {
+        p_account_digest: accountDigest ?? null,
+        p_code_digest: codeDigest ?? null,
+        p_session_digest: sessionDigest,
         p_signal_bucket: signal.bucket,
         p_signal_digest: signal.digest,
         p_signal_expires_at: signal.expiresAt,

@@ -96,11 +96,14 @@ is therefore absent from ordinary request logs and referrer headers. On the
 redeem page, the client must parse the fragment, prefill the input, and
 immediately call `history.replaceState` to remove it before any submission or
 navigation. It then sends the claim only in a protected request body.
-For compatibility with an earlier prototype, the redeem UI also recognizes a
-single legacy `?code=` value, moves it into the local form, and immediately
-scrubs it from the address. It never trusts query-carried consent; the customer
-must still accept the current terms before submission. New private QRs must use
-the fragment contract above.
+The earlier `?code=` compatibility path is retired because a query value
+reaches the server, CDN, and browser history before client JavaScript can scrub
+it. `/redeem` redirects `code`, `claim`, `token`, or query-carried consent to a
+clean `/redeem` without consuming any value; the client repeats that scrub as
+defense in depth. The page declares `no-referrer`. An already-arrived first-hop
+query can still exist in hosting-edge access logs, so the operator must disable
+query-value logging/redact these keys and must never generate such links. All
+private QRs use the fragment contract above.
 
 `buildClaimUrl` accepts an origin, not an arbitrary base URL. It rejects
 credentials, paths, query strings, and non-HTTPS production origins.
@@ -150,7 +153,7 @@ boundary: `redeem_campaign_code` accepts a `p_user_id` that the server adapter
 derives from the authenticated session and is executable only by
 `service_role`. Browser Supabase clients must never receive that credential or
 invoke the RPC. The route must authenticate, derive the short-lived HMAC abuse
-signal, and call `admit_campaign_redemption_attempt` before the privileged
+signal, and call `admit_campaign_redemption_attempt_v2` before the privileged
 redemption call. Every RPC uses schema-qualified objects and a fixed
 `search_path`, locks the authoritative row with `FOR UPDATE`, and writes the
 wallet plus ledger transition in one database transaction. External provider
@@ -238,23 +241,51 @@ duplicate events remain untouched.
 
 ## Public-validation admission
 
-The public validation route derives a `v1` HMAC envelope with the fixed
-`validate-code` purpose before it asks the repository whether a claim is
-eligible. Production admission is shared in Postgres rather than counted
-independently in each application process. The service-role-only
-`admit_campaign_public_validation` RPC accepts only the current five-minute
-bucket with its exact bucket-end expiry, then takes a transaction advisory lock
-for that signal and bucket. It admits the first thirty calls and records every
-valid call, including denials, without storing the raw claim or request
-fingerprint.
+The public validation route derives independent `v1` HMAC envelopes for the
+canonical Vercel client IP (`validate-code`), a signed 128-bit HttpOnly
+rate-session cookie (`validate-session`), the normalized claim
+(`validate-claim`), and an authenticated account when present
+(`validate-account`). It rejects missing, malformed, chained, or untrusted
+network headers; canonical IPv4, IPv4-mapped IPv6, and equivalent IPv6
+spellings map consistently. Raw addresses, cookie identifiers, account values,
+and claims never cross the admission boundary.
+
+Production admission is shared in Postgres rather than counted independently
+in each application process. The service-role-only
+`admit_campaign_public_validation_v2` RPC accepts only the current five-minute
+bucket with its exact bucket-end expiry. It sorts and locks every populated
+dimension before counting. The reviewed ceilings per five minutes are 300 for
+the broad network signal (wide enough for a campus NAT), 12 per signed browser
+session, 20 per normalized claim, and 10 per authenticated account. Only an
+admitted request inserts a row. A denial returns `false` with zero durable
+writes, preventing a 429 flood from growing the attempts table without bound.
 
 `public_validation_attempts` has forced RLS and no `anon` or `authenticated`
-table grants. Rows expire at the end of their signed bucket. Each valid
-admission also removes at most 500 expired rows, ordered by expiry, using
-`FOR UPDATE SKIP LOCKED`; the bounded batch prevents cleanup work from growing
-with table size while concurrent signal buckets continue safely. The memory
-admission implementation mirrors the fixed limit and expiry behavior for local
+table grants. Admitted rows become eligible for deletion at the end of their
+signed bucket. Neither v2 request-path RPC deletes expired rows; cleanup belongs
+only to the service-role scheduled bounded-maintenance lane, so a denied call
+has no insert, update, or delete side effect. The memory admission
+implementation mirrors the fixed limit and expiry behavior for local
 development and tests, but is not the production cross-instance authority.
+
+When `YGF_TURNSTILE_ENABLED` is exactly `true`, durable admission runs first to
+protect Cloudflare Siteverify from request flooding. The bounded one-use token
+is then sent directly from the browser POST body to the server-only Siteverify
+call. The application checks `success`, exact action `redeem-code`, and the
+exact hostname derived from `YGF_PUBLIC_ORIGIN`, with a five-second timeout.
+Expired/duplicate, missing, action/hostname-mismatched, and invalid tokens are
+generic rejections; provider/network/malformed-response failures are generic
+retryable outages. The token, Turnstile secret, and raw IP are not placed in a
+cookie, database row, analytics event, or application log. An explicitly
+enabled but missing site key, secret, or exact origin fails closed. Production
+also rejects Cloudflare's official dummy credentials and obvious placeholders
+at any length, in addition to keys shorter than 20 bytes for a site key or 30
+bytes for a secret. The browser uses explicit widget rendering, retains the
+widget ID for exact reset/removal, and reports loading, ready, and unavailable
+states to the form. Loading or unavailable verification disables submission;
+script or server outages retain the localized unavailable error. The widget
+re-renders with `en`, `zh-cn`, `es`, `fr`, or `ru` when the campaign locale
+changes. Disabled local/demo mode stays deterministic.
 
 ## Redemption-attempt admission
 
@@ -264,21 +295,59 @@ plus the validated `v1` HMAC envelope. Its bucket and expiry must match the
 current five-minute server bucket; raw IP, device, and receipt values never
 cross this boundary.
 
-Admission takes transaction advisory locks for both the account/bucket and
-signal/bucket. It sorts the two lock keys before acquiring them, so requests
-that share either dimension serialize without reversing lock order. While
-holding both locks it counts only prior non-throttled admissions. The fixed
-limits are five admitted attempts per account/bucket and twenty per
-signal/bucket.
+Admission takes transaction advisory locks for account, canonical network
+signal, signed pending-claim session, and normalized claim HMAC dimensions. It
+sorts all lock keys before acquiring them, so overlapping requests serialize
+without reversing lock order. V2 deliberately reuses the exact legacy v1
+account and signal lock formulas; its session and claim locks remain v2-only.
+That common namespace makes mixed v1/v2 callers serialize on both dimensions
+during an app rollback. While holding the locks it counts only prior
+admissions. The reviewed five-minute ceilings are five per account, 200 for the
+broad campus-NAT signal, five per signed claim session, and ten per claim.
 
-Every valid admission call inserts exactly one `redemption_attempts` row. An
-admitted request starts as `unavailable`, which is fail-closed if the route
-dies before redemption; a denied request starts and remains `throttled`.
+Every admitted call inserts exactly one `redemption_attempts` row starting as
+`unavailable`, which is fail-closed if the route dies before redemption. A
+denied call returns `allowed=false` and a null attempt ID with zero writes; the
+route returns 429 with a bucket-bounded `Retry-After` and never calls finish.
+The anti-replay envelope still expires at the exact five-minute bucket end,
+while an admitted audit row is retained for one hour from admission.
+This reviewed stale grace lets a request admitted just before a bucket boundary
+finish safely; only scheduled bounded maintenance removes it afterward.
 `finish_campaign_redemption_attempt` locks the admitted row and may finalize it
 only as `accepted`, `invalid`, or `unavailable`. `finalized_at` makes exact
 retries idempotent and prevents a terminal result from being rewritten.
-`PUBLIC`, `anon`, and `authenticated` have no execution grant on either RPC;
-only `service_role` may invoke them.
+The migration revokes customized default-privilege grants as well as `PUBLIC`
+from both v2 RPCs. Their direct EXECUTE ACL is exactly the `postgres` owner and
+`service_role`; no unexpected named role may retain access.
+
+If the core redemption commits but attempt finalization fails, the route does
+not claim completion: it returns a retryable 503 and retains the signed pending
+claim. A retry replays the already-committed redemption idempotently, obtains a
+new admitted audit attempt, finalizes it, and only then returns success. The
+earlier fail-closed `unavailable` attempt ages out through scheduled
+maintenance; no retry can mint a second grant.
+
+The per-account ceiling intentionally includes same-owner/idempotent retries:
+the first five attempts in one bucket may return the existing wallet, while the
+sixth returns 429. The underlying code redemption remains idempotent and never
+mints another grant.
+
+Migration `202607300003_multidimensional_redemption_admission.sql` is an
+expand-first rollout. It keeps the original service-role-only admission
+functions available for the prior app during the rollback window and adds
+versioned v2 functions. Deploy migration first, then deploy the app that calls
+v2, verify live traffic and PostgREST schema refresh, and only then use a future
+contract migration to revoke/remove v1. New nullable columns precede
+`NOT VALID` checks and validation. A bounded preflight aborts above 10,000 rows;
+ordinary index creation is allowed only in a paused maintenance window under
+the configured lock/statement timeouts. Larger tables require a separately
+reviewed concurrent-index rollout with a pinned, verified migration runner.
+Only v2 guarantees zero-write denial and no request-path cleanup; v1 remains
+available solely for rollback compatibility and retains its legacy writes.
+Therefore the production rollout still pauses and drains traffic until every
+application instance is on v2. A disposable live Supabase multi-session test
+must then overlap v1/v2 calls at the fifth account attempt and prove the shared
+locks admit no sixth request before this gate is considered closed.
 
 Idempotency keys are scoped by user and operation. The first result stores
 balance snapshots in the ledger. An exact retry returns that first snapshot;
@@ -569,8 +638,8 @@ The migration includes foreign-key indexes, active/terminal partial indexes,
 check constraints, updated-at triggers, explicit function revokes/grants, and
 row-locking RPCs. The repository tests inspect this contract statically. That
 does not prove the migration applies or behaves correctly on a live Supabase
-project; a disposable-project migration and concurrent RPC smoke remain a
-deployment gate.
+project; a disposable-project migration and concurrent multi-session v1/v2 RPC
+smoke remain a deployment gate.
 
 ## Privacy and retention
 

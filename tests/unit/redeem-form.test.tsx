@@ -8,10 +8,33 @@ const navigationMocks = vi.hoisted(() => ({
   usePathname: vi.fn(() => "/redeem"),
   useRouter: vi.fn(),
 }));
+const turnstileScriptCallbacks = vi.hoisted(() => ({
+  onError: undefined as (() => void) | undefined,
+  onLoad: undefined as (() => void) | undefined,
+  onReady: undefined as (() => void) | undefined,
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: navigationMocks.usePathname,
   useRouter: navigationMocks.useRouter,
+}));
+vi.mock("next/script", () => ({
+  default: ({
+    onError,
+    onLoad,
+    onReady,
+    src,
+  }: {
+    onError: () => void;
+    onLoad: () => void;
+    onReady: () => void;
+    src: string;
+  }) => {
+    turnstileScriptCallbacks.onError = onError;
+    turnstileScriptCallbacks.onLoad = onLoad;
+    turnstileScriptCallbacks.onReady = onReady;
+    return <div data-src={src} data-testid="turnstile-script" />;
+  },
 }));
 
 import {
@@ -43,6 +66,9 @@ describe("RedeemForm", () => {
     navigationMocks.useRouter.mockReturnValue({
       refresh: navigationMocks.refresh,
     });
+    turnstileScriptCallbacks.onError = undefined;
+    turnstileScriptCallbacks.onLoad = undefined;
+    turnstileScriptCallbacks.onReady = undefined;
     localStorage.clear();
     history.replaceState(null, "", "/redeem#code=BOWL7K2A");
     container = document.createElement("div");
@@ -53,6 +79,7 @@ describe("RedeemForm", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
+    delete window.turnstile;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -74,7 +101,7 @@ describe("RedeemForm", () => {
     );
   });
 
-  it("scrubs a legacy query claim and never trusts query consent", async () => {
+  it("scrubs and refuses a legacy query claim instead of consuming a logged URL secret", async () => {
     history.replaceState(
       null,
       "",
@@ -88,7 +115,7 @@ describe("RedeemForm", () => {
     expect(
       container.querySelector<HTMLInputElement>('input[name="code"]')
         ?.value,
-    ).toBe("BOWL7K2A");
+    ).toBe("");
     expect(
       container.querySelector<HTMLInputElement>(
         'input[name="termsAccepted"]',
@@ -249,6 +276,271 @@ describe("RedeemForm", () => {
     ).toBe(false);
   });
 
+  it("requires a completed Turnstile token only when the server enables it", async () => {
+    const submitClaim = vi.fn<
+      (submission: RedeemFormSubmission) => Promise<void>
+    >(async () => undefined);
+    let renderOptions:
+      | Parameters<NonNullable<Window["turnstile"]>["render"]>[1]
+      | undefined;
+    window.turnstile = {
+      remove: vi.fn(),
+      render: vi.fn((_container, options) => {
+        renderOptions = options;
+        return "redeem-widget";
+      }),
+      reset: vi.fn(),
+    };
+    await act(async () => {
+      root.render(
+        <RedeemForm
+          submitClaim={submitClaim}
+          turnstileRequired
+          turnstileSiteKey="site_key_123"
+        />,
+      );
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    expect(submitClaim).not.toHaveBeenCalled();
+    expect(container.textContent).toContain(
+      "Complete the security check",
+    );
+
+    expect(renderOptions).toMatchObject({
+      action: "redeem-code",
+      language: "en",
+      sitekey: "site_key_123",
+    });
+    await act(async () => {
+      renderOptions?.callback("single-use-browser-token");
+    });
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(submitClaim).toHaveBeenCalledWith({
+      code: "BOWL7K2A",
+      termsAccepted: true,
+      turnstileToken: "single-use-browser-token",
+    });
+    expect(
+      container.querySelector(".redeem-form__turnstile"),
+    ).not.toBeNull();
+  });
+
+  it("resets the exact explicit Turnstile widget after a failed submission", async () => {
+    const reset = vi.fn();
+    let renderOptions:
+      | Parameters<NonNullable<Window["turnstile"]>["render"]>[1]
+      | undefined;
+    window.turnstile = {
+      remove: vi.fn(),
+      render: vi.fn((_container, options) => {
+        renderOptions = options;
+        return "redeem-widget";
+      }),
+      reset,
+    };
+    const submitClaim = vi.fn(async () => {
+      throw new Error("CODE_INVALID");
+    });
+
+    await act(async () => {
+      root.render(
+        <RedeemForm
+          submitClaim={submitClaim}
+          turnstileRequired
+          turnstileSiteKey="site_key_123"
+        />,
+      );
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      renderOptions?.callback("single-use-browser-token");
+    });
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(reset).toHaveBeenCalledWith("redeem-widget");
+    expect(container.textContent).toContain("invalid or unavailable");
+  });
+
+  it("ignores a delayed reset token and keeps a server-reported Turnstile outage blocked", async () => {
+    const reset = vi.fn();
+    let renderOptions:
+      | Parameters<NonNullable<Window["turnstile"]>["render"]>[1]
+      | undefined;
+    window.turnstile = {
+      remove: vi.fn(),
+      render: vi.fn((_container, options) => {
+        renderOptions = options;
+        return "redeem-widget";
+      }),
+      reset,
+    };
+    const submitClaim = vi.fn<
+      (submission: RedeemFormSubmission) => Promise<void>
+    >(async () => {
+      throw new Error("TURNSTILE_UNAVAILABLE");
+    });
+
+    await act(async () => {
+      root.render(
+        <RedeemForm
+          submitClaim={submitClaim}
+          turnstileRequired
+          turnstileSiteKey="site_key_123"
+        />,
+      );
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      renderOptions?.callback("single-use-browser-token");
+    });
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    const submit = container.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    expect(submitClaim).toHaveBeenCalledOnce();
+    expect(reset).toHaveBeenCalledWith("redeem-widget");
+    expect(submit?.disabled).toBe(true);
+    expect(container.textContent).toContain(
+      redeemCopy.en.form.errors.verificationUnavailable,
+    );
+
+    await act(async () => {
+      renderOptions?.callback("delayed-token-after-reset");
+    });
+    expect(submit?.disabled).toBe(true);
+    expect(container.textContent).toContain(
+      redeemCopy.en.form.errors.verificationUnavailable,
+    );
+
+    await act(async () => {
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(submitClaim).toHaveBeenCalledOnce();
+    expect(submitClaim.mock.calls[0]?.[0]).toMatchObject({
+      turnstileToken: "single-use-browser-token",
+    });
+    expect(container.textContent).toContain(
+      redeemCopy.en.form.errors.verificationUnavailable,
+    );
+  });
+
+  it("fails visibly and disables submission when Turnstile is enabled but misconfigured", async () => {
+    await act(async () => {
+      root.render(
+        <RedeemForm turnstileRequired turnstileSiteKey={null} />,
+      );
+    });
+
+    expect(
+      container.querySelector<HTMLButtonElement>('button[type="submit"]')
+        ?.disabled,
+    ).toBe(true);
+    expect(
+      container.querySelector(
+        ".redeem-form__verification-unavailable",
+      )?.textContent,
+    ).toContain("temporarily unavailable");
+  });
+
+  it("keeps a blocked Turnstile script unavailable and makes no API request", async () => {
+    delete window.turnstile;
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await act(async () => {
+      root.render(
+        <RedeemForm
+          turnstileRequired
+          turnstileSiteKey="site_key_123"
+        />,
+      );
+    });
+
+    const submit = container.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    expect(submit?.disabled).toBe(true);
+
+    await act(async () => turnstileScriptCallbacks.onError?.());
+
+    expect(submit?.disabled).toBe(true);
+    expect(container.textContent).toContain(
+      redeemCopy.en.form.errors.verificationUnavailable,
+    );
+
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(submit?.disabled).toBe(true);
+    expect(container.textContent).toContain(
+      redeemCopy.en.form.errors.verificationUnavailable,
+    );
+  });
+
   it("locks duplicate valid submissions before React can repaint", async () => {
     let releaseSubmission: (() => void) | undefined;
     const submitClaim = vi.fn(
@@ -382,6 +674,43 @@ describe("RedeemForm", () => {
     );
     expect(codeInput?.getAttribute("aria-invalid")).toBe("true");
     expect(document.activeElement).toBe(codeInput);
+  });
+
+  it("does not present an origin rejection as a Turnstile failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json(
+          { eligible: false, error: "ORIGIN_FORBIDDEN" },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    await act(async () => {
+      root.render(<RedeemForm />);
+    });
+    await act(async () => {
+      container
+        .querySelector<HTMLInputElement>(
+          'input[name="termsAccepted"]',
+        )
+        ?.click();
+      container.querySelector("form")?.dispatchEvent(
+        new SubmitEvent("submit", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain(
+      redeemCopy.en.form.errors.generic,
+    );
+    expect(container.textContent).not.toContain(
+      redeemCopy.en.form.errors.verificationRequired,
+    );
   });
 
   it.each(campaignLocales)(

@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
 import { PGlite } from "@electric-sql/pglite";
@@ -18,6 +18,11 @@ const migrationNames = [
   "202607270007_bounded_agent_replay_cleanup.sql",
   "202607270008_partner_rewards.sql",
   "20260729060004_function_execute_hardening.sql",
+  "20260729060005_global_bounded_maintenance.sql",
+  "20260729234500_admin_batch_coalesce_runtime_fix.sql",
+  "202607300001_same_account_redemption_retry.sql",
+  "202607300002_same_account_redemption_retry_wallet_lock.sql",
+  "202607300003_multidimensional_redemption_admission.sql",
 ] as const;
 
 const userId = "11111111-1111-4111-8111-111111111111";
@@ -204,6 +209,18 @@ async function failTask(
 }
 
 describe("disposable Postgres campaign migrations", () => {
+  it("keeps the executable migration chain in sync with the migration directory", async () => {
+    const migrationDirectory = path.join(
+      process.cwd(),
+      "supabase/migrations",
+    );
+    const migrationFiles = (await readdir(migrationDirectory))
+      .filter((name) => name.endsWith(".sql"))
+      .sort();
+
+    expect([...migrationNames]).toEqual(migrationFiles);
+  });
+
   it(
     "uses a partial replay index and bounded, lock-safe Agent response cleanup",
     async () => {

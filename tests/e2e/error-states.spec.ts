@@ -41,25 +41,40 @@ test("invalid private QR is removed from the URL and offers printed-code recover
   ).toBeVisible();
 });
 
-test("legacy query claims are scrubbed without trusting query consent", async ({
+test("legacy query claims are retired and redirected without consuming the URL secret", async ({
   page,
 }) => {
-  await gotoApp(
-    page,
+  for (const path of [
     "/redeem?code=BOWL7K2A&termsAccepted=on&source=legacy",
-  );
+    "/redeem?claim=BOWL7K2A",
+    "/redeem?token=BOWL7K2A",
+  ]) {
+    const redirectResponse = await page.request.get(path, {
+      maxRedirects: 0,
+    });
+    expect(redirectResponse.status()).toBe(307);
+    expect(redirectResponse.headers()["location"]).toMatch(/\/redeem$/);
+    expect(redirectResponse.headers()["cache-control"]).toContain("no-store");
+    expect(redirectResponse.headers()["referrer-policy"]).toBe("no-referrer");
 
-  await expect(
-    page.getByLabel("8-character card code"),
-  ).toHaveValue("BOWL7K2A");
-  await expect(
-    page.getByRole("checkbox", { name: /promotional terms/i }),
-  ).not.toBeChecked();
-  await expect
-    .poll(() => new URL(page.url()).search)
-    .toBe("?source=legacy");
-  expect(page.url()).not.toContain("BOWL7K2A");
-  expect(page.url()).not.toContain("termsAccepted");
+    const finalResponse = await gotoApp(page, path);
+    await expect(
+      page.getByLabel("8-character card code"),
+    ).toHaveValue("");
+    await expect(
+      page.getByRole("checkbox", { name: /promotional terms/i }),
+    ).not.toBeChecked();
+    await expect
+      .poll(() => new URL(page.url()).pathname + new URL(page.url()).search)
+      .toBe("/redeem");
+    expect(page.url()).not.toContain("BOWL7K2A");
+    expect(page.url()).not.toContain("termsAccepted");
+    expect(finalResponse?.headers()["referrer-policy"]).toBe("no-referrer");
+  }
+  await expect(page.locator('meta[name="referrer"]')).toHaveAttribute(
+    "content",
+    "no-referrer",
+  );
 });
 
 test("reviewing legal terms keeps a scanned private code on the redeem page", async ({

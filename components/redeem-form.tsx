@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, Clock3, Laptop } from "lucide-react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -13,6 +14,10 @@ import {
 } from "react";
 
 import { useCampaignLanguage } from "@/components/campaign-language";
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from "@/components/turnstile-widget";
 import { createAuthBrowserClient } from "@/lib/auth/client";
 import { parseClaimFragment } from "@/lib/campaign/claim-url";
 import { redeemCopy, type RedeemErrorKey } from "@/lib/i18n/redeem";
@@ -20,6 +25,7 @@ import { redeemCopy, type RedeemErrorKey } from "@/lib/i18n/redeem";
 export interface RedeemFormSubmission {
   code: string;
   termsAccepted: true;
+  turnstileToken?: string;
 }
 
 export interface RedeemFormProps {
@@ -27,7 +33,15 @@ export interface RedeemFormProps {
   createAnonymousSession?: () => Promise<void>;
   pendingClaimReady?: boolean;
   submitClaim?: (submission: RedeemFormSubmission) => Promise<void>;
+  turnstileRequired?: boolean;
+  turnstileSiteKey?: string | null;
 }
+
+type TurnstileStatus =
+  | "disabled"
+  | "loading"
+  | "ready"
+  | "unavailable";
 
 async function readOptionalJson<T extends object>(
   response: Response,
@@ -89,6 +103,15 @@ async function defaultSubmitClaim(
   if (validation.status === 429) {
     throw new Error("VALIDATION_THROTTLED");
   }
+  if (validationBody.error === "TURNSTILE_REQUIRED") {
+    throw new Error("TURNSTILE_REQUIRED");
+  }
+  if (validationBody.error === "TURNSTILE_UNAVAILABLE") {
+    throw new Error("TURNSTILE_UNAVAILABLE");
+  }
+  if (validation.status === 403) {
+    throw new Error("REQUEST_REJECTED");
+  }
   if (
     validation.status === 503 &&
     validationBody.error === "REDEMPTION_PAUSED"
@@ -138,6 +161,12 @@ function userFacingErrorKey(error: unknown): RedeemErrorKey {
     if (error.message === "VALIDATION_THROTTLED") {
       return "validationThrottled";
     }
+    if (error.message === "TURNSTILE_REQUIRED") {
+      return "verificationRequired";
+    }
+    if (error.message === "TURNSTILE_UNAVAILABLE") {
+      return "verificationUnavailable";
+    }
     if (
       error.message === "SERVICE_UNAVAILABLE" ||
       error.message === "REDEMPTION_UNAVAILABLE"
@@ -179,6 +208,8 @@ export function RedeemForm({
   createAnonymousSession = defaultCreateAnonymousSession,
   pendingClaimReady = false,
   submitClaim,
+  turnstileRequired = false,
+  turnstileSiteKey = null,
 }: RedeemFormProps) {
   const { locale } = useCampaignLanguage();
   const copy = redeemCopy[locale].form;
@@ -190,6 +221,7 @@ export function RedeemForm({
   const codeInputRef = useRef<HTMLInputElement>(null);
   const submissionInFlightRef = useRef(false);
   const termsInputRef = useRef<HTMLInputElement>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [code, setCode] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [errorField, setErrorField] = useState<
@@ -201,6 +233,25 @@ export function RedeemForm({
   const [showManualAuthFallback, setShowManualAuthFallback] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(
+    null,
+  );
+  const turnstileNeeded = turnstileRequired && !pendingClaimReady;
+  const initialTurnstileStatus: TurnstileStatus =
+    !turnstileNeeded
+      ? "disabled"
+      : turnstileSiteKey
+        ? "loading"
+        : "unavailable";
+  const [turnstileStatus, setTurnstileStatus] =
+    useState<TurnstileStatus>(initialTurnstileStatus);
+  const turnstileStatusRef = useRef<TurnstileStatus>(
+    initialTurnstileStatus,
+  );
+  const turnstileConfigurationRef = useRef({
+    needed: turnstileNeeded,
+    siteKey: turnstileSiteKey,
+  });
   const [wasScanned, setWasScanned] = useState(false);
   const mounted = useSyncExternalStore(
     subscribeToHydration,
@@ -232,20 +283,70 @@ export function RedeemForm({
     </div>
   ) : null;
 
+  const updateTurnstileStatus = useCallback(
+    (status: TurnstileStatus) => {
+      turnstileStatusRef.current = status;
+      setTurnstileStatus(status);
+    },
+    [],
+  );
+
+  const markTurnstileUnavailable = useCallback(() => {
+    updateTurnstileStatus("unavailable");
+    setTurnstileToken(null);
+    setErrorField(null);
+    setErrorKey("verificationUnavailable");
+  }, [updateTurnstileStatus]);
+
+  function handleTurnstileTokenChange(token: string | null) {
+    if (turnstileStatusRef.current === "unavailable") {
+      return;
+    }
+    setTurnstileToken(token);
+    if (token) {
+      setErrorKey((current) =>
+        current === "verificationRequired" ? null : current,
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (
+      turnstileConfigurationRef.current.needed === turnstileNeeded &&
+      turnstileConfigurationRef.current.siteKey === turnstileSiteKey
+    ) {
+      return;
+    }
+    turnstileConfigurationRef.current = {
+      needed: turnstileNeeded,
+      siteKey: turnstileSiteKey,
+    };
+    setTurnstileToken(null);
+    updateTurnstileStatus(
+      !turnstileNeeded
+        ? "disabled"
+        : turnstileSiteKey
+          ? "loading"
+          : "unavailable",
+    );
+  }, [
+    turnstileNeeded,
+    turnstileSiteKey,
+    updateTurnstileStatus,
+  ]);
+
   useEffect(() => {
     let active = true;
 
     function consumeClaimFromUrl() {
       const url = new URL(window.location.href);
       const fragment = url.hash;
-      const legacyQueryCode = url.searchParams.get("code");
-      const hasSensitiveQuery =
+      const hasLegacySensitiveQuery =
         url.searchParams.has("code") ||
         url.searchParams.has("termsAccepted");
-
       url.searchParams.delete("code");
       url.searchParams.delete("termsAccepted");
-      if (fragment || hasSensitiveQuery) {
+      if (fragment || hasLegacySensitiveQuery) {
         const safeSearch = url.searchParams.toString();
         window.history.replaceState(
           window.history.state,
@@ -254,14 +355,12 @@ export function RedeemForm({
         );
       }
 
-      if (!fragment && !legacyQueryCode) {
+      if (!fragment) {
         return;
       }
 
       try {
-        const parsedCode = fragment
-          ? parseClaimFragment(fragment)
-          : normalizedCardCode(legacyQueryCode ?? "");
+        const parsedCode = parseClaimFragment(fragment);
         if (!isValidCardCode(parsedCode)) {
           throw new Error("CLAIM_URL_INVALID");
         }
@@ -329,6 +428,30 @@ export function RedeemForm({
       termsInputRef.current?.focus();
       return;
     }
+    if (turnstileRequired && !turnstileSiteKey) {
+      setErrorKey("verificationUnavailable");
+      return;
+    }
+
+    const currentTurnstileStatus = turnstileStatusRef.current;
+    if (turnstileNeeded && currentTurnstileStatus !== "ready") {
+      setErrorKey(
+        currentTurnstileStatus === "unavailable"
+          ? "verificationUnavailable"
+          : "verificationRequired",
+      );
+      return;
+    }
+
+    if (
+      turnstileNeeded &&
+      (typeof turnstileToken !== "string" ||
+        turnstileToken.length === 0 ||
+        turnstileToken.length > 2_048)
+    ) {
+      setErrorKey("verificationRequired");
+      return;
+    }
 
     submissionInFlightRef.current = true;
     setIsSubmitting(true);
@@ -336,6 +459,9 @@ export function RedeemForm({
       const submission = {
         code: normalizedCardCode(code),
         termsAccepted: true as const,
+        ...(typeof turnstileToken === "string"
+          ? { turnstileToken }
+          : {}),
       };
       if (submitClaim) {
         await submitClaim(submission);
@@ -348,6 +474,12 @@ export function RedeemForm({
       }
     } catch (submissionError) {
       const nextErrorKey = userFacingErrorKey(submissionError);
+      if (nextErrorKey === "verificationUnavailable") {
+        markTurnstileUnavailable();
+      }
+      if (turnstileRequired) {
+        turnstileRef.current?.reset();
+      }
       setShowManualAuthFallback(
         submissionError instanceof Error &&
           submissionError.message === "ANONYMOUS_AUTH_UNAVAILABLE",
@@ -471,9 +603,39 @@ export function RedeemForm({
         </label>
       )}
 
+      {!pendingClaimReady && turnstileRequired ? (
+        turnstileSiteKey ? (
+          <TurnstileWidget
+            label={copy.verificationLabel}
+            locale={locale}
+            onError={markTurnstileUnavailable}
+            onReady={() => {
+              updateTurnstileStatus("ready");
+              setErrorKey((current) =>
+                current === "verificationRequired" ||
+                current === "verificationUnavailable"
+                  ? null
+                  : current,
+              );
+            }}
+            onTokenChange={handleTurnstileTokenChange}
+            ref={turnstileRef}
+            siteKey={turnstileSiteKey}
+          />
+        ) : (
+          <p className="redeem-form__verification-unavailable" role="alert">
+            {copy.errors.verificationUnavailable}
+          </p>
+        )
+      ) : null}
+
       <button
         className="button button--primary button--medium redeem-form__submit"
-        disabled={!mounted || isSubmitting}
+        disabled={
+          !mounted ||
+          isSubmitting ||
+          (turnstileNeeded && turnstileStatus !== "ready")
+        }
         type="submit"
       >
         {isSubmitting
@@ -505,7 +667,13 @@ export function RedeemForm({
 
 export function RedeemPageContent({
   pendingClaimReady = false,
-}: Readonly<{ pendingClaimReady?: boolean }>) {
+  turnstileRequired = false,
+  turnstileSiteKey = null,
+}: Readonly<{
+  pendingClaimReady?: boolean;
+  turnstileRequired?: boolean;
+  turnstileSiteKey?: string | null;
+}>) {
   const { locale } = useCampaignLanguage();
   const copy = redeemCopy[locale];
 
@@ -521,7 +689,11 @@ export function RedeemPageContent({
           <div className="redeem-card">
             <h1>{copy.title}</h1>
             <p>{copy.intro}</p>
-            <RedeemForm pendingClaimReady={pendingClaimReady} />
+            <RedeemForm
+              pendingClaimReady={pendingClaimReady}
+              turnstileRequired={turnstileRequired}
+              turnstileSiteKey={turnstileSiteKey}
+            />
           </div>
 
           <aside className="redeem-page__aside">

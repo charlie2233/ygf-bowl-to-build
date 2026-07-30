@@ -164,6 +164,11 @@ Create a development Supabase project, then provide:
   `YGF_AGENT_REQUEST_FINGERPRINT_SECRET`
 - `NEXT_PUBLIC_APP_URL` and `YGF_PUBLIC_ORIGIN` set to the exact local
   application origin (production uses `https://malatangai.com` for both)
+- optionally enable the implemented Turnstile boundary with
+  `YGF_TURNSTILE_ENABLED=true`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, and the
+  server-only `TURNSTILE_SECRET_KEY`; enabled-but-incomplete configuration
+  fails closed, and production rejects official dummy credentials plus
+  placeholders shorter than 20-byte site keys or 30-byte secrets
 - a server-only `OPENAI_API_KEY`
 - optionally `YGF_ADMIN_EMAIL_ALLOWLIST`
 
@@ -185,9 +190,10 @@ Anonymous users receive Supabase’s `authenticated` database role and stay
 inside the same user-bound wallet/task RLS policies. They are not custom guest
 IDs. Until an identity is linked, clearing site data can permanently lose
 access to that wallet. Anonymous-user cleanup is not automatic in this
-repository. Supabase dashboard configuration, CAPTCHA/Turnstile, edge rate
-limits, manual-linking behavior, anonymous cleanup, and a live upgrade test
-are external state and are not completed merely by applying migrations.
+repository. Creating a hostname-restricted Cloudflare Turnstile widget,
+installing its production keys, checking its analytics, edge rate limits,
+manual-linking behavior, anonymous cleanup, and a live upgrade test are
+external state and are not completed merely by applying migrations.
 
 For production, the Supabase redirect allowlist must contain the exact URL
 `https://malatangai.com/auth/callback`; do not add a wildcard or the `www`
@@ -197,7 +203,8 @@ create/rotate operations remain gated until that same user is no longer
 anonymous. Local development needs its own exact local `/auth/callback` URL.
 
 Apply `202607300001_same_account_redemption_retry.sql` and then
-`202607300002_same_account_redemption_retry_wallet_lock.sql`. The first
+`202607300002_same_account_redemption_retry_wallet_lock.sql`, followed by
+`202607300003_multidimensional_redemption_admission.sql`. The first
 introduces same-owner receipt recovery without minting credits; the second
 locks and reads the wallet in that transaction so the returned snapshot is
 the authoritative serialized **current** wallet at commit time. Re-submitting
@@ -206,6 +213,23 @@ already spent or reserved; it never adds another grant, resets the balance to
 3,000, or extends expiry. The same code from a different account remains
 `CODE_ALREADY_REDEEMED`, and an account cannot use a different code to create
 another wallet.
+
+The third migration is migration-first and keeps the old service-role-only
+admission RPCs during the rollback window while adding versioned v2 RPCs used
+by the new app. Pause redemption and confirm each attempt table has at most
+10,000 rows before its ordinary indexes are created. Apply the migration,
+deploy the v2-calling app, verify live admission/finalization and schema-cache
+refresh, then remove v1 only in a later reviewed contract migration. V2 denied
+calls do no cleanup or other durable write; scheduled bounded maintenance owns
+expired-row deletion. The retained v1 rollback functions preserve their legacy
+cleanup and denial-write behavior, so pause and drain remains mandatory until
+all application instances call v2. During that mixed-version window, v2 reuses
+the exact v1 user/signal advisory-lock namespaces while adding v2-only
+session/code locks, so old and new callers still serialize on their shared
+dimensions. A redemption attempt is retained for one hour after admission so
+admitted work can finish safely. Same-owner
+retries count toward the five-per-bucket account ceiling, making attempt six a
+429 without changing the one-wallet/one-grant invariant.
 
 ## Mode 3: production
 
@@ -266,15 +290,19 @@ Deploy the application only after:
 
 - applying all migrations, including
   `202607300001_same_account_redemption_retry.sql` followed by
-  `202607300002_same_account_redemption_retry_wallet_lock.sql`, to the intended
+  `202607300002_same_account_redemption_retry_wallet_lock.sql` and
+  `202607300003_multidimensional_redemption_admission.sql`, to the intended
   production project;
 - verifying RLS and server-only service-role access with separate user/admin
   accounts;
 - retaining the configured exact production callback and Manual Linking
   setting, installing Google/Apple provider credentials, and testing both
   normal OAuth and anonymous `linkIdentity`;
-- enabling and testing anonymous sign-in, CAPTCHA/Turnstile, edge rate
-  limiting, and anonymous-user cleanup;
+- enabling and testing anonymous sign-in; creating a hostname-restricted
+  Turnstile widget; installing `YGF_TURNSTILE_ENABLED=true`, its public site
+  key, and server-only secret; then proving valid, expired/duplicate,
+  hostname/action mismatch, and provider-outage behavior without logging the
+  token;
 - setting both independent Agent HMAC secrets and explicitly enabling the
   gateway only after one real provider request, refund, and cost-cap smoke;
 - setting `YGF_REDEMPTION_ENABLED=true` only after inventory is ready, while

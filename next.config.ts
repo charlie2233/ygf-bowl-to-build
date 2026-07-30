@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
     return [
       {
         headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+        source: "/redeem",
+      },
+      {
+        headers: [
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
           { key: "X-Frame-Options", value: "DENY" },
         ],

@@ -7,11 +7,20 @@ import {
 } from "@/lib/auth/pending-claim";
 import { isSameOriginMutation } from "@/lib/auth/admin";
 import {
-  getPublicValidationAbuseSignal,
+  getPublicValidationAdmissionContext,
+  type PublicValidationAdmissionContext,
 } from "@/lib/auth/request-signal";
+import {
+  applyRateSessionCookie,
+} from "@/lib/auth/rate-session";
 import { serverSecret } from "@/lib/auth/runtime";
+import {
+  resolveTurnstileConfiguration,
+  verifyTurnstileToken,
+} from "@/lib/auth/turnstile";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { normalizeCode } from "@/lib/campaign/code";
+import { abuseSignalRetryAfterSeconds } from "@/lib/campaign/rate-limit";
 import { isRedemptionEnabled } from "@/lib/operations/readiness";
 import { getCampaignRepository } from "@/lib/repositories";
 import { getPublicValidationAdmission } from "@/lib/repositories/public-validation-admission";
@@ -25,9 +34,10 @@ export const dynamic = "force-dynamic";
 interface ValidationBody {
   code?: unknown;
   termsAccepted?: unknown;
+  turnstileToken?: unknown;
 }
 
-const MAX_VALIDATION_BODY_BYTES = 512;
+const MAX_VALIDATION_BODY_BYTES = 3_072;
 
 interface ValidationRouteDependencies {
   handle: (request: Request) => Promise<Response>;
@@ -35,16 +45,39 @@ interface ValidationRouteDependencies {
   nodeEnvironment?: string;
 }
 
+interface ValidationResponseOptions {
+  error?: string;
+  nodeEnvironment?: string;
+  rateSessionCookie?: string;
+  retryAfterSeconds?: number;
+}
+
 function validationResponse(
   eligible: boolean,
   status = 200,
+  {
+    error,
+    nodeEnvironment = process.env.NODE_ENV,
+    rateSessionCookie,
+    retryAfterSeconds,
+  }: ValidationResponseOptions = {},
 ) {
-  return NextResponse.json(
-    { eligible },
+  const response = NextResponse.json(
+    { eligible, ...(error ? { error } : {}) },
     {
-      headers: { "cache-control": "private, no-store" },
+      headers: {
+        "cache-control": "private, no-store",
+        ...(retryAfterSeconds
+          ? { "retry-after": String(retryAfterSeconds) }
+          : {}),
+      },
       status,
     },
+  );
+  return applyRateSessionCookie(
+    response,
+    rateSessionCookie,
+    nodeEnvironment,
   );
 }
 
@@ -71,9 +104,15 @@ export function createValidationRouteHandler({
   };
 }
 
-async function handleValidation(request: Request) {
-  if (!isSameOriginMutation(request)) {
-    return validationResponse(false, 403);
+async function handleValidation(
+  request: Request,
+  environment = process.env,
+  nodeEnvironment = process.env.NODE_ENV,
+) {
+  if (!isSameOriginMutation(request, environment)) {
+    return validationResponse(false, 403, {
+      error: "ORIGIN_FORBIDDEN",
+    });
   }
 
   let body: ValidationBody;
@@ -98,7 +137,10 @@ async function handleValidation(request: Request) {
       parsed === null ||
       Array.isArray(parsed) ||
       Object.keys(parsed).some(
-        (key) => key !== "code" && key !== "termsAccepted",
+        (key) =>
+          key !== "code" &&
+          key !== "termsAccepted" &&
+          key !== "turnstileToken",
       )
     ) {
       return validationResponse(false, 400);
@@ -118,27 +160,68 @@ async function handleValidation(request: Request) {
     return validationResponse(false, 400);
   }
 
+  let code: string | undefined;
   try {
-    const signal = await getPublicValidationAbuseSignal(request);
-    if (!(await getPublicValidationAdmission().admit(signal))) {
-      return validationResponse(false, 429);
+    code = normalizeCode(body.code);
+  } catch {
+    code = undefined;
+  }
+
+  let user: Awaited<ReturnType<typeof getAuthenticatedUser>>;
+  let context: PublicValidationAdmissionContext | undefined;
+  try {
+    user = await getAuthenticatedUser();
+    context = getPublicValidationAdmissionContext(request, {
+      ...(code ? { code } : {}),
+      ...(user ? { userId: user.id } : {}),
+    });
+    if (
+      !(await getPublicValidationAdmission().admit(context.admission))
+    ) {
+      return validationResponse(false, 429, {
+        nodeEnvironment,
+        rateSessionCookie: context.setRateSessionCookie,
+        retryAfterSeconds: abuseSignalRetryAfterSeconds(
+          context.admission.signal,
+        ),
+      });
     }
 
-    let code: string;
-    try {
-      code = normalizeCode(body.code);
-    } catch {
-      return validationResponse(false);
+    const challenge = await verifyTurnstileToken(
+      body.turnstileToken,
+      resolveTurnstileConfiguration(environment, nodeEnvironment),
+    );
+    if (challenge.kind === "rejected") {
+      return validationResponse(false, 403, {
+        error: "TURNSTILE_REQUIRED",
+        nodeEnvironment,
+        rateSessionCookie: context.setRateSessionCookie,
+      });
+    }
+    if (challenge.kind === "unavailable") {
+      return validationResponse(false, 503, {
+        error: "TURNSTILE_UNAVAILABLE",
+        nodeEnvironment,
+        rateSessionCookie: context.setRateSessionCookie,
+      });
+    }
+    if (!code) {
+      return validationResponse(false, 200, {
+        nodeEnvironment,
+        rateSessionCookie: context.setRateSessionCookie,
+      });
     }
 
-    const user = await getAuthenticatedUser();
     const repository = getCampaignRepository();
     const result = await repository.validateCode({
       code,
       ...(user ? { userId: user.id } : {}),
     });
     if (!result.eligible) {
-      return validationResponse(false);
+      return validationResponse(false, 200, {
+        nodeEnvironment,
+        rateSessionCookie: context.setRateSessionCookie,
+      });
     }
 
     const response = NextResponse.json({
@@ -156,18 +239,26 @@ async function handleValidation(request: Request) {
         maxAge: PENDING_CLAIM_TTL_SECONDS,
         path: "/",
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: nodeEnvironment === "production",
       },
     );
     response.headers.set("cache-control", "private, no-store");
-    return response;
+    return applyRateSessionCookie(
+      response,
+      context.setRateSessionCookie,
+      nodeEnvironment,
+    );
   } catch {
-    return validationResponse(false, 503);
+    return validationResponse(false, 503, {
+      nodeEnvironment,
+      rateSessionCookie: context?.setRateSessionCookie,
+    });
   }
 }
 
 export async function POST(request: Request) {
   return createValidationRouteHandler({
-    handle: handleValidation,
+    handle: (currentRequest) =>
+      handleValidation(currentRequest, process.env, process.env.NODE_ENV),
   })(request);
 }

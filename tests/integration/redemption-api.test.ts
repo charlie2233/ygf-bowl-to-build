@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { hashCode } from "@/lib/campaign/code";
-import type { RedemptionAttemptOutcome } from "@/lib/campaign/redemption-admission";
+import type {
+  RedemptionAdmission,
+  RedemptionAttemptOutcome,
+} from "@/lib/campaign/redemption-admission";
 import { createRedemptionHandler } from "@/lib/http/redeem-route";
 import { createRedemptionRouteHandler } from "@/app/api/redeem/route";
 import {
   MemoryCampaignRepository,
 } from "@/lib/repositories/memory-campaign-repository";
+import {
+  MemoryRedemptionAdmission,
+} from "@/lib/repositories/redemption-admission";
 
 const START = new Date("2026-07-27T12:00:00.000Z");
 
@@ -23,11 +29,13 @@ function responseBody<T>(response: Response) {
 
 function createHarness({
   allowed = true,
+  admission,
   code = "BOWL7K2A",
   now = START,
   userId = "demo-user",
 }: {
   allowed?: boolean;
+  admission?: RedemptionAdmission;
   code?: string | null;
   now?: Date;
   userId?: string | null;
@@ -46,22 +54,36 @@ function createHarness({
     }) => Promise<void>
   >(async () => undefined);
   const clearPendingClaim = vi.fn();
+  const admit = vi.fn(async () =>
+    allowed
+      ? ({ allowed: true, attemptId: "attempt-1" } as const)
+      : ({ allowed: false, retryAfterSeconds: 137 } as const),
+  );
+  const getAdmissionInput = vi.fn(
+    async (
+      _request: Request,
+      context: Readonly<{
+        code: string;
+        sessionId: string;
+        userId: string;
+      }>,
+    ) => ({
+      codeDigest: "c".repeat(64),
+      sessionDigest: "s".repeat(64),
+      signal: {
+        bucket: 1,
+        digest: "a".repeat(64),
+        expiresAt: "2026-07-27T12:05:00.000Z",
+        purpose: "redeem",
+        version: "v1" as const,
+      },
+      userId: context.userId,
+    }),
+  );
   const handler = createRedemptionHandler({
-    admission: {
-      admit: vi.fn(async () => ({
-        allowed,
-        attemptId: "attempt-1",
-      })),
-      finish,
-    },
+    admission: admission ?? { admit, finish },
     clearPendingClaim,
-    getAbuseSignal: vi.fn(async () => ({
-      bucket: 1,
-      digest: "a".repeat(64),
-      expiresAt: "2026-07-27T12:05:00.000Z",
-      purpose: "redeem",
-      version: "v1" as const,
-    })),
+    getAdmissionInput,
     getPendingClaim: vi.fn(async () =>
       code === null
         ? null
@@ -88,6 +110,7 @@ function createHarness({
 
   return {
     clearPendingClaim,
+    getAdmissionInput,
     finish,
     handle: handler,
     redeem,
@@ -260,6 +283,23 @@ describe("redemption API boundary", () => {
     expect((await revoked.redeem()).status).toBe(423);
   });
 
+  it("rate-limits same-owner idempotent retries and returns 429 on the sixth attempt in one bucket", async () => {
+    const harness = createHarness({
+      admission: new MemoryRedemptionAdmission(),
+    });
+    const statuses: number[] = [];
+
+    for (let index = 0; index < 6; index += 1) {
+      harness.setPendingClaimIdempotencyKey(`same-owner-${index}`);
+      statuses.push((await harness.redeem()).status);
+    }
+
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+    await expect(
+      harness.repository.getWallet({ userId: "demo-user" }),
+    ).resolves.toMatchObject({ remainingBalance: 3_000 });
+  });
+
   it("fails closed for unauthenticated, missing-claim, and throttled requests", async () => {
     expect(
       (await createHarness({ userId: null }).redeem()).status,
@@ -271,7 +311,23 @@ describe("redemption API boundary", () => {
     const throttled = createHarness({ allowed: false });
     const response = await throttled.redeem();
     expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("137");
     expect(throttled.finish).not.toHaveBeenCalled();
+  });
+
+  it("binds admission to the trusted account and signed claim session", async () => {
+    const harness = createHarness({ userId: "verified-user" });
+
+    await harness.redeem();
+
+    expect(harness.getAdmissionInput).toHaveBeenCalledWith(
+      expect.any(Request),
+      {
+        code: "BOWL7K2A",
+        sessionId: "claim-idempotency-1",
+        userId: "verified-user",
+      },
+    );
   });
 
   it("clears the pending claim after every terminal redemption outcome", async () => {
@@ -288,19 +344,78 @@ describe("redemption API boundary", () => {
     });
   });
 
-  it("reports a committed redemption truthfully if attempt finalization fails", async () => {
+  it("returns a retryable outage and idempotently recovers when finalization fails after commit", async () => {
     const harness = createHarness();
     harness.finish.mockRejectedValueOnce(
       new Error("temporary audit write failure"),
     );
 
-    const response = await harness.redeem();
+    const first = await harness.redeem();
 
-    expect(response.status).toBe(200);
-    expect(harness.clearPendingClaim).toHaveBeenCalledTimes(1);
+    expect(first.status).toBe(503);
+    expect(harness.clearPendingClaim).not.toHaveBeenCalled();
     await expect(
       harness.repository.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({ remainingBalance: 3000 });
+
+    const recovered = await harness.redeem();
+    expect(recovered.status).toBe(200);
+    expect(harness.clearPendingClaim).toHaveBeenCalledTimes(1);
+    expect(harness.finish).toHaveBeenLastCalledWith({
+      attemptId: "attempt-1",
+      outcome: "accepted",
+    });
+  });
+
+  it("recovers a committed redemption under a fresh production-shaped attempt ID without a second grant", async () => {
+    const admit = vi
+      .fn<RedemptionAdmission["admit"]>()
+      .mockResolvedValueOnce({
+        allowed: true,
+        attemptId:
+          "8df659d5-c8b2-4ae9-b4ef-000000000001",
+      })
+      .mockResolvedValueOnce({
+        allowed: true,
+        attemptId:
+          "8df659d5-c8b2-4ae9-b4ef-000000000002",
+      });
+    const finish = vi.fn<RedemptionAdmission["finish"]>(
+      async ({ attemptId }) => {
+        if (
+          attemptId ===
+          "8df659d5-c8b2-4ae9-b4ef-000000000001"
+        ) {
+          throw new Error("temporary audit write failure");
+        }
+      },
+    );
+    const harness = createHarness({
+      admission: { admit, finish },
+    });
+
+    const first = await harness.redeem();
+    const recovered = await harness.redeem();
+
+    expect(first.status).toBe(503);
+    expect(recovered.status).toBe(200);
+    expect(admit).toHaveBeenCalledTimes(2);
+    expect(finish).toHaveBeenNthCalledWith(1, {
+      attemptId:
+        "8df659d5-c8b2-4ae9-b4ef-000000000001",
+      outcome: "accepted",
+    });
+    expect(finish).toHaveBeenNthCalledWith(2, {
+      attemptId:
+        "8df659d5-c8b2-4ae9-b4ef-000000000002",
+      outcome: "accepted",
+    });
+    expect(harness.clearPendingClaim).toHaveBeenCalledTimes(1);
+    await expect(harness.repository.getDashboard()).resolves.toMatchObject({
+      activeWalletCount: 1,
+      redeemedCount: 1,
+      remainingCredits: 3_000,
+    });
   });
 
   it("preserves the signed claim when a dependency fails before completion", async () => {

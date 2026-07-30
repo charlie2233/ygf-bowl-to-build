@@ -99,7 +99,11 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Application callback behavior returns only to approved same-origin
   destinations in a live OAuth/linking round trip.
 - [ ] Public validation and redemption limits work behind the production
-  proxy; raw IP addresses and plaintext codes are not logged or stored.
+  proxy with the reviewed five-minute ceilings (validation:
+  network/session/code/account `300/12/20/10`; redemption:
+  network/session/code/account `200/5/10/5`). Confirm canonical Vercel IP
+  parsing, sorted advisory locks, zero-write denials, and bounded
+  `Retry-After`; raw IP addresses and plaintext codes are not logged or stored.
 - [ ] Admin routes reject non-admin users. Batch download is one-time,
   manager-controlled, and plaintext outputs stay only in the ignored
   `private/` location with restricted permissions.
@@ -112,6 +116,29 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   held its lock and succeeded after rollback. The RPC is `SECURITY DEFINER`,
   owned by `postgres`, fixes `search_path=pg_catalog`, and is executable only
   by `service_role`.
+- [ ] Apply
+  `202607300003_multidimensional_redemption_admission.sql` before deploying
+  the corresponding route code. Before applying, set
+  `YGF_REDEMPTION_ENABLED=false`, drain redemption traffic, and confirm both
+  attempt tables have at most 10,000 rows; otherwise stop and plan a dedicated
+  concurrent-index migration using a pinned and verified Supabase CLI.
+  Verify v1 and v2 admission functions coexist for migration-first rollback,
+  the app calls only v2, all functions are owned by `postgres` and executable
+  only by `service_role`, a denied request performs no insert/update/delete,
+  and a v2 admitted attempt remains finalizable through the next bucket.
+  Confirm the exact shared v1/v2 user and signal advisory-lock formulas in the
+  live catalog, then overlap multi-session v1/v2 calls at the fifth account
+  attempt and prove no sixth admission. Only v2 has zero-write denial and no
+  request-path cleanup; v1 retains its legacy behavior for rollback, so keep
+  traffic paused/drained until every application instance calls v2.
+  Keep v1 until live v2 verification, then remove it only in a later contract
+  migration.
+- [ ] Verify same-owner retries remain idempotent but rate-limited: attempts
+  one through five in a five-minute bucket return the existing wallet without
+  another grant, while attempt six returns 429.
+- [ ] Inject an attempt-finalization failure after a committed redemption:
+  the first response must be retryable 503 with the pending claim retained,
+  and one retry must recover to success with one wallet and one grant.
 - [ ] Complete the remaining live redemption matrix with two normal browser
   accounts plus invalid, expired, and revoked claims. Record only non-secret
   references and outcomes; do not place claim values in the evidence log.
@@ -174,9 +201,18 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   anonymous user and wallet, makes the account non-anonymous, and only then
   unlocks Agent key creation/rotation; do not substitute a second-account
   OAuth sign-in.
-- [ ] Configure and test CAPTCHA/Turnstile plus edge rate limits for anonymous
-  signup/claim traffic. The repository does not claim these dashboard controls
-  are already applied.
+- [ ] Create a hostname-restricted Cloudflare Turnstile widget, set
+  `YGF_TURNSTILE_ENABLED=true`, install the public site key and server-only
+  secret, and verify exact `redeem-code` action/`malatangai.com` hostname,
+  expired-or-duplicate rejection, five-second outage behavior, and analytics.
+  Confirm production rejects all official dummy keys and undersized
+  placeholders, explicit rendering resets/removes the exact widget ID, all
+  five languages render, and tokens never enter logs, cookies, database rows,
+  or analytics.
+- [ ] Configure hosting-edge limits and redact `code`, `claim`, and `token`
+  query values from access logs. The application redirects legacy query
+  claims without consuming them and declares `no-referrer`, but cannot erase a
+  query already received by the CDN on the first hop.
 - [ ] Approve and schedule anonymous-user cleanup. Deleting unlinked anonymous
   users is not automatic, and clearing browser data makes their wallets
   unrecoverable.

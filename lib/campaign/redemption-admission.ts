@@ -7,14 +7,21 @@ export type RedemptionAttemptOutcome =
   | "throttled";
 
 export interface RedemptionAdmissionInput {
+  codeDigest: string;
+  sessionDigest: string;
   signal: AbuseSignal;
   userId: string;
 }
 
-export interface RedemptionAdmissionResult {
-  allowed: boolean;
-  attemptId: string;
-}
+export type RedemptionAdmissionResult =
+  | {
+      allowed: true;
+      attemptId: string;
+    }
+  | {
+      allowed: false;
+      retryAfterSeconds: number;
+    };
 
 export interface FinishRedemptionAttemptInput {
   attemptId: string;

@@ -5,7 +5,7 @@ import {
   readPendingClaim,
 } from "@/lib/auth/pending-claim";
 import { isSameOriginMutation } from "@/lib/auth/admin";
-import { getRedemptionAbuseSignal } from "@/lib/auth/request-signal";
+import { getRedemptionAdmissionInput } from "@/lib/auth/request-signal";
 import {
   serverSecret,
   type RuntimeEnvironment,
@@ -59,7 +59,7 @@ async function createProductionHandler(): Promise<RedemptionRequestHandler> {
     async clearPendingClaim() {
       cookieStore.delete(PENDING_CLAIM_COOKIE);
     },
-    getAbuseSignal: getRedemptionAbuseSignal,
+    getAdmissionInput: getRedemptionAdmissionInput,
     async getPendingClaim() {
       return readPendingClaim(
         cookieStore.get(PENDING_CLAIM_COOKIE)?.value,

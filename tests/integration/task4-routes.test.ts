@@ -17,16 +17,24 @@ import {
   resetPublicValidationAdmissionForTests,
 } from "@/lib/repositories/public-validation-admission";
 
-function validationRequest(code: string) {
+function validationRequest(
+  code: string,
+  {
+    cookie,
+    turnstileToken,
+  }: { cookie?: string; turnstileToken?: string } = {},
+) {
   return new Request(
     "http://localhost:3000/api/code/validate",
     {
       body: JSON.stringify({
         code,
         termsAccepted: true,
+        ...(turnstileToken ? { turnstileToken } : {}),
       }),
       headers: {
         "content-type": "application/json",
+        ...(cookie ? { cookie } : {}),
         origin: "http://localhost:3000",
       },
       method: "POST",
@@ -43,6 +51,7 @@ describe("Task 4 route composition in demo mode", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
     resetDemoRepositoryForTests();
     resetPublicValidationAdmissionForTests();
   });
@@ -78,7 +87,12 @@ describe("Task 4 route composition in demo mode", () => {
       validationRequest("NOTREAL1"),
     );
     expect(await invalid.json()).toEqual({ eligible: false });
-    expect(invalid.headers.get("set-cookie")).toBeNull();
+    expect(invalid.headers.get("set-cookie")).toContain(
+      "ygf_rate_session=",
+    );
+    expect(invalid.headers.get("set-cookie")).not.toContain(
+      "ygf_pending_claim=",
+    );
   });
 
   it("pauses public validation before claim-state or admission work", async () => {
@@ -107,7 +121,12 @@ describe("Task 4 route composition in demo mode", () => {
   it("rejects cross-origin, unexpected, and oversized validation requests", async () => {
     const crossOrigin = validationRequest("BOWL7K2A");
     crossOrigin.headers.set("origin", "https://attacker.example");
-    expect((await validateCode(crossOrigin)).status).toBe(403);
+    const crossOriginResponse = await validateCode(crossOrigin);
+    expect(crossOriginResponse.status).toBe(403);
+    await expect(crossOriginResponse.json()).resolves.toEqual({
+      eligible: false,
+      error: "ORIGIN_FORBIDDEN",
+    });
 
     const unexpected = validationRequest("BOWL7K2A");
     const unexpectedBody = new Request(unexpected.url, {
@@ -126,7 +145,7 @@ describe("Task 4 route composition in demo mode", () => {
       {
         body: JSON.stringify({
           code: "BOWL7K2A",
-          filler: "x".repeat(600),
+          filler: "x".repeat(3_500),
           termsAccepted: true,
         }),
         headers: {
@@ -137,6 +156,103 @@ describe("Task 4 route composition in demo mode", () => {
       },
     );
     expect((await validateCode(oversized)).status).toBe(413);
+  });
+
+  it("requires exact Turnstile hostname/action verification when explicitly enabled", async () => {
+    vi.stubEnv("YGF_TURNSTILE_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "site_key_123");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "secret_key_123");
+    vi.stubEnv("YGF_PUBLIC_ORIGIN", "http://localhost:3000");
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        action: "redeem-code",
+        hostname: "localhost",
+        success: true,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchImplementation);
+
+    const missing = await validateCode(
+      validationRequest("BOWL7K2A"),
+    );
+    expect(missing.status).toBe(403);
+    expect(missing.headers.get("set-cookie")).toContain(
+      "ygf_rate_session=",
+    );
+    expect(missing.headers.get("set-cookie")).not.toContain(
+      "ygf_pending_claim=",
+    );
+    await expect(missing.json()).resolves.toEqual({
+      eligible: false,
+      error: "TURNSTILE_REQUIRED",
+    });
+
+    const accepted = await validateCode(
+      validationRequest("BOWL7K2A", {
+        turnstileToken: "single-use-browser-token",
+      }),
+    );
+    expect(accepted.status).toBe(200);
+    await expect(accepted.json()).resolves.toMatchObject({
+      eligible: true,
+    });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+  });
+
+  it("fails closed without contacting Siteverify when Turnstile is enabled but misconfigured", async () => {
+    vi.stubEnv("YGF_TURNSTILE_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "site_key_123");
+    vi.stubEnv("YGF_PUBLIC_ORIGIN", "http://localhost:3000");
+    const fetchImplementation = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchImplementation);
+
+    const response = await validateCode(
+      validationRequest("BOWL7K2A", {
+        turnstileToken: "browser-token",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      eligible: false,
+      error: "TURNSTILE_UNAVAILABLE",
+    });
+    expect(fetchImplementation).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).not.toContain(
+      "ygf_pending_claim=",
+    );
+  });
+
+  it("returns a bounded Retry-After after the account validation ceiling", async () => {
+    let cookie: string | undefined;
+    let response: Response | undefined;
+    for (let index = 0; index < 11; index += 1) {
+      response = await validateCode(
+        validationRequest("NOTREAL1", { cookie }),
+      );
+      const rateCookie =
+        /ygf_rate_session=([^;]+)/u.exec(
+          response.headers.get("set-cookie") ?? "",
+        )?.[1];
+      if (rateCookie) {
+        cookie = `ygf_rate_session=${rateCookie}`;
+      }
+    }
+
+    expect(response).toBeDefined();
+    if (!response) {
+      throw new Error("missing validation response");
+    }
+    expect(response.status).toBe(429);
+    expect(Number(response.headers.get("retry-after"))).toBeGreaterThan(
+      0,
+    );
+    expect(Number(response.headers.get("retry-after"))).toBeLessThanOrEqual(
+      300,
+    );
+    await expect(response.json()).resolves.toEqual({
+      eligible: false,
+    });
   });
 
   it("returns a browser-safe balance from the composed route", async () => {

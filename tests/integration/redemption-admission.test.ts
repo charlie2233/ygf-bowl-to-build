@@ -23,6 +23,8 @@ describe("redemption admission", () => {
     for (let index = 0; index < 6; index += 1) {
       results.push(
         await admission.admit({
+          codeDigest: `${index}`.padStart(64, "c"),
+          sessionDigest: `${index}`.padStart(64, "d"),
           signal: signal(`${index}`.padStart(64, "a")),
           userId: "same-user",
         }),
@@ -39,23 +41,61 @@ describe("redemption admission", () => {
     ]);
   });
 
-  it("allows twenty attempts per abuse signal and rejects the next", async () => {
+  it("uses a broad campus-NAT signal ceiling while account limits remain strict", async () => {
     const admission = new MemoryRedemptionAdmission();
     const results = [];
 
-    for (let index = 0; index < 21; index += 1) {
+    for (let index = 0; index < 201; index += 1) {
       results.push(
         await admission.admit({
+          codeDigest: `${index}`.padStart(64, "c"),
+          sessionDigest: `${index}`.padStart(64, "d"),
           signal: signal(),
           userId: `user-${index}`,
         }),
       );
     }
 
-    expect(results.slice(0, 20).every((result) => result.allowed)).toBe(
+    expect(results.slice(0, 200).every((result) => result.allowed)).toBe(
       true,
     );
-    expect(results[20]?.allowed).toBe(false);
+    expect(results[200]?.allowed).toBe(false);
+  });
+
+  it("enforces independent signed-claim session and code ceilings", async () => {
+    const sessionAdmission = new MemoryRedemptionAdmission();
+    const sessionResults = [];
+    for (let index = 0; index < 6; index += 1) {
+      sessionResults.push(
+        await sessionAdmission.admit({
+          codeDigest: `${index}`.padStart(64, "c"),
+          sessionDigest: "d".repeat(64),
+          signal: signal(`${index}`.padStart(64, "a")),
+          userId: `user-${index}`,
+        }),
+      );
+    }
+    expect(
+      sessionResults.slice(0, 5).every((result) => result.allowed),
+    ).toBe(true);
+    expect(sessionResults[5]?.allowed).toBe(false);
+
+    const codeAdmission = new MemoryRedemptionAdmission();
+    const codeResults = [];
+    for (let index = 0; index < 11; index += 1) {
+      codeResults.push(
+        await codeAdmission.admit({
+          codeDigest: "c".repeat(64),
+          sessionDigest: `${index}`.padStart(64, "d"),
+          signal: signal(`${index}`.padStart(64, "a")),
+          userId: `user-${index}`,
+        }),
+      );
+    }
+    expect(
+      codeResults.slice(0, 10).every((result) => result.allowed),
+    ).toBe(true);
+    expect(codeResults[10]?.allowed).toBe(false);
   });
 
   it("requires finalization to reference an admitted attempt", async () => {
@@ -66,5 +106,26 @@ describe("redemption admission", () => {
         outcome: "invalid",
       }),
     ).rejects.toThrow("REDEMPTION_ATTEMPT_NOT_FOUND");
+  });
+
+  it("returns no attempt identifier for a denied admission", async () => {
+    const admission = new MemoryRedemptionAdmission();
+    let denied:
+      | Awaited<ReturnType<typeof admission.admit>>
+      | undefined;
+    for (let index = 0; index < 6; index += 1) {
+      const result = await admission.admit({
+        codeDigest: `${index}`.padStart(64, "c"),
+        sessionDigest: "d".repeat(64),
+        signal: signal(`${index}`.padStart(64, "a")),
+        userId: `user-${index}`,
+      });
+      if (!result.allowed) {
+        denied = result;
+      }
+    }
+
+    expect(denied).toMatchObject({ allowed: false });
+    expect(denied).not.toHaveProperty("attemptId");
   });
 });

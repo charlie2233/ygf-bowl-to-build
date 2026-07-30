@@ -84,3 +84,15 @@ export function deriveAbuseSignal({
     expiresAt: new Date((bucket + 1) * bucketMs).toISOString(),
   };
 }
+
+export function abuseSignalRetryAfterSeconds(
+  signal: AbuseSignal,
+  now = new Date(),
+) {
+  const expiresAt = new Date(signal.expiresAt).getTime();
+  const current = now.getTime();
+  if (!Number.isFinite(expiresAt) || !Number.isFinite(current)) {
+    return 1;
+  }
+  return Math.max(1, Math.min(3_600, Math.ceil((expiresAt - current) / 1_000)));
+}

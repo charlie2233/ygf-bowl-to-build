@@ -2,9 +2,9 @@ import {
   CampaignDomainError,
   type CampaignErrorCode,
 } from "@/lib/campaign/types";
-import type { AbuseSignal } from "@/lib/campaign/rate-limit";
 import type {
   RedemptionAdmission,
+  RedemptionAdmissionInput,
   RedemptionAdmissionResult,
   RedemptionAttemptOutcome,
 } from "@/lib/campaign/redemption-admission";
@@ -28,7 +28,14 @@ interface AuthenticatedUser {
 export interface RedemptionHandlerDependencies {
   admission: RedemptionAdmission;
   clearPendingClaim: () => Promise<void> | void;
-  getAbuseSignal: (request: Request) => Promise<AbuseSignal>;
+  getAdmissionInput: (
+    request: Request,
+    context: Readonly<{
+      code: string;
+      sessionId: string;
+      userId: string;
+    }>,
+  ) => Promise<RedemptionAdmissionInput> | RedemptionAdmissionInput;
   getPendingClaim: (request: Request) => Promise<PendingClaim | null>;
   getUser: (request: Request) => Promise<AuthenticatedUser | null>;
   repository: Pick<CampaignRepository, "redeemCode">;
@@ -40,12 +47,19 @@ interface MappedCampaignError {
   status: number;
 }
 
-function errorResponse(error: string, status: number) {
+function errorResponse(
+  error: string,
+  status: number,
+  retryAfterSeconds?: number,
+) {
   return Response.json(
     { error },
     {
       headers: {
         "cache-control": "private, no-store",
+        ...(retryAfterSeconds
+          ? { "retry-after": String(retryAfterSeconds) }
+          : {}),
       },
       status,
     },
@@ -125,9 +139,12 @@ async function finishAttempt(
   attemptId: string,
   outcome: RedemptionAttemptOutcome,
 ) {
-  await Promise.resolve()
-    .then(() => admission.finish({ attemptId, outcome }))
-    .catch(() => undefined);
+  try {
+    await admission.finish({ attemptId, outcome });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function clearClaim(
@@ -156,7 +173,7 @@ function successResponse(result: RedemptionResult) {
 export function createRedemptionHandler({
   admission,
   clearPendingClaim,
-  getAbuseSignal,
+  getAdmissionInput,
   getPendingClaim,
   getUser,
   repository,
@@ -200,17 +217,22 @@ export function createRedemptionHandler({
 
     let admitted: RedemptionAdmissionResult;
     try {
-      const signal = await getAbuseSignal(request);
-      admitted = await admission.admit({
-        signal,
+      const admissionInput = await getAdmissionInput(request, {
+        code: claim.code,
+        sessionId: claim.idempotencyKey,
         userId: user.id,
       });
+      admitted = await admission.admit(admissionInput);
     } catch {
       return errorResponse("REDEMPTION_UNAVAILABLE", 503);
     }
 
     if (!admitted.allowed) {
-      return errorResponse("REDEMPTION_THROTTLED", 429);
+      return errorResponse(
+        "REDEMPTION_THROTTLED",
+        429,
+        admitted.retryAfterSeconds,
+      );
     }
 
     try {
@@ -219,11 +241,14 @@ export function createRedemptionHandler({
         idempotencyKey: claim.idempotencyKey,
         userId: user.id,
       });
-      await finishAttempt(
+      const finalized = await finishAttempt(
         admission,
         admitted.attemptId,
         "accepted",
       );
+      if (!finalized) {
+        return errorResponse("REDEMPTION_UNAVAILABLE", 503);
+      }
       await clearClaim(clearPendingClaim);
       return successResponse(result);
     } catch (error) {
@@ -237,11 +262,14 @@ export function createRedemptionHandler({
       }
 
       const mapped = mapCampaignError(error.code);
-      await finishAttempt(
+      const finalized = await finishAttempt(
         admission,
         admitted.attemptId,
         mapped.outcome,
       );
+      if (!finalized) {
+        return errorResponse("REDEMPTION_UNAVAILABLE", 503);
+      }
       await clearClaim(clearPendingClaim);
       return errorResponse(mapped.error, mapped.status);
     }

@@ -266,22 +266,29 @@ export class SupabaseCampaignRepository
 {
   async validateCode({
     code,
+    userId,
   }: ValidateCodeInput): Promise<ValidateCodeResult> {
     const client = createServiceRoleClient();
     const codeHash = await hashCode(code);
     const { data, error } = await client
       .from("promo_codes")
-      .select("state,expires_at")
+      .select("state,expires_at,redeemed_by")
       .eq("code_hash", codeHash)
       .maybeSingle();
 
     if (error) {
       return repositoryUnavailable();
     }
-    const eligible =
+    const generallyEligible =
       data?.state === "eligible" &&
       (data.expires_at === null ||
         new Date(data.expires_at).getTime() > Date.now());
+    const sameAccountRetry =
+      typeof userId === "string" &&
+      userId.length > 0 &&
+      data?.state === "redeemed" &&
+      data.redeemed_by === userId;
+    const eligible = generallyEligible || sameAccountRetry;
     return { eligible };
   }
 

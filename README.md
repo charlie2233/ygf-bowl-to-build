@@ -8,10 +8,10 @@ YGF Bowl-to-Build turns a qualifying meal into one simple AI balance:
    non-cash Build Credits for 14 days in a private guest wallet—without a
    login screen.
 4. Study, Coding, Career, and Pick My Bowl each spend 120 credits per run.
-5. As an optional advanced path, the guest can link Google or Apple, then
-   create a personal, limited `ygf_…` API key and connect an
-   OpenAI-compatible Agent. Agent calls reserve and settle variable credits
-   from the same wallet.
+5. As an optional advanced path, the guest can link Google or Apple after that
+   Supabase provider is configured, then create a personal, limited `ygf_…`
+   API key and connect an OpenAI-compatible Agent. Agent calls reserve and
+   settle variable credits from the same wallet.
 6. A specially designated claim can also unlock one official prepaid Claude
    subscription gift when a campaign manager has purchased and securely
    attached that gift to the claim. Ordinary claims remain credits-only.
@@ -28,9 +28,10 @@ is never an API key. Provider credentials stay on the server.
   and customer-facing error states, with one persistent accessible language
   control
 - a numbered **Step 1 Claim / Step 2 Connect my Agent** first-viewport path
-  with a generated cinematic food loop, immediate poster fallback, scoped
-  GSAP timelines, ScrollTrigger reveals, fine-pointer depth, and static
-  reduced-motion/browser-reported data-saver paths
+  with responsive desktop/mobile YGF-derived static hero media, scoped GSAP
+  timelines, ScrollTrigger reveals, fine-pointer depth, and an equivalent
+  static experience for reduced-motion, data-saver, autoplay-restricted, and
+  no-JavaScript contexts
 - Supabase Auth/Postgres production adapter, RLS, and atomic ledger RPCs
 - deterministic local demo mode with the receipt code `BOWL7K2A`
 - fixed-endpoint OpenAI Chat Completions adapter plus deterministic demo provider
@@ -188,6 +189,24 @@ repository. Supabase dashboard configuration, CAPTCHA/Turnstile, edge rate
 limits, manual-linking behavior, anonymous cleanup, and a live upgrade test
 are external state and are not completed merely by applying migrations.
 
+For production, the Supabase redirect allowlist must contain the exact URL
+`https://malatangai.com/auth/callback`; do not add a wildcard or the `www`
+host. Enable **Manual Linking** so an anonymous wallet upgrades through
+`linkIdentity` without changing its Supabase user ID. The Agent page and key
+create/rotate operations remain gated until that same user is no longer
+anonymous. Local development needs its own exact local `/auth/callback` URL.
+
+Apply `202607300001_same_account_redemption_retry.sql` and then
+`202607300002_same_account_redemption_retry_wallet_lock.sql`. The first
+introduces same-owner receipt recovery without minting credits; the second
+locks and reads the wallet in that transaction so the returned snapshot is
+the authoritative serialized **current** wallet at commit time. Re-submitting
+the same code from the same authenticated Supabase account includes credits
+already spent or reserved; it never adds another grant, resets the balance to
+3,000, or extends expiry. The same code from a different account remains
+`CODE_ALREADY_REDEEMED`, and an account cannot use a different code to create
+another wallet.
+
 ## Mode 3: production
 
 Production uses the same Supabase and provider variables as Mode 2, with
@@ -200,6 +219,14 @@ Install a dedicated `YGF_REWARD_ENCRYPTION_KEY` before assigning any optional
 Claude gift. Production gift URLs are entered through the authenticated admin
 workflow after the matching code inventory exists; they do not come from demo
 environment variables.
+
+Current production Supabase configuration has Manual Linking enabled and the
+redirect allowlist set to the exact
+`https://malatangai.com/auth/callback`. Google and Apple sign-in/linking are
+still externally blocked until their provider client IDs and secrets are
+installed in Supabase and both normal OAuth and anonymous `linkIdentity`
+round trips are tested. The configured redirect and Manual Linking toggle are
+not evidence that either provider is live.
 
 The first safe production posture is intentionally narrow: enable claiming
 only after a private code batch exists, and keep both forms of paid inference
@@ -237,12 +264,17 @@ browser URL.
 
 Deploy the application only after:
 
-- applying the migration to the intended production project;
+- applying all migrations, including
+  `202607300001_same_account_redemption_retry.sql` followed by
+  `202607300002_same_account_redemption_retry_wallet_lock.sql`, to the intended
+  production project;
 - verifying RLS and server-only service-role access with separate user/admin
   accounts;
-- configuring auth callback origins and provider credentials;
-- enabling and testing anonymous sign-in, manual identity linking,
-  CAPTCHA/Turnstile, edge rate limiting, and anonymous-user cleanup;
+- retaining the configured exact production callback and Manual Linking
+  setting, installing Google/Apple provider credentials, and testing both
+  normal OAuth and anonymous `linkIdentity`;
+- enabling and testing anonymous sign-in, CAPTCHA/Turnstile, edge rate
+  limiting, and anonymous-user cleanup;
 - setting both independent Agent HMAC secrets and explicitly enabling the
   gateway only after one real provider request, refund, and cost-cap smoke;
 - setting `YGF_REDEMPTION_ENABLED=true` only after inventory is ready, while
@@ -329,7 +361,8 @@ prevents multiple keys from charging the same request twice.
 
 Anonymous wallet users can use the web tools, history, and safe check-in card,
 but cannot create or rotate Agent keys. They must link Google or Apple to the
-same Supabase user first. Listing or revoking an existing key remains safe.
+same Supabase user first and become a non-anonymous linked account. Listing or
+revoking an existing key remains safe.
 
 ```env
 OPENAI_BASE_URL=https://malatangai.com/v1
@@ -495,6 +528,11 @@ test, or approve launch. Those gates are tracked in
   per credit), reserve the model ceiling, and settle actual cost.
 - Claim values travel in a URL fragment, are removed from visible history
   before submission, and are persisted only as hashes.
+- A same-account retry of the same redeemed claim returns the current wallet
+  and never adds or resets credits; another account receives the already-used
+  state. Install `202607300001_same_account_redemption_retry.sql` first, then
+  `202607300002_same_account_redemption_retry_wallet_lock.sql`; the second
+  migration provides the authoritative serialized current-wallet snapshot.
 - Input is bounded to 12,000 text characters. Submitted prompt text is not
   retained by default; a generated output enters history only after an
   explicit save.

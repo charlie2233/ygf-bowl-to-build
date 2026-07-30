@@ -15,6 +15,12 @@ import type {
 
 export interface ValidateCodeInput {
   code: string;
+  /**
+   * Optional trusted server identity. A redeemed code is considered eligible
+   * only for the same account that already owns it, so retrying a claim can
+   * return the existing wallet without disclosing ownership to other users.
+   */
+  userId?: string;
 }
 
 export interface ValidateCodeResult {

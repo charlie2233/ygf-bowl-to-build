@@ -46,9 +46,7 @@ export type CampaignHomeCopy = Readonly<{
     disclaimer: string;
     guidance: string;
     imageAlt: string;
-    pauseMotion: string;
     phoneAriaLabel: string;
-    playMotion: string;
     rewardContext: string;
     stepOne: string;
     stepTwo: string;
@@ -111,11 +109,9 @@ export const campaignHomeCopy: Record<
       disclaimer:
         "For the USC community. Not affiliated with or endorsed by USC.",
       imageAlt:
-        "Overhead bowl of spicy malatang with vegetables, tofu, lotus root, and noodles",
-      pauseMotion: "Pause motion",
+        "A finished spicy malatang bowl in front of a Yang Guo Fu ingredient display",
       phoneAriaLabel:
         "Illustration of an AI card with a private QR and printed code; example only, not live",
-      playMotion: "Play motion",
       receipt: {
         qualifyingPurchase: "Your AI card",
         total: "Purchase",
@@ -229,11 +225,9 @@ export const campaignHomeCopy: Record<
       connectAgent: "连接 Agent（可选）",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
       imageAlt:
-        "俯视视角的麻辣烫碗，配有蔬菜、豆腐、莲藕和粉面",
-      pauseMotion: "暂停动态",
+        "杨国福食材展示柜前的一碗成品香辣麻辣烫",
       phoneAriaLabel:
         "带私人二维码和纸质兑换码的 AI 算力卡示意图；仅作示例，并非真实兑换码",
-      playMotion: "播放动态",
       receipt: {
         qualifyingPurchase: "你的 AI 算力卡",
         total: "消费门槛",
@@ -348,11 +342,9 @@ export const campaignHomeCopy: Record<
       disclaimer:
         "Para la comunidad de USC. No está afiliado ni respaldado por USC.",
       imageAlt:
-        "Bowl de malatang picante visto desde arriba, con verduras, tofu, raíz de loto y fideos",
-      pauseMotion: "Pausar movimiento",
+        "Un bowl de malatang picante servido frente a una selección de ingredientes de Yang Guo Fu",
       phoneAriaLabel:
         "Ilustración de una tarjeta de IA con QR privado y código impreso; es solo un ejemplo",
-      playMotion: "Reproducir movimiento",
       receipt: {
         qualifyingPurchase: "Tu tarjeta de IA",
         total: "Compra",
@@ -468,11 +460,9 @@ export const campaignHomeCopy: Record<
       disclaimer:
         "Pour la communauté USC. Sans affiliation ni approbation de l’USC.",
       imageAlt:
-        "Bol de malatang épicé vu du dessus, avec légumes, tofu, racine de lotus et nouilles",
-      pauseMotion: "Mettre en pause",
+        "Un bol de malatang épicé servi devant un étal d’ingrédients Yang Guo Fu",
       phoneAriaLabel:
         "Illustration d’une carte IA avec QR privé et code imprimé ; exemple uniquement",
-      playMotion: "Lire l’animation",
       receipt: {
         qualifyingPurchase: "Votre carte IA",
         total: "Achat",
@@ -588,11 +578,9 @@ export const campaignHomeCopy: Record<
       disclaimer:
         "Для сообщества USC. Не связано с USC и не одобрено университетом.",
       imageAlt:
-        "Вид сверху на острый малатан с овощами, тофу, корнем лотоса и лапшой",
-      pauseMotion: "Приостановить движение",
+        "Готовая чаша острого малатана перед витриной ингредиентов Yang Guo Fu",
       phoneAriaLabel:
         "Иллюстрация AI-карты с личным QR и печатным кодом; только пример",
-      playMotion: "Включить движение",
       receipt: {
         qualifyingPurchase: "Ваша AI-карта",
         total: "Покупка",

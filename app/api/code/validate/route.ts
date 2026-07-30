@@ -131,13 +131,16 @@ async function handleValidation(request: Request) {
       return validationResponse(false);
     }
 
+    const user = await getAuthenticatedUser();
     const repository = getCampaignRepository();
-    const result = await repository.validateCode({ code });
+    const result = await repository.validateCode({
+      code,
+      ...(user ? { userId: user.id } : {}),
+    });
     if (!result.eligible) {
       return validationResponse(false);
     }
 
-    const user = await getAuthenticatedUser();
     const response = NextResponse.json({
       eligible: true,
       requiresAnonymousSession: user === null,

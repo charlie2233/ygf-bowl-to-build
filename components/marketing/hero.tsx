@@ -1,6 +1,6 @@
 import { Clock3 } from "lucide-react";
 
-import { HeroVideo } from "@/components/marketing/hero-video";
+import { HeroMedia } from "@/components/marketing/hero-media";
 import { ButtonLink } from "@/components/ui/button";
 import {
   campaignHomeCopy,
@@ -31,11 +31,7 @@ export function Hero({
       className="marketing-hero"
       data-motion-hero
     >
-      <HeroVideo
-        imageAlt={copy.imageAlt}
-        pauseLabel={copy.pauseMotion}
-        playLabel={copy.playMotion}
-      />
+      <HeroMedia imageAlt={copy.imageAlt} />
 
       <div className="marketing-hero__inner container">
         <div className="marketing-hero__copy" data-motion-hero-copy>

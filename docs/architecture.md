@@ -73,9 +73,14 @@ guest identity. The server derives `isAnonymous` only from the trusted
 `is_anonymous` claim. Anonymous users can redeem and use web AI, but key
 creation/rotation and `/connect/agent` require an identity upgrade.
 Google/Apple upgrades use `linkIdentity`, not a new OAuth sign-in that could
-strand the wallet on a second user. Manual linking, anonymous sign-in,
+strand the wallet on a second user. Agent key creation and rotation require
+that same user to become a non-anonymous linked account. Production Supabase
+has Manual Linking enabled and an exact redirect allowlist entry for
+`https://malatangai.com/auth/callback`; Google and Apple remain externally
+blocked until their provider client IDs/secrets are installed and both normal
+OAuth and anonymous-linking round trips are verified. Anonymous sign-in,
 CAPTCHA/Turnstile, edge limits, dynamic rendering, and anonymous-user cleanup
-must still be configured and verified in the live Supabase project.
+remain separate live controls.
 
 ## Receipt fragment handling
 
@@ -123,10 +128,12 @@ and must remain ignored from version control.
 - session/history metadata and events;
 - campaign dashboards, batch registration, and revocation.
 
-Public validation returns generic eligibility and does not reveal whether a
-claim is unknown, used, expired, or revoked. Authenticated redemption returns
-typed domain errors for those states. Both the memory adapter and the Supabase
-RPCs enforce one wallet per user and one redemption per claim.
+Validation returns generic eligibility and does not reveal whether a claim is
+unknown, used, expired, or revoked to an unauthenticated or non-owning caller.
+When the trusted server identity already owns that redeemed claim, validation
+allows the recovery submission to continue. Authenticated redemption returns
+typed domain errors for other states. Both the memory adapter and the Supabase
+RPCs enforce one wallet per user and one grant per claim.
 
 The memory adapter performs every state transition in one synchronous critical
 section after hashing input. It returns defensive copies so callers cannot
@@ -151,11 +158,18 @@ calls never occur inside an RPC.
 
 The redemption RPC returns the code identifier, redemption timestamp, and the
 complete wallet snapshot needed for `RedemptionResult` before that transaction
-commits. Exact idempotent retries return the original grant-ledger balance
-snapshot, even if later tasks changed the live wallet. The Supabase repository
-maps that single RPC row directly and must not perform follow-up wallet or
-ledger reads: a read failure after commit cannot be allowed to report a
-successful grant as failed.
+commits. Apply `202607300001_same_account_redemption_retry.sql` first to add
+exact-idempotency and same-account/same-code recovery, then
+`202607300002_same_account_redemption_retry_wallet_lock.sql`. The second
+migration takes the wallet row lock used by spend/settlement mutations and
+returns the authoritative serialized **current** wallet at commit time, even
+when later tasks changed its balance. The retry does not insert a second
+grant, reset credits to 3,000, or extend expiry. A different account still
+receives `CODE_ALREADY_REDEEMED`; the one-wallet-per-account check still
+rejects a different code for an account that already has a wallet. The
+Supabase repository maps that single RPC row directly and must not perform a
+follow-up wallet or ledger read: a read failure after commit cannot be allowed
+to report a successful grant as failed.
 
 ## Code-bound partner rewards
 
@@ -459,7 +473,10 @@ The public origin is `https://malatangai.com`. The application redirects
 and the homepage emits the apex canonical metadata URL. This protects
 same-origin mutation checks from a parallel public host. DNS, TLS, deployed
 redirect behavior, and canonical-header inspection are external release
-checks; QR and callback artwork must use the apex origin regardless.
+checks; QR and callback artwork must use the apex origin regardless. The
+production Supabase redirect allowlist contains only the exact application
+callback `https://malatangai.com/auth/callback` for this origin, without a
+wildcard or `www` variant.
 
 Keys are limited to three active rows and ten creates/replacements per wallet
 per rolling 24 hours. The RPM counter is a single row per key, so over-limit

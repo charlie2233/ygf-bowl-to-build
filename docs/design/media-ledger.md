@@ -21,10 +21,8 @@ licenses or permissions that have not been supplied.
 - Runtime use: this sanitized PNG is the supporting photo in the below-fold
   “From checkout to build mode” section. The home page loads it lazily; the
   standalone offer page may load it eagerly because that section appears
-  immediately after the offer introduction. The July 29 cinematic poster and
-  progressively loaded video now provide the home-page hero; the separately
-  sourced fresh-bar frame is retained only as a superseded, auditable
-  derivative.
+  immediately after the offer introduction. The home-page hero uses the
+  separately sourced, responsive YGF-derived static assets documented below.
 - Rights status: **user-provided; pending brand-rights confirmation**. Receipt
   of the archive is not treated as a license or a representation that the
   photo is rights-cleared.
@@ -42,7 +40,7 @@ licenses or permissions that have not been supplied.
   below-fold image's lazy-loading contract.
 - Runtime use: superseded home-page background retained as an auditable
   derivative; it is no longer referenced by the runtime after the July 29
-  fresh-bar cover update.
+  responsive static hero update.
 - Rights status and launch gate: identical to the source photo above; a
   derived file does not create or imply usage permission.
 
@@ -61,10 +59,9 @@ licenses or permissions that have not been supplied.
   retains the YANGGUOFU store wordmark and small ingredient labels as
   authentic location context; responsive cover crops may place the wordmark
   outside the visible viewport.
-- Runtime use: superseded by the July 29 cinematic poster/video hero and no
-  longer referenced at runtime. The dedicated filename is retained as an
-  auditable derivative in case the approved campaign later returns to real
-  store photography.
+- Runtime use: source image for the July 29 responsive static home-page hero
+  derivatives documented below. The source itself is retained as an auditable
+  derivative and is not loaded directly into the first viewport.
 - Rights status: **user-provided; pending brand-rights confirmation**.
   Receipt of the archive is not treated as a license or as public-use
   approval.
@@ -72,6 +69,38 @@ licenses or permissions that have not been supplied.
   derivative before public campaign use. If approval is not obtained, replace
   it and repeat responsive crop, accessibility, performance, and deployment
   checks.
+
+### `public/media/ygf-authentic-hero-desktop-v2.jpg` and
+`public/media/ygf-authentic-hero-mobile-v2.jpg`
+
+- Source: AI-enhanced campaign composites derived from the real YGF
+  ingredient-wall derivative `public/media/ygf-fresh-bar-hero.jpg`. The
+  supplied store display remains the location and ingredient reference, while
+  the finished malatang bowl was generated because the supplied archive did
+  not contain a finished-bowl photograph. These files are therefore not
+  represented as unmodified documentary photography or as photographs of an
+  actual served YGF bowl.
+- Processing: the desktop JPEG is 1672 × 941 and 203,071 bytes. The mobile
+  portrait JPEG is 1122 × 1402 and 169,063 bytes. The two art-directed frames
+  were generated separately rather than forcing one landscape crop to cover
+  both aspect ratios, then compressed as sRGB JPEGs for the web.
+- Visual inspection: both frames contain the ingredient display and one
+  finished bowl, with no people, embedded campaign copy, USC mark, private QR,
+  redemption code, API key, email, or other account data. No new or invented
+  logo was added.
+- Runtime use: these are the current home-page first-viewport media. The
+  desktop image loads by default; a responsive `<picture>` source selects the
+  portrait image at 820px and below. Both are static, eagerly loaded hero
+  media with localized alternative text and a cream readability layer. This
+  avoids shipping a background video and keeps the same complete experience
+  for reduced-motion, data-saver, autoplay-restricted, and no-JavaScript
+  contexts.
+- Rights and disclosure status: **user-provided store-photo source plus
+  AI-generated bowl; pending creative/brand approval**. The brand owner must
+  approve public use of the source photo, the generated bowl treatment, and
+  the final desktop/mobile composites. If approval is not obtained, replace
+  both derivatives and repeat responsive, accessibility, performance, and
+  deployed-origin visual checks.
 
 ## Agent Pass production inspection
 
@@ -129,15 +158,14 @@ licenses or permissions that have not been supplied.
   toppings, background, and chopsticks remain stable. The forward/reverse
   encode improved end-to-start SSIM from 0.378 to 0.918 and removes the hard
   crop reset in the direct loop.
-- Runtime use: the WebP poster is eager and priority loaded with localized alt
-  text. The decorative video is muted, looping, inline, and hidden until
-  `playing`. Client policy does not insert video sources for reduced-motion or
-  browser-reported data-saver/2G users; playback failure leaves the poster
-  visible. A localized keyboard-accessible control pauses and resumes motion.
-  Browsers without the Network Information API cannot expose Low Data Mode to
-  this application, which remains a physical-device verification gate.
-- Status: generated campaign media, not represented as a real YGF dish or
-  location. Manager/brand approval remains an external launch gate.
+- Historical runtime use: this poster/video set previously provided the
+  home-page hero. It is superseded by the responsive static assets above and
+  is not referenced by the current hero runtime. The files remain in the
+  repository only as auditable generated-media history; reintroducing them
+  would reopen performance, reduced-motion, autoplay, accessibility, and
+  deployed-browser review.
+- Status: superseded generated campaign media, not represented as a real YGF
+  dish or location and not approved for renewed runtime use.
 
 ### `public/media/malatang-hero.png`
 
@@ -155,9 +183,10 @@ licenses or permissions that have not been supplied.
   workbook, but no standalone food photograph and no photograph embedded in
   that workbook was found. A later user-provided `南加大图片.zip` archive did
   supply real ingredient-counter media. The sanitized PNG supports the
-  below-fold experience and Agent Pass artwork, while the July 29 cinematic
-  generated media now provides the home-page background. This earlier
-  generated bowl remains in wallet/share and rendered campaign collateral.
+  below-fold experience and Agent Pass artwork, while the YGF-derived
+  responsive composites documented above provide the home-page background.
+  This earlier generated bowl remains in wallet/share and rendered campaign
+  collateral.
 - Rights status: no license or usage-rights claim is invented or inferred for
   this generated fallback.
 - Launch gate: before public launch, a manager must approve the user-supplied

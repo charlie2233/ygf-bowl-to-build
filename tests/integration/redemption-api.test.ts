@@ -34,6 +34,7 @@ function createHarness({
 } = {}) {
   let currentNow = now;
   let currentIdempotencyKey = "claim-idempotency-1";
+  let currentUserId = userId;
   const repository = new MemoryCampaignRepository({
     demoMode: true,
     now: () => currentNow,
@@ -70,7 +71,7 @@ function createHarness({
           },
     ),
     getUser: vi.fn(async () =>
-      userId === null ? null : { id: userId },
+      currentUserId === null ? null : { id: currentUserId },
     ),
     repository,
   });
@@ -96,6 +97,9 @@ function createHarness({
     },
     setPendingClaimIdempotencyKey(value: string) {
       currentIdempotencyKey = value;
+    },
+    setUserId(value: string | null) {
+      currentUserId = value;
     },
   };
 }
@@ -221,13 +225,22 @@ describe("redemption API boundary", () => {
     ).rejects.toMatchObject({ code: "WALLET_NOT_FOUND" });
   });
 
-  it("returns typed used, expired, and revoked outcomes", async () => {
+  it("retries for the same owner and returns typed cross-owner, expired, and revoked outcomes", async () => {
     const used = createHarness();
     expect((await used.redeem()).status).toBe(200);
     used.setPendingClaimIdempotencyKey("claim-idempotency-2");
-    expect(
-      (await used.redeem()).status,
-    ).toBe(409);
+    const sameOwnerRetry = await used.redeem();
+    expect(sameOwnerRetry.status).toBe(200);
+    await expect(sameOwnerRetry.json()).resolves.toMatchObject({
+      wallet: { remainingBalance: 3_000 },
+    });
+    used.setUserId("other-user");
+    used.setPendingClaimIdempotencyKey("claim-idempotency-3");
+    const otherOwnerRetry = await used.redeem();
+    expect(otherOwnerRetry.status).toBe(409);
+    await expect(otherOwnerRetry.json()).resolves.toEqual({
+      error: "CODE_ALREADY_REDEEMED",
+    });
 
     const expiredHarness = createHarness({ code: "EXPIRE99" });
     await expiredHarness.repository.createBatch({

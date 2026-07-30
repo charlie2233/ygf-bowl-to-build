@@ -44,8 +44,9 @@ times.
 | 2 | Scan the counter-card public campaign QR | Offer opens with `counter-card-5x7` attribution |
 | 3 | After a qualifying checkout, scan a private claim QR | Claim page prefills the same code printed in human-readable form |
 | 4 | Manually enter the paired text code | Same result as the private QR; no confusing character ambiguity |
-| 5 | Redeem while signed out | Sign-in completes and returns safely to the pending claim |
-| 6 | Submit a valid code twice | First claim succeeds once; repeat shows already used and creates no second wallet |
+| 5 | Redeem with no existing session | Anonymous sign-in completes behind the scan-first flow and returns safely to the pending claim without a Google/Apple/Magic Link screen |
+| 6a | Submit the same valid code again from its original account after spending credits | Current wallet and current remaining balance return; no second grant, reset to 3,000, expiry extension, or second wallet |
+| 6b | Submit that redeemed code from a different account | Already-used state; no wallet, ownership, or code-state information crosses accounts |
 | 7 | Enter an invalid fixture | Clear invalid state, no credit, no code leakage, no automatic reissue |
 | 8 | Enter an expired fixture | Clear expired state; staff cannot extend it |
 | 9 | Enter a revoked fixture | Clear revoked state and manager escalation |
@@ -57,6 +58,7 @@ times.
 | 15 | Try a sensitive prompt and a food/allergen question | Warnings are visible; no claim of medical or allergen certainty |
 | 16 | Manager rehearses recovery/reissue | Original is reviewed/revoked, new row is audited, staff never records plaintext |
 | 17 | Engineering rehearses each paused server-side switch | A new redemption or web task receives a clear retry-later state with no wallet/provider mutation; the Agent gateway stays separately disabled |
+| 18 | After Google/Apple provider credentials are installed, link an anonymous wallet through `https://malatangai.com/auth/callback` | `linkIdentity` preserves the same user and wallet, the account becomes non-anonymous, and Agent access unlocks; this scenario is blocked until provider client IDs/secrets exist |
 
 Include at least one iPhone/Safari participant, one Android/Chrome participant,
 one desktop participant, one participant using manual entry, and one

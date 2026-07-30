@@ -12,7 +12,7 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 | Optional Claude gifts | Campaign manager plus account owner | Buys and reconciles one official transferable gift per selected row without sharing accounts |
 | Application, database, AI spend | Engineering owner | Verifies production configuration, migrations, alarms, and rollback |
 | Privacy, terms, retention | YGF accountable owner | Approves data handling, deletion/retention, incident path, and public copy |
-| Photography and print | Creative/brand owner | Confirms rights for the supplied YGF photo or approves a replacement and final print proof |
+| Photography and print | Creative/brand owner | Confirms rights for the supplied YGF source photo, approves the disclosed AI-generated bowl treatment or a replacement, and approves final web/print proofs |
 | External account configuration | Named account owners | Verify deployment, Supabase, AI provider, Formspree/email, analytics, and any partner account |
 
 ## Offer and creative gates
@@ -22,7 +22,15 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   operationally correct.
 - [ ] Legal/communications owner approves the full promotional fine print,
   university disclaimer, terms, privacy notice, and creator disclosure.
-- [ ] Approve the generated cinematic hero poster/WebM/MP4 as campaign media.
+- [ ] Approve the responsive static home-page hero:
+  `public/media/ygf-authentic-hero-desktop-v2.jpg` (1672 × 941; 203,071 bytes)
+  and `public/media/ygf-authentic-hero-mobile-v2.jpg` (1122 × 1402; 169,063
+  bytes). Confirm rights for their user-supplied YGF ingredient-wall source
+  and explicitly approve the AI-generated finished bowl treatment; do not
+  represent either composite as unmodified documentary photography. Confirm
+  both remain free of campaign text, USC marks, claim secrets, QR codes, API
+  keys, and people. The superseded cinematic poster/WebM/MP4 is not approved
+  or required for the current runtime.
   Obtain brand-owner approval for the supporting user-supplied
   `public/media/ygf-user-photo.png` and any retained real-photo derivative.
   Approve or replace `public/media/malatang-hero.png` anywhere it remains in
@@ -85,14 +93,28 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   `alter table public.agent_requests validate constraint
   agent_requests_hashed_idempotency_key`, then confirm `convalidated=true`
   before enabling traffic.
-- [ ] Auth callback returns only to approved same-origin destinations.
+- [x] Production Supabase Manual Linking is enabled and its redirect allowlist
+  contains the exact `https://malatangai.com/auth/callback` entry, without a
+  wildcard or `www` callback.
+- [ ] Application callback behavior returns only to approved same-origin
+  destinations in a live OAuth/linking round trip.
 - [ ] Public validation and redemption limits work behind the production
   proxy; raw IP addresses and plaintext codes are not logged or stored.
 - [ ] Admin routes reject non-admin users. Batch download is one-time,
   manager-controlled, and plaintext outputs stay only in the ignored
   `private/` location with restricted permissions.
-- [ ] Redeem success, invalid, already used, expired, and revoked states are
-  tested. Repeat submission does not create a second wallet.
+- [x] Production has
+  `202607300001_same_account_redemption_retry.sql` followed by
+  `202607300002_same_account_redemption_retry_wallet_lock.sql`. A live
+  same-owner retry returned the existing wallet and current balance without
+  another grant, balance reset, or expiry extension; a different owner was
+  rejected. A competing wallet update blocked while the retry transaction
+  held its lock and succeeded after rollback. The RPC is `SECURITY DEFINER`,
+  owned by `postgres`, fixes `search_path=pg_catalog`, and is executable only
+  by `service_role`.
+- [ ] Complete the remaining live redemption matrix with two normal browser
+  accounts plus invalid, expired, and revoked claims. Record only non-secret
+  references and outcomes; do not place claim values in the evidence log.
 - [ ] Ordinary claims remain credits-only. A special test claim atomically
   grants the normal wallet plus exactly one reward, and retries/concurrency do
   not reassign it.
@@ -143,9 +165,15 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 
 - [ ] Enable Supabase anonymous sign-ins and verify a valid receipt can reach
   a first web AI result without a Google/Apple/Magic Link screen.
-- [ ] Enable and verify manual identity linking so Google/Apple upgrades keep
-  the same anonymous user and wallet; do not substitute a second-account OAuth
-  sign-in.
+- [x] Enable Supabase Manual Linking and register the exact production callback
+  `https://malatangai.com/auth/callback`.
+- [ ] Install Google and Apple provider client IDs/secrets in Supabase. Until
+  then, both provider buttons are externally blocked and are not accepted as a
+  working production sign-in or linking path.
+- [ ] Verify `linkIdentity` through each configured provider keeps the same
+  anonymous user and wallet, makes the account non-anonymous, and only then
+  unlocks Agent key creation/rotation; do not substitute a second-account
+  OAuth sign-in.
 - [ ] Configure and test CAPTCHA/Turnstile plus edge rate limits for anonymous
   signup/claim traffic. The repository does not claim these dashboard controls
   are already applied.

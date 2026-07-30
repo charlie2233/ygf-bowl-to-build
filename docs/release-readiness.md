@@ -32,7 +32,7 @@ after this document is committed.
 | --- | --- | --- |
 | Lint | `pnpm lint` | Pass on July 29, 2026 |
 | TypeScript | `pnpm typecheck` | Pass on July 29, 2026 |
-| Unit/integration/security contracts | `pnpm test` | Pass on July 29, 2026: 72 files, 537 tests |
+| Unit/integration/security contracts | each discovered Vitest file in a fresh `pnpm vitest run <file>` process | Pass on July 29, 2026: 74/74 files and 543/543 tests, including 68 non-PGlite files (528 tests) and 6 PGlite files (15 tests), with every process exiting 0 |
 | Production compilation | `pnpm build` | Pass on July 29, 2026: optimized build, page generation, and dynamic route manifest |
 | Production dependency audit | `pnpm audit --prod` | Pass on July 29, 2026: 0 known vulnerabilities |
 | Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 29, 2026: 83 tests across setup, desktop Chromium, and iPhone WebKit projects |
@@ -41,13 +41,16 @@ after this document is committed.
 | iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 41 WebKit checks after the shared setup |
 | Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 29, 2026; no OpenAI, personal Agent, or JWT-shaped secret values found in built client output. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI |
 | Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 29, 2026; all medium-or-higher review findings remediated and independently rechecked before checkpoint |
-| Remote identity | local SHA equals GitHub branch SHA after push | Verified for the code-bearing cinematic-hero SHA `a782560380579378e087f8d1b5f200e2c2d18909`; local, upstream, `ls-remote`, and Vercel deployment metadata matched |
+| Remote identity | local SHA equals GitHub branch SHA after push | Pending for this pre-commit candidate; the final handoff records the exact local/upstream/`ls-remote`/Vercel SHA comparison without embedding a commit's own identity here |
 
 Required behavioral evidence:
 
 - typed claim and receipt-fragment claim resolve to the same normalized code;
 - the fragment disappears from the visible URL before any claim request;
 - one confirmed redemption grants exactly 3,000 credits with 14-day expiry;
+- the same account retrying that same code receives its current wallet without
+  another grant, balance reset, or expiry extension, while a different account
+  remains rejected;
 - a successful task deducts exactly 120 credits;
 - a failed provider call refunds the reservation;
 - exact task retries do not run the provider or spend twice;
@@ -113,7 +116,7 @@ against the candidate release SHA before deployment.
 | Poster PDF | 24x36 inch page, raster inspection, decoder contract | final printer stock/crop/scan |
 | Counter PDF | 5x7 inch page, raster inspection, decoder contract | counter lighting and physical scan |
 | SVG variants | deterministic copy, dimensions, quiet zones, URLs | social-platform preview |
-| Food media | silent WebM/MP4 cinematic hero plus eager poster and sanitized user-supplied supporting photo, all recorded in the media ledger | generated-media approval, brand-rights approval for the real photo, and physical-device network/autoplay review |
+| Food media | 203,071-byte desktop and 169,063-byte mobile static hero JPEGs derived from the real YGF ingredient-wall source, plus the sanitized supporting photo; exact provenance and the generated-bowl disclosure are recorded in the media ledger, and the old cinematic WebM/MP4/poster set is unused | brand-rights approval for the user-supplied source, creative approval of the AI-generated bowl and final composites, and deployed responsive-selection/visual review |
 | Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG plus full-page 300-DPI raster-only PDF review | physical registration, scratch layer, or store scan |
 | Private Agent Pass fixture | matching text/QR decoded from final PDF raster, ignored 0700/0600 no-overwrite renderer, reflected long-edge duplex sheets | real batch custody or physical fulfillment |
 | Safe check-in card | explicit SVG download with fixed public fields only | automatic social-platform upload or account identity |
@@ -139,18 +142,41 @@ satisfied by this checkout.
   build and a real optimized image request succeed. Vercel installed with
   `pnpm install --frozen-lockfile`, completed the Next.js production build,
   and returned a successful 1280 × 720 optimized image response.
-- [ ] Apply the migration to a disposable/staging Supabase project and run
-  concurrent redemption, task lease, spend, refund, and replay smoke tests.
-- [ ] Apply the reviewed migration to production and verify RLS with separate
-  anonymous, user, admin, and service-role paths.
-- [ ] Configure magic link, Google, and Apple callbacks in Supabase and test
-  each approved provider.
+- [ ] Apply all migrations, including
+  `202607300001_same_account_redemption_retry.sql` followed by
+  `202607300002_same_account_redemption_retry_wallet_lock.sql`, to a
+  disposable/staging Supabase project. Prove the second migration serializes
+  the retry with wallet spend/settlement and returns the authoritative current
+  wallet without adding or resetting credits, different accounts remain
+  rejected, then run concurrent task lease, spend, refund, and replay smokes.
+- [x] Production has
+  `202607300001_same_account_redemption_retry.sql` and
+  `202607300002_same_account_redemption_retry_wallet_lock.sql`. A live
+  same-owner retry returned the existing wallet/current balance without a new
+  grant, reset, or expiry extension; a different owner was rejected; and a
+  competing wallet update blocked until the retry transaction rolled back.
+  The production RPC is `SECURITY DEFINER`, owned by `postgres`, fixes
+  `search_path=pg_catalog`, and grants execution only to `service_role`.
+- [ ] Complete browser-session and RLS proof with separate anonymous, linked
+  user, admin, and service-role paths, including a two-account cross-owner
+  claim attempt. The database service-role probe above does not replace that
+  browser evidence.
+- [x] Production Supabase Manual Linking is enabled and the redirect allowlist
+  contains the exact `https://malatangai.com/auth/callback` entry. It contains
+  no required wildcard or `www` callback.
+- [ ] Install Google and Apple provider client IDs/secrets in Supabase and test
+  each normal OAuth and anonymous `linkIdentity` round trip. Both providers
+  remain externally blocked until those credentials exist.
+- [ ] Test the approved magic-link recovery callback for a non-anonymous
+  account.
 - [ ] Enable Supabase anonymous sign-in and prove scan → anonymous wallet →
   first web AI result with no login screen. Verify the session receives the
   `authenticated` role and remains inside user-bound RLS.
-- [ ] Enable manual identity linking and prove Google/Apple upgrades preserve
-  the same wallet. Configure CAPTCHA/Turnstile, edge limits, and an approved
-  anonymous-user cleanup policy; none is claimed as applied by this checkout.
+- [ ] After provider credentials are installed, prove Google/Apple linking
+  preserves the same anonymous user and wallet, changes the account to
+  non-anonymous, and only then unlocks Agent key creation/rotation. Configure
+  CAPTCHA/Turnstile, edge limits, and an approved anonymous-user cleanup
+  policy; none is claimed as applied by this checkout.
 - [ ] Apply `20260729060005_global_bounded_maintenance.sql`, install an
   independent host `CRON_SECRET`, and deploy the checked-in daily
   `/api/internal/maintenance` schedule. Prove an authorized run returns only
@@ -189,8 +215,11 @@ These require named human owners:
 
 - [ ] YGF manager verifies the participating location, current menu/prices,
   qualifying $25+ checkout rule, ingredient facts, and allergen escalation.
-- [ ] Brand owner confirms rights for the selected user-provided YGF photo or
-  supplies an approved replacement; regenerate all affected artifacts.
+- [ ] Brand owner confirms rights for the selected user-provided YGF
+  ingredient-wall source and approves the disclosed AI-generated bowl in
+  `ygf-authentic-hero-desktop-v2.jpg` and
+  `ygf-authentic-hero-mobile-v2.jpg`, or supplies approved replacements;
+  repeat responsive browser checks and regenerate all affected artifacts.
 - [ ] Legal/privacy owner approves terms, privacy, university disclaimer,
   retention/deletion schedule, and incident path.
 - [ ] Campaign owner renders every public QR with the live HTTPS origin and

@@ -318,12 +318,20 @@ export class MemoryCampaignRepository implements CampaignRepository {
 
   async validateCode({
     code,
+    userId,
   }: ValidateCodeInput): Promise<ValidateCodeResult> {
     const codeHash = await hashCode(code);
     const stored = this.#codes.get(codeHash);
+    const state =
+      stored === undefined
+        ? undefined
+        : this.codeState(stored, this.currentTime());
     const eligible =
       stored !== undefined &&
-      this.codeState(stored, this.currentTime()) === "eligible";
+      (state === "eligible" ||
+        (state === "redeemed" &&
+          typeof userId === "string" &&
+          stored.redeemedBy === userId));
 
     return { eligible };
   }
@@ -340,7 +348,14 @@ export class MemoryCampaignRepository implements CampaignRepository {
       if (prior.fingerprint !== fingerprint) {
         return domainError("IDEMPOTENCY_CONFLICT");
       }
-      return cloneRedemption(prior.result);
+      const currentWallet = this.#wallets.get(input.userId);
+      if (!currentWallet) {
+        return domainError("WALLET_NOT_FOUND");
+      }
+      return {
+        ...cloneRedemption(prior.result),
+        wallet: cloneWallet(currentWallet),
+      };
     }
 
     const stored = this.#codes.get(codeHash);
@@ -351,6 +366,22 @@ export class MemoryCampaignRepository implements CampaignRepository {
     const now = this.currentTime();
     const state = this.codeState(stored, now);
     if (state === "redeemed") {
+      if (stored.redeemedBy === input.userId && stored.redeemedAt) {
+        const currentWallet = this.#wallets.get(input.userId);
+        if (!currentWallet) {
+          return domainError("WALLET_NOT_FOUND");
+        }
+        const result: RedemptionResult = {
+          codeId: stored.id,
+          redeemedAt: stored.redeemedAt,
+          wallet: cloneWallet(currentWallet),
+        };
+        this.#redemptions.set(idempotencyMapKey, {
+          fingerprint,
+          result: cloneRedemption(result),
+        });
+        return result;
+      }
       return domainError("CODE_ALREADY_REDEEMED");
     }
     if (state === "expired") {

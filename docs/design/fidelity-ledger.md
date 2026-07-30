@@ -104,8 +104,8 @@ fragment was removed before submission, and the rendered balance changed from
 | Above-fold copy | “Buy a bowl. Build with AI.”, qualifying-purchase subhead, claim/how-it-works actions, USC disclaimer | Exact canonical English H1 and approved subhead remain; the explicitly requested secondary action is now `Step 2 Connect my Agent`, while `How it works` remains in navigation | Matched with requested CTA evolution |
 | First-viewport composition | Editorial copy left, dominant bowl media, receipt/wallet phone at right | Same visual order and one dominant media frame; phone remains illustrative and explicitly says its claim is not live | Matched |
 | Typography and hierarchy | Large dark editorial H1 with restrained supporting copy | Bold system/Geist-compatible display scale, short line lengths, and quieter control type; one H1 per page | Matched |
-| Palette and surfaces | Warm cream, true white, burgundy, gold, teal/sage | Shared tokens use the locked values without university colors/marks; the cinematic hero has one cream readability gradient | Matched with accessible media overlay |
-| Media treatment | Overhead malatang hero with no embedded words or logos | The first viewport uses a stable generated cinematic bowl loop with a localized, eager poster fallback, controlled desktop/mobile crops, and a cream readability overlay; the real ingredient-counter frame remains below the fold | Requested video upgrade implemented; generated-media approval pending |
+| Palette and surfaces | Warm cream, true white, burgundy, gold, teal/sage | Shared tokens use the locked values without university colors/marks; the responsive static hero has one cream readability gradient | Matched with accessible media overlay |
+| Media treatment | Overhead malatang hero with no embedded words or logos | The first viewport uses separately art-directed desktop/mobile static composites derived from the real YGF ingredient wall; the generated finished bowl is disclosed, the images load eagerly with localized alt text, and the old cinematic video is unused | Responsive static upgrade implemented; source rights and generated-media approval pending |
 | Container model | Open landing layout and bounded white workflow/result panels | Marketing stays open; wallet/task/admin use thin borders, 18px radii, restrained shadows, and stable wide containers | Matched |
 | Controls and icons | Clear rectangular actions and simple line metaphors | Semantic buttons/links, Lucide or code-native line icons, visible focus, and no model/provider jargon on the default path | Matched |
 | Language access | Not present in the accepted concept | Compact native selector adds English, Chinese, Spanish, French, and Russian; selection persists locally and updates document language | Intentional requested enhancement |
@@ -139,14 +139,16 @@ fragment was removed before submission, and the rendered balance changed from
    locked `gsap` and `@gsap/react` dependencies. The runtime is bundled
    locally with scoped cleanup and responsive/reduced-motion branches; no CDN,
    remote motion runtime, Three.js, or Remotion dependency is used.
-8. The 2026-07-29 cinematic hero remains progressive enhancement: video
-   sources are added only after client policy permits motion and network use.
-   The poster remains the canonical no-JavaScript, reduced-motion,
-   browser-reported data-saver/2G, and autoplay-failure first viewport.
+8. The later 2026-07-29 static refresh supersedes the cinematic hero. The
+   runtime does not load the old WebM, MP4, or poster. Desktop and mobile now
+   receive separate static compositions, so reduced motion, data saving,
+   autoplay restrictions, and no-JavaScript do not change the hero content.
 
-### July 29 cinematic hero verification
+### Superseded July 29 cinematic hero verification
 
-The selected Sora 2 Pro output is an eight-second 1280 × 720 bowl animation.
+This section preserves historical evidence for the retired implementation; it
+does not describe current runtime media. The selected Sora 2 Pro output is an
+eight-second 1280 × 720 bowl animation.
 The runtime uses a 13.433-second forward/reverse encode so the loop returns to
 its starting composition without the original hard reset. End-to-start SSIM
 improved from 0.378 on the direct loop to 0.918 on the selected encode. The
@@ -181,7 +183,50 @@ gap. Accepted production captures are retained at:
 - `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/production-desktop-playing.png`
 - `/Users/hanfei/.codex/visualizations/2026/07/28/019fa7bf-2822-7bd1-ba39-644549df5dc7/video-hero/production-iphone-playing.png`
 
-### July 29 authentic cover-photo verification
+The current hero does not reference this poster, WebM, or MP4. Reintroducing
+any of them requires a new performance, motion-policy, accessibility, and
+deployed-browser review.
+
+### July 29 responsive YGF-derived static hero
+
+The current first viewport uses two purpose-built static JPEGs derived from
+the real ingredient-wall source:
+
+- `public/media/ygf-authentic-hero-desktop-v2.jpg`: 1672 × 941 and 203,071
+  bytes;
+- `public/media/ygf-authentic-hero-mobile-v2.jpg`: 1122 × 1402 and 169,063
+  bytes; and
+- source `public/media/ygf-fresh-bar-hero.jpg`: 2000 × 1500 and 550,163
+  bytes, derived from user-supplied `IMG_2135 2.JPG`.
+
+The archive audit covered all 235 supplied still images plus representative
+frames from every supplied video and found no finished malatang bowl photo.
+The ingredient display is real YGF-supplied context; the finished bowl in both
+new frames is AI-generated. The composites must not be represented as
+unmodified documentary photography or proof of an actually served dish.
+
+The desktop and portrait compositions are selected through a responsive
+`<picture>` boundary at 820px instead of making one landscape image survive an
+extreme mobile cover crop. Both are static and eager, retain localized alt
+text and the cream readability layer, and contain no people, embedded
+campaign words, USC mark, private QR, redemption code, API key, email, or
+other account data. No new or invented logo was added. The retired cinematic
+poster and video files are not loaded by the current hero.
+
+| Check | Intended current treatment | Remaining evidence |
+| --- | --- | --- |
+| Desktop composition | Calm copy field with the generated bowl weighted right against the authentic ingredient display | Inspect the production build at 1440 × 900 across all five locales |
+| Mobile composition | Dedicated portrait art with the bowl below the copy instead of a narrow landscape slice | Inspect at 390 × 844 and 360 × 800 with no horizontal overflow |
+| Accessibility and motion | Localized meaningful alt text, no autoplay control, and the same content under reduced motion | Run axe, keyboard, reduced-motion, and no-JavaScript browser checks |
+| Payload | 203,071-byte desktop JPEG or 169,063-byte mobile JPEG; no hero WebM/MP4 request | Confirm request selection and absence of old video requests in browser evidence |
+| Content safety | No embedded copy, USC mark, claim secret, QR, key, email, or person | Preserve visual review evidence for both exact files |
+| Approval | Honest AI-bowl disclosure and real-source provenance | Creative/brand owner approves source rights and both final composites |
+
+Above-the-fold copy is unchanged: H1, $25+ offer, 3,000 Credits, 14-day
+duration, Step 1 redemption, optional Step 2 Agent connection, special gift
+note, and USC non-endorsement text remain separate HTML content.
+
+### Superseded July 29 direct authentic cover-photo verification
 
 The cover refresh was checked against both the previous rendered home page and
 the selected source image. The complete user archive was audited before the
@@ -216,12 +261,10 @@ Above-the-fold copy diff: **none**. H1, $25+ offer, 3,000 Credits,
 14-day duration, Step 1 redemption, optional Step 2 Agent connection, special
 gift note, and USC non-endorsement text are unchanged in every locale.
 
-The remaining intentional deviation from the accepted generated concept is
-the absence of a finished overhead bowl in the supplied real photography.
-Using the authentic ingredient wall is preferable to misrepresenting the
-generated bowl as a real location. This is visually faithful to the
-choose-your-ingredients YGF experience, but brand-rights confirmation remains
-an external launch gate.
+This was an intermediate direct-photo implementation and is retained as
+historical evidence. The current composite keeps the authentic ingredient
+wall while adding a disclosed generated bowl; brand approval of the source
+rights and generated treatment remains an external launch gate.
 
 ### July 28 GSAP visual verification
 

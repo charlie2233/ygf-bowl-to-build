@@ -95,6 +95,58 @@ describe("MemoryCampaignRepository redemption", () => {
     ).rejects.toMatchObject({ code: "ACCOUNT_ALREADY_REDEEMED" });
   });
 
+  it("lets only the owning account retry the same code without restoring spent credits", async () => {
+    const { repository } = demoRepository();
+    await redeemDemo(repository);
+    await repository.reserveSpend({
+      idempotencyKey: "task-after-claim",
+      providerCostMicroUsd: 1,
+      userId: "user-1",
+    });
+
+    await expect(
+      repository.validateCode({
+        code: "BOWL7K2A",
+        userId: "user-1",
+      }),
+    ).resolves.toEqual({ eligible: true });
+    await expect(
+      repository.validateCode({
+        code: "BOWL7K2A",
+        userId: "user-2",
+      }),
+    ).resolves.toEqual({ eligible: false });
+    await expect(
+      repository.validateCode({ code: "BOWL7K2A" }),
+    ).resolves.toEqual({ eligible: false });
+
+    const retry = await repository.redeemCode({
+      code: "BOWL7K2A",
+      idempotencyKey: "fresh-retry-key",
+      userId: "user-1",
+    });
+    const originalKeyRetry = await repository.redeemCode({
+      code: "BOWL7K2A",
+      idempotencyKey: "redeem-user-1",
+      userId: "user-1",
+    });
+
+    expect(retry.wallet).toMatchObject({
+      initialBalance: 3_000,
+      remainingBalance: 2_880,
+      reservedBalance: 120,
+      userId: "user-1",
+    });
+    expect(originalKeyRetry.wallet).toEqual(retry.wallet);
+    await expect(
+      repository.redeemCode({
+        code: "BOWL7K2A",
+        idempotencyKey: "other-account-retry",
+        userId: "user-2",
+      }),
+    ).rejects.toMatchObject({ code: "CODE_ALREADY_REDEEMED" });
+  });
+
   it("returns typed errors for expired, revoked, and unknown codes", async () => {
     const { repository, setNow } = demoRepository();
     const expiredCode = "EXPIRE99";

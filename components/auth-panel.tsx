@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { useCampaignLanguage } from "@/components/campaign-language";
 import { createAuthBrowserClient } from "@/lib/auth/client";
+import { safeAuthNextPath } from "@/lib/auth/redirect";
 import {
   customerPagesCopy,
   type AuthMessageKey,
@@ -18,7 +19,7 @@ interface AuthPanelProps {
 
 function callbackUrl(nextPath: string) {
   const url = new URL("/auth/callback", window.location.origin);
-  url.searchParams.set("next", nextPath);
+  url.searchParams.set("next", safeAuthNextPath(nextPath));
   return url.toString();
 }
 
@@ -44,17 +45,21 @@ export function AuthPanel({
     setBusy(true);
     setMessageKey(null);
     setMessageKind("status");
-    const client = createAuthBrowserClient();
-    const { error } = isAnonymous
-      ? await client.auth.linkIdentity({
-          options: { redirectTo: callbackUrl(nextPath) },
-          provider,
-        })
-      : await client.auth.signInWithOAuth({
-          options: { redirectTo: callbackUrl(nextPath) },
-          provider,
-        });
-    if (error) {
+    try {
+      const client = createAuthBrowserClient();
+      const { data, error } = isAnonymous
+        ? await client.auth.linkIdentity({
+            options: { redirectTo: callbackUrl(nextPath) },
+            provider,
+          })
+        : await client.auth.signInWithOAuth({
+            options: { redirectTo: callbackUrl(nextPath) },
+            provider,
+          });
+      if (error || !data.url) {
+        throw error ?? new Error("OAUTH_REDIRECT_UNAVAILABLE");
+      }
+    } catch {
       setMessageKey("providerError");
       setMessageKind("error");
       setBusy(false);

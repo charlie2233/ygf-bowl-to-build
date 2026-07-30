@@ -127,9 +127,13 @@ the final commands complete.
   RLS, ownership, concurrent multi-key, stale-worker, and failure-injection
   tests before production. PGlite is single-connection, so it validates SQL
   execution and accounting but cannot prove multi-session lock behavior.
-- Enable and test Supabase anonymous sign-in, CAPTCHA/Turnstile, manual
-  Google/Apple identity linking, and anonymous cleanup. Until linking, clearing
-  browser data permanently loses access to the guest wallet.
+- Production Supabase Manual Linking and the exact
+  `https://malatangai.com/auth/callback` redirect entry are configured.
+  Google/Apple provider client IDs/secrets and live normal/linking round trips
+  remain blocked external gates. Also enable and test anonymous sign-in,
+  CAPTCHA/Turnstile, and anonymous cleanup. Until linking, clearing browser
+  data permanently loses access to the guest wallet; Agent key
+  creation/rotation remains unavailable to that anonymous user.
 - Apply the global-maintenance migration, install an independent host
   `CRON_SECRET`, and exercise the checked-in daily maintenance route while the
   gateway is idle. The source does not claim a live host schedule, an

@@ -45,13 +45,13 @@ describe("public campaign pages", () => {
     const handoffLink = body.querySelector<HTMLAnchorElement>(
       '[data-campaign-handoff] a[href="/redeem"]',
     );
-    const heroVideo = body.querySelector<HTMLVideoElement>(
-      ".marketing-hero__video",
+    const heroMedia = body.querySelector<HTMLElement>(
+      ".marketing-hero__media",
     );
-    const heroImage = Array.from(body.querySelectorAll("img")).find((image) =>
-      /overhead bowl of spicy malatang/i.test(
-        image.getAttribute("alt") ?? "",
-      ),
+    const heroPicture = heroMedia?.querySelector("picture");
+    const mobileHeroSource = heroPicture?.querySelector("source");
+    const heroImage = heroPicture?.querySelector<HTMLImageElement>(
+      ".marketing-hero__poster",
     );
     const realYgfImage = Array.from(body.querySelectorAll("img")).find(
       (image) =>
@@ -81,14 +81,18 @@ describe("public campaign pages", () => {
     expect(normalizedText(body)).toMatch(/agent setup is optional/i);
     expect(heroImage).toBeTruthy();
     expect(heroImage?.getAttribute("loading")).toBe("eager");
+    expect(heroImage?.getAttribute("fetchpriority")).toBe("high");
     expect(
       decodeURIComponent(heroImage?.getAttribute("src") ?? ""),
-    ).toContain("/media/ygf-cinematic-hero-poster.webp");
-    expect(heroVideo).toBeTruthy();
-    expect(heroVideo?.getAttribute("aria-hidden")).toBe("true");
-    expect(heroVideo?.getAttribute("preload")).toBe("none");
-    expect(heroVideo?.querySelectorAll("source")).toHaveLength(0);
-    expect(heroVideo?.hasAttribute("poster")).toBe(false);
+    ).toContain("/media/ygf-authentic-hero-desktop-v2.jpg");
+    expect(mobileHeroSource?.getAttribute("media")).toBe("(max-width: 820px)");
+    expect(mobileHeroSource?.getAttribute("type")).toBe("image/jpeg");
+    expect(mobileHeroSource?.getAttribute("srcset")).toBe(
+      "/media/ygf-authentic-hero-mobile-v2.jpg",
+    );
+    expect(heroMedia?.getAttribute("data-hero-media-state")).toBe("still");
+    expect(heroMedia?.querySelector("video")).toBeNull();
+    expect(body.querySelector(".marketing-hero__motion-toggle")).toBeNull();
     expect(
       decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
     ).toContain(

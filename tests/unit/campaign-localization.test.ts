@@ -102,8 +102,6 @@ describe("campaign localization contract", () => {
       expect(copy.hero.stepOne).not.toMatch(/^0/);
       expect(copy.hero.stepTwo).not.toMatch(/^0/);
       expect(copy.hero.imageAlt).toBeTruthy();
-      expect(copy.hero.pauseMotion).toBeTruthy();
-      expect(copy.hero.playMotion).toBeTruthy();
       expect(copy.hero.disclaimer).toMatch(/USC/i);
       expect(copy.useCases.items).toHaveLength(4);
       expect(copy.howItWorks.steps).toHaveLength(3);

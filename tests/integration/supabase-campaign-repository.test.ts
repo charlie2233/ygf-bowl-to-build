@@ -196,6 +196,42 @@ describe("SupabaseCampaignRepository redemption", () => {
     });
   });
 
+  it("treats a redeemed code as eligible only for its trusted owning account", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        expires_at: "2026-08-10T12:00:00.000Z",
+        redeemed_by: "user-1",
+        state: "redeemed",
+      },
+      error: null,
+    });
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    createServiceRoleClientMock.mockReturnValue({
+      from: vi.fn(() => ({ select })),
+    } as never);
+    const repository = new SupabaseCampaignRepository();
+
+    await expect(
+      repository.validateCode({
+        code: "BOWL7K2A",
+        userId: "user-1",
+      }),
+    ).resolves.toEqual({ eligible: true });
+    await expect(
+      repository.validateCode({
+        code: "BOWL7K2A",
+        userId: "user-2",
+      }),
+    ).resolves.toEqual({ eligible: false });
+    await expect(
+      repository.validateCode({ code: "BOWL7K2A" }),
+    ).resolves.toEqual({ eligible: false });
+    expect(select).toHaveBeenCalledWith(
+      "state,expires_at,redeemed_by",
+    );
+  });
+
   it("maps partner reward summaries without exposing a secret envelope", async () => {
     const { rpc } = mockServiceClient({
       data: [{ ...partnerRewardRow, ...rewardEnvelope }],

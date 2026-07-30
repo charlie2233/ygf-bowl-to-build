@@ -157,4 +157,25 @@ describe("Task 4 route composition in demo mode", () => {
     expect(serialized).not.toContain('"userId"');
     expect(serialized).not.toContain('"providerCommittedMicroUsd"');
   });
+
+  it("lets the same demo account revalidate its redeemed code without another grant", async () => {
+    await getCampaignRepository().redeemCode({
+      code: "BOWL7K2A",
+      idempotencyKey: "first-route-claim",
+      userId: "demo-user",
+    });
+
+    const response = await validateCode(
+      validationRequest("BOWL7K2A"),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      eligible: true,
+      requiresAnonymousSession: false,
+    });
+    expect(response.headers.get("set-cookie")).toMatch(
+      /ygf_pending_claim=/,
+    );
+  });
 });

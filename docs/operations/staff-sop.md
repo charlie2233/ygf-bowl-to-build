@@ -53,9 +53,10 @@ printed row if a scan behaves unexpectedly.
 
 - **Invalid:** Ask the guest to re-scan the original row or manually enter the
   visible characters once. Do not guess characters or promise a replacement.
-- **Already used:** Explain that the code has already been claimed. If the
-  guest may be signed into the wrong account, direct them to sign out and use
-  the account that originally claimed it. Escalate any reissue request.
+- **Already used:** This means the current account does not own that code.
+  Direct the guest to the original account. Re-entering the same code from its
+  original account safely returns the current wallet; it does not restore
+  spent credits or add another grant. Escalate any reissue request.
 - **Expired:** Explain that the promotional code or credits are outside the
   allowed period. Staff cannot extend an expiry.
 - **Revoked:** Stop. Do not issue another row. Refer the guest to the manager.

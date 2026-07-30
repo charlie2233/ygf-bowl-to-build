@@ -70,11 +70,12 @@ test("campaign home switches all requested languages and remembers the choice", 
       "alt",
       campaignHomeCopy[locale].hero.imageAlt,
     );
-    await expect(
-      page.getByRole("button", {
-        name: campaignHomeCopy[locale].hero.pauseMotion,
-      }),
-    ).toBeVisible();
+    await expect(page.locator(".marketing-hero__media")).toHaveAttribute(
+      "data-hero-media-state",
+      "still",
+    );
+    await expect(page.locator(".marketing-hero__video")).toHaveCount(0);
+    await expect(page.locator(".marketing-hero__motion-toggle")).toHaveCount(0);
     await expectNoHorizontalOverflow(page, `home-${locale}`);
   }
 
@@ -184,6 +185,7 @@ test("long public navigation stays inside a tablet viewport", async ({
 });
 
 test("campaign motion honors reduced-motion preferences", async ({ page }) => {
+  await page.setViewportSize({ height: 900, width: 1_200 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await gotoApp(page, "/");
 
@@ -200,93 +202,40 @@ test("campaign motion honors reduced-motion preferences", async ({ page }) => {
     "true",
   );
 
-  const activeHeroVideo = page.locator(".marketing-hero__video");
-  await expect(activeHeroVideo.locator("source")).toHaveCount(2);
-  expect(
-    await activeHeroVideo.locator("source").evaluateAll((sources) =>
-      sources.map((source) => ({
-        src: source.getAttribute("src"),
-        type: source.getAttribute("type"),
-      })),
-    ),
-  ).toEqual([
-    {
-      src: "/media/ygf-cinematic-hero.webm",
-      type: "video/webm",
-    },
-    {
-      src: "/media/ygf-cinematic-hero.mp4",
-      type: "video/mp4",
-    },
-  ]);
-  expect(
-    await activeHeroVideo.evaluate((video) => ({
-      autoplay: (video as HTMLVideoElement).autoplay,
-      loop: (video as HTMLVideoElement).loop,
-      muted: (video as HTMLVideoElement).muted,
-      playsInline: (video as HTMLVideoElement).playsInline,
-    })),
-  ).toEqual({
-    autoplay: true,
-    loop: true,
-    muted: true,
-    playsInline: true,
-  });
-
   const heroMedia = page.locator(".marketing-hero__media");
   await expect(heroMedia).toHaveAttribute(
     "data-hero-media-state",
-    "playing",
+    "still",
   );
-  const pauseMotion = page.getByRole("button", {
-    name: campaignHomeCopy.en.hero.pauseMotion,
-  });
-  await expect(pauseMotion).toBeVisible();
-  const initialPlaybackTime = await activeHeroVideo.evaluate(
-    (video) => (video as HTMLVideoElement).currentTime,
+  const heroPicture = page.locator(".marketing-hero__picture");
+  const heroPoster = page.locator(".marketing-hero__poster");
+  await expect(heroPicture.locator("source")).toHaveAttribute(
+    "media",
+    "(max-width: 820px)",
   );
-  await expect
-    .poll(() =>
-      activeHeroVideo.evaluate(
-        (video) => (video as HTMLVideoElement).currentTime,
-      ),
-    )
-    .toBeGreaterThan(initialPlaybackTime + 0.05);
-  await pauseMotion.click();
-  await expect(heroMedia).toHaveAttribute(
-    "data-hero-media-state",
-    "paused",
+  await expect(heroPicture.locator("source")).toHaveAttribute(
+    "srcset",
+    "/media/ygf-authentic-hero-mobile-v2.jpg",
   );
-  await expect(
-    page.getByRole("button", {
-      name: campaignHomeCopy.en.hero.playMotion,
-    }),
-  ).toHaveAttribute("aria-pressed", "true");
-  const pausedPlaybackTime = await activeHeroVideo.evaluate(
-    (video) => (video as HTMLVideoElement).currentTime,
-  );
-  await page.waitForTimeout(250);
+  await expect(heroPoster).toBeVisible();
   expect(
-    await activeHeroVideo.evaluate(
-      (video) => (video as HTMLVideoElement).currentTime,
+    await heroPoster.evaluate(
+      (image) => (image as HTMLImageElement).currentSrc,
     ),
-  ).toBeCloseTo(pausedPlaybackTime, 1);
-  await page
-    .getByRole("button", {
-      name: campaignHomeCopy.en.hero.playMotion,
-    })
-    .click();
-  await expect(heroMedia).toHaveAttribute(
-    "data-hero-media-state",
-    "playing",
-  );
+  ).toContain("/media/ygf-authentic-hero-desktop-v2.jpg");
+  await expect(page.locator(".marketing-hero__video")).toHaveCount(0);
+  await expect(page.locator(".marketing-hero__motion-toggle")).toHaveCount(0);
   await expect
     .poll(() =>
-      activeHeroVideo.evaluate(
-        (video) => (video as HTMLVideoElement).currentTime,
-      ),
+      heroPoster.evaluate((image) => ({
+        complete: (image as HTMLImageElement).complete,
+        naturalWidth: (image as HTMLImageElement).naturalWidth,
+      })),
     )
-    .toBeGreaterThan(pausedPlaybackTime + 0.05);
+    .toEqual({
+      complete: true,
+      naturalWidth: 1_672,
+    });
 
   await page.emulateMedia({ reducedMotion: "reduce" });
 
@@ -309,18 +258,14 @@ test("campaign motion honors reduced-motion preferences", async ({ page }) => {
 
   const hero = page.locator(".marketing-hero");
   const heroImage = page.locator(".marketing-hero__media");
-  const heroVideo = page.locator(".marketing-hero__video");
 
   await expect(heroImage).toHaveCSS("position", "absolute");
   await expect(heroImage).toHaveCSS("transform", "none");
   await expect(heroImage).toBeVisible();
-  await expect(heroVideo).toHaveCSS("display", "none");
-  await expect(heroVideo.locator("source")).toHaveCount(0);
-  await expect
-    .poll(() =>
-      heroVideo.evaluate((video) => (video as HTMLVideoElement).paused),
-    )
-    .toBe(true);
+  await expect(heroMedia).toHaveAttribute("data-hero-media-state", "still");
+  await expect(heroPoster).toBeVisible();
+  await expect(page.locator(".marketing-hero__video")).toHaveCount(0);
+  await expect(page.locator(".marketing-hero__motion-toggle")).toHaveCount(0);
 
   const heroBounds = await hero.boundingBox();
   const imageBounds = await heroImage.boundingBox();
@@ -363,26 +308,44 @@ test("campaign motion honors reduced-motion preferences", async ({ page }) => {
   );
 });
 
-test("cinematic hero keeps its poster when video playback fails", async ({
+test("responsive hero serves its mobile image without requesting old video assets", async ({
   page,
 }) => {
-  let failedVideoRequests = 0;
+  await page.setViewportSize({ height: 844, width: 390 });
+  let oldVideoRequests = 0;
   await page.route(
     /\/media\/ygf-cinematic-hero\.(?:mp4|webm)$/,
     async (route) => {
-      failedVideoRequests += 1;
-      await route.abort("failed");
+      oldVideoRequests += 1;
+      await route.continue();
     },
   );
   await gotoApp(page, "/");
 
   const heroMedia = page.locator(".marketing-hero__media");
-  await expect.poll(() => failedVideoRequests).toBeGreaterThan(0);
   await expect(heroMedia).toHaveAttribute(
     "data-hero-media-state",
-    "poster",
+    "still",
   );
-  await expect(page.locator(".marketing-hero__poster")).toBeVisible();
+  const heroPoster = page.locator(".marketing-hero__poster");
+  await expect(heroPoster).toBeVisible();
+  await expect
+    .poll(() =>
+      heroPoster.evaluate((image) => ({
+        complete: (image as HTMLImageElement).complete,
+        currentSrc: (image as HTMLImageElement).currentSrc,
+        naturalWidth: (image as HTMLImageElement).naturalWidth,
+      })),
+    )
+    .toEqual({
+      complete: true,
+      currentSrc: expect.stringContaining(
+        "/media/ygf-authentic-hero-mobile-v2.jpg",
+      ),
+      naturalWidth: 1_122,
+    });
+  expect(oldVideoRequests).toBe(0);
+  await expect(page.locator(".marketing-hero__video")).toHaveCount(0);
   await expect(page.locator(".marketing-hero__motion-toggle")).toHaveCount(0);
 });
 
@@ -502,37 +465,19 @@ test("mobile motion releases temporary compositor hints", async ({ page }) => {
     "true",
   );
 
-  const motionControl = page.getByRole("button", {
-    name: campaignHomeCopy.en.hero.pauseMotion,
-  });
-  await expect(motionControl).toBeVisible();
-  const mobileControlLayout = await page.evaluate(() => {
-    const control = document.querySelector<HTMLElement>(
-      ".marketing-hero__motion-toggle",
-    );
-    const heading = document.querySelector<HTMLElement>(
-      "#campaign-hero-title",
-    );
-
-    if (!control || !heading) {
-      return null;
-    }
-
-    const controlBounds = control.getBoundingClientRect();
-    const headingBounds = heading.getBoundingClientRect();
-
-    return {
-      controlBottom: controlBounds.bottom,
-      controlRight: controlBounds.right,
-      headingTop: headingBounds.top,
-      viewportWidth: window.innerWidth,
-    };
-  });
-  expect(mobileControlLayout).not.toBeNull();
-  expect(mobileControlLayout?.controlBottom ?? Number.POSITIVE_INFINITY)
-    .toBeLessThanOrEqual(mobileControlLayout?.headingTop ?? 0);
-  expect(mobileControlLayout?.controlRight ?? Number.POSITIVE_INFINITY)
-    .toBeLessThanOrEqual(mobileControlLayout?.viewportWidth ?? 0);
+  const heroPoster = page.locator(".marketing-hero__poster");
+  await expect(heroPoster).toBeVisible();
+  expect(
+    await heroPoster.evaluate(
+      (image) => (image as HTMLImageElement).currentSrc,
+    ),
+  ).toContain("/media/ygf-authentic-hero-mobile-v2.jpg");
+  await expect(page.locator(".marketing-hero__media")).toHaveAttribute(
+    "data-hero-media-state",
+    "still",
+  );
+  await expect(page.locator(".marketing-hero__video")).toHaveCount(0);
+  await expect(page.locator(".marketing-hero__motion-toggle")).toHaveCount(0);
 
   await expect
     .poll(() =>

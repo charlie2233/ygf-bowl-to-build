@@ -21,7 +21,7 @@ changes are **manager-only**.
 | State | Safe first check | Staff response | Manager decision |
 | --- | --- | --- | --- |
 | Invalid | Re-scan the original row, then manually enter it once | Do not guess, transcribe remotely, or consume another row | Verify batch/issuance evidence; reissue only if the printed credential was defective and purchase qualifies |
-| Already used | Ask whether the guest used another sign-in account | Direct the guest to the original account | Review audit state; do not reissue merely because the original wallet is on another account |
+| Already used | Ask whether the guest used another sign-in account | Direct the guest to the original account; that account can retry the same code to reopen its current wallet | Review audit state; do not reissue merely because the original wallet is on another account |
 | Expired | Confirm whether the message refers to the code or redeemed credits | Explain the stated promotional period | No extension unless a written campaign exception is approved and audited |
 | Revoked | No counter troubleshooting | Refer to manager immediately | Review the revocation reason before any further action |
 | Scan problem | Use the human-readable code on the same row | Keep the QR and text paired | Replace only a physically defective, unredeemed row |
@@ -41,6 +41,9 @@ changes are **manager-only**.
    - explain that the valid state is already used, expired, or revoked;
    - revoke the original and issue one new claim row; or
    - escalate without changing code state.
+   A same-account retry returns that wallet's current credits and expiry. It
+   never restores spent credits, resets the balance to 3,000, or extends the
+   promotional period.
 6. For a reissue, record operator, timestamp, batch/source, reason category,
    original non-secret record identifier, and replacement non-secret record
    identifier. Do not put either plaintext code in the note.

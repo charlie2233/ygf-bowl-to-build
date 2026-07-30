@@ -32,9 +32,8 @@ CTA, then complete fine print. Avoid extra stacked microcopy.
 - Use only subtle entrance, scroll-reveal, image-depth, and phone-tilt motion.
   The locally bundled GSAP layer uses scoped `useGSAP` timelines and
   ScrollTrigger cleanup; do not add Three.js, Remotion, CDN scripts, or pinned
-  scenes. The approved cinematic hero is the single continuous-loop
-  exception; it must remain muted, retain a visible localized Pause/Play
-  control, and preserve the static-poster policy below.
+  scenes. The hero itself is responsive static media; do not introduce
+  autoplay video or a motion-only version of the offer.
 - Disable pointer parallax on coarse/touch pointers. Under
   `prefers-reduced-motion: reduce`, render every section immediately and remove
   decorative transforms.
@@ -99,20 +98,22 @@ rather than scaling the current artwork.
 
 ## Photography and illustration
 
-The first viewport uses the generated cinematic bowl loop at
-`public/media/ygf-cinematic-hero.webm` with MP4 fallback and an eagerly loaded
-WebP poster. Keep the bowl weighted to the right, the left copy field calm,
-the cream readability gradient intact, and the frame free of embedded copy,
-people, private claim material, or university marks. The video is decorative
-and muted; reduced-motion, browser-reported data-saver/2G, autoplay-failure,
-and no-JavaScript paths must retain the complete poster experience without
-downloading an active video source. Browsers that do not expose the Network
-Information API cannot provide a reliable application-level Low Data Mode
-signal, so that case remains a physical-device verification gate. The
-separate real ingredient-counter PNG may appear below the fold, where it stays
-visually secondary to the campaign offer. Generated-media approval and
-brand-rights confirmation for the real supporting photo remain required
-before public launch.
+The first viewport uses two art-directed, static JPEGs:
+`public/media/ygf-authentic-hero-desktop-v2.jpg` (1672 × 941; 203,071 bytes)
+and `public/media/ygf-authentic-hero-mobile-v2.jpg` (1122 × 1402; 169,063
+bytes). A responsive `<picture>` selects the portrait composition at 820px
+and below instead of forcing the landscape image through an extreme mobile
+crop. Keep the desktop bowl weighted to the right, the mobile bowl low enough
+to preserve the copy field, the cream readability gradient intact, and both
+frames free of embedded copy, people, private claim material, or university
+marks. Both images are AI-enhanced derivatives of the real YGF ingredient
+display at `public/media/ygf-fresh-bar-hero.jpg`; the finished bowl is
+generated and must be disclosed as such rather than represented as an
+unmodified store photograph. The retired cinematic WebM/MP4/poster set is
+not part of the current runtime. The separate real ingredient-counter PNG may
+appear below the fold, where it stays visually secondary to the campaign
+offer. Brand approval for the user-supplied source and the generated bowl
+treatment remains required before launch.
 `public/media/malatang-hero.png` remains a generated beta image in wallet/share
 and rendered collateral; approve or replace it, update both ledgers, and
 regenerate every affected output.

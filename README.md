@@ -264,11 +264,14 @@ environment variables.
 
 Current production Supabase configuration has Manual Linking enabled and the
 redirect allowlist set to the exact
-`https://malatangai.com/auth/callback`. Google and Apple sign-in/linking are
-still externally blocked until their provider client IDs and secrets are
-installed in Supabase and both normal OAuth and anonymous `linkIdentity`
-round trips are tested. The configured redirect and Manual Linking toggle are
-not evidence that either provider is live.
+`https://malatangai.com/auth/callback`. On July 31, 2026, the production
+Google provider was installed and enabled, the external Google Auth Platform
+app was published to production, and both live paths were verified: an
+anonymous `linkIdentity` round trip returned to `/connect/agent` without
+changing the 3,000-Credit wallet, and a later normal Google OAuth sign-in
+restored that same wallet at `/wallet`. Apple remains disabled and externally
+blocked until its separate provider credentials and both corresponding round
+trips are verified.
 
 The first safe production posture is intentionally narrow: enable claiming
 only after a private code batch exists, and keep both forms of paid inference
@@ -314,8 +317,9 @@ Deploy the application only after:
 - verifying RLS and server-only service-role access with separate user/admin
   accounts;
 - retaining the configured exact production callback and Manual Linking
-  setting, installing Google/Apple provider credentials, and testing both
-  normal OAuth and anonymous `linkIdentity`;
+  setting, retaining the verified Google provider configuration, and repeating
+  both normal OAuth and anonymous `linkIdentity` after any auth change; install
+  and verify Apple separately before enabling its button;
 - enabling and testing anonymous sign-in; creating a hostname-restricted
   Turnstile widget; installing `YGF_TURNSTILE_ENABLED=true`, its public site
   key, and server-only secret; then proving valid, expired/duplicate,

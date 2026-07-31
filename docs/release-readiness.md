@@ -165,19 +165,26 @@ satisfied by this checkout.
 - [x] Production Supabase Manual Linking is enabled and the redirect allowlist
   contains the exact `https://malatangai.com/auth/callback` entry. It contains
   no required wildcard or `www` callback.
-- [ ] Install Google and Apple provider client IDs/secrets in Supabase and test
-  each normal OAuth and anonymous `linkIdentity` round trip. Both providers
-  remain externally blocked until those credentials exist.
+- [x] Install and enable the Google provider in Supabase, publish its external
+  Google Auth Platform app, and test both a normal OAuth and anonymous
+  `linkIdentity` round trip. The July 31, 2026 live proof returned the linked
+  guest to `/connect/agent`, preserved the 3,000-Credit wallet, then restored
+  that same wallet at `/wallet` after sign-out and normal Google sign-in.
+- [ ] Install Apple provider credentials and test both its normal OAuth and
+  anonymous `linkIdentity` round trip. Apple remains disabled and externally
+  blocked.
 - [ ] Test the approved magic-link recovery callback for a non-anonymous
   account.
 - [ ] Enable Supabase anonymous sign-in and prove scan → anonymous wallet →
   first web AI result with no login screen. Verify the session receives the
   `authenticated` role and remains inside user-bound RLS.
-- [ ] After provider credentials are installed, prove Google/Apple linking
-  preserves the same anonymous user and wallet, changes the account to
-  non-anonymous, and only then unlocks Agent key creation/rotation. Configure
-  CAPTCHA/Turnstile, edge limits, and an approved anonymous-user cleanup
-  policy; none is claimed as applied by this checkout.
+- [x] Prove Google linking preserves the same anonymous user and wallet,
+  changes the account to non-anonymous, and reaches the authenticated Agent
+  page. Production Agent key creation remains intentionally disabled by the
+  separate gateway kill switch.
+- [ ] Repeat the same preservation proof for Apple after its provider is
+  installed. Maintain the existing CAPTCHA/Turnstile, edge-limit, and approved
+  anonymous-user cleanup gates independently.
 - [x] Install the managed, `malatangai.com`-restricted Turnstile widget and all
   three Vercel Production variables, then deploy the enabled boundary.
   Production deployment `dpl_CWKRz8EvJ6ZhSLreyZ17T7fM66WC` showed a real

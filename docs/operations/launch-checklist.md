@@ -194,13 +194,16 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   a first web AI result without a Google/Apple/Magic Link screen.
 - [x] Enable Supabase Manual Linking and register the exact production callback
   `https://malatangai.com/auth/callback`.
-- [ ] Install Google and Apple provider client IDs/secrets in Supabase. Until
-  then, both provider buttons are externally blocked and are not accepted as a
-  working production sign-in or linking path.
-- [ ] Verify `linkIdentity` through each configured provider keeps the same
-  anonymous user and wallet, makes the account non-anonymous, and only then
-  unlocks Agent key creation/rotation; do not substitute a second-account
-  OAuth sign-in.
+- [x] Install and enable the production Google provider, publish the external
+  Google Auth Platform app, and verify both normal OAuth and anonymous
+  `linkIdentity`. The July 31, 2026 live round trips preserved and restored the
+  same 3,000-Credit wallet.
+- [ ] Install and independently verify Apple. Its production provider and UI
+  remain disabled.
+- [x] Verify Google `linkIdentity` keeps the same anonymous user and wallet and
+  returns to the authenticated Agent page; do not substitute a second-account
+  OAuth sign-in. Agent key creation remains separately disabled until the
+  gateway production gate is opened.
 - [x] Create a managed Cloudflare Turnstile widget restricted to
   `malatangai.com`, install its public site key and server-only secret in
   Vercel Production, set `YGF_TURNSTILE_ENABLED=true`, and redeploy. Production

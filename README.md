@@ -269,9 +269,11 @@ Google provider was installed and enabled, the external Google Auth Platform
 app was published to production, and both live paths were verified: an
 anonymous `linkIdentity` round trip returned to `/connect/agent` without
 changing the 3,000-Credit wallet, and a later normal Google OAuth sign-in
-restored that same wallet at `/wallet`. Apple remains disabled and externally
-blocked until its separate provider credentials and both corresponding round
-trips are verified.
+restored that same wallet at `/wallet`. The Apple provider is now installed and
+enabled with Services ID `com.malatangai.web.login`; the production UI reaches
+Apple's authorization endpoint with the exact Supabase callback. Human Apple
+sign-in and the corresponding anonymous-wallet preservation round trip remain
+an explicit live acceptance gate.
 
 The first safe production posture is intentionally narrow: enable claiming
 only after a private code batch exists, and keep both forms of paid inference
@@ -318,8 +320,9 @@ Deploy the application only after:
   accounts;
 - retaining the configured exact production callback and Manual Linking
   setting, retaining the verified Google provider configuration, and repeating
-  both normal OAuth and anonymous `linkIdentity` after any auth change; install
-  and verify Apple separately before enabling its button;
+  both normal OAuth and anonymous `linkIdentity` after any auth change; repeat
+  that live acceptance for Apple before treating its enabled button as a
+  completed identity-recovery path;
 - enabling and testing anonymous sign-in; creating a hostname-restricted
   Turnstile widget; installing `YGF_TURNSTILE_ENABLED=true`, its public site
   key, and server-only secret; then proving valid, expired/duplicate,

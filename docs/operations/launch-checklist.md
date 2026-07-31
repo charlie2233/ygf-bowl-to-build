@@ -198,8 +198,13 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   Google Auth Platform app, and verify both normal OAuth and anonymous
   `linkIdentity`. The July 31, 2026 live round trips preserved and restored the
   same 3,000-Credit wallet.
-- [ ] Install and independently verify Apple. Its production provider and UI
-  remain disabled.
+- [x] Install and enable Apple using Services ID
+  `com.malatangai.web.login`, the exact Supabase Apple callback, and a
+  mode-`0600` ignored signing key. Verify the production UI reaches Apple's
+  authorization endpoint without exposing the client secret.
+- [ ] Complete Apple's normal sign-in and anonymous `linkIdentity` wallet
+  preservation round trips with a human Apple account. The enabled provider
+  and successful outbound redirect are not end-to-end acceptance.
 - [x] Verify Google `linkIdentity` keeps the same anonymous user and wallet and
   returns to the authenticated Agent page; do not substitute a second-account
   OAuth sign-in. Agent key creation remains separately disabled until the

@@ -170,9 +170,14 @@ satisfied by this checkout.
   `linkIdentity` round trip. The July 31, 2026 live proof returned the linked
   guest to `/connect/agent`, preserved the 3,000-Credit wallet, then restored
   that same wallet at `/wallet` after sign-out and normal Google sign-in.
-- [ ] Install Apple provider credentials and test both its normal OAuth and
-  anonymous `linkIdentity` round trip. Apple remains disabled and externally
-  blocked.
+- [x] Install and enable the Apple provider with Services ID
+  `com.malatangai.web.login`, register the exact Supabase callback, and verify
+  the production button reaches Apple's authorization endpoint. The signing
+  key stays in ignored, mode-`0600` local storage and only the generated client
+  secret is installed in Supabase.
+- [ ] Complete Apple's normal OAuth and anonymous `linkIdentity` round trips.
+  Provider activation and a valid authorization redirect do not prove that the
+  human account/2FA exchange returns or preserves a wallet.
 - [ ] Test the approved magic-link recovery callback for a non-anonymous
   account.
 - [ ] Enable Supabase anonymous sign-in and prove scan → anonymous wallet →
@@ -182,7 +187,7 @@ satisfied by this checkout.
   changes the account to non-anonymous, and reaches the authenticated Agent
   page. Production Agent key creation remains intentionally disabled by the
   separate gateway kill switch.
-- [ ] Repeat the same preservation proof for Apple after its provider is
+- [ ] Repeat the same preservation proof for Apple now that its provider is
   installed. Maintain the existing CAPTCHA/Turnstile, edge-limit, and approved
   anonymous-user cleanup gates independently.
 - [x] Install the managed, `malatangai.com`-restricted Turnstile widget and all

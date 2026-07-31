@@ -79,10 +79,13 @@ has Manual Linking enabled and an exact redirect allowlist entry for
 `https://malatangai.com/auth/callback`. Google is live: on July 31, 2026 its
 provider was enabled, its external OAuth app was published to production, an
 anonymous-linking round trip preserved the 3,000-Credit wallet, and a normal
-OAuth sign-in restored that same wallet after sign-out. Apple remains disabled
-until its provider credentials and both round trips are independently
-verified. Anonymous sign-in, CAPTCHA/Turnstile, edge limits, dynamic rendering,
-and anonymous-user cleanup remain separate live controls.
+OAuth sign-in restored that same wallet after sign-out. Apple is also installed
+and enabled: the production button reaches Apple's authorization endpoint with
+the registered Services ID and exact Supabase callback. Its normal sign-in and
+anonymous-wallet preservation round trips remain a separate live acceptance
+gate until a human finishes Apple authentication. Anonymous sign-in,
+CAPTCHA/Turnstile, edge limits, dynamic rendering, and anonymous-user cleanup
+remain separate live controls.
 
 ## Receipt fragment handling
 

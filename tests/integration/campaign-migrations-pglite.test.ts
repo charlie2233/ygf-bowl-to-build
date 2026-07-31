@@ -23,6 +23,9 @@ const migrationNames = [
   "202607300001_same_account_redemption_retry.sql",
   "202607300002_same_account_redemption_retry_wallet_lock.sql",
   "202607300003_multidimensional_redemption_admission.sql",
+  "202607310001_agent_terminalize_coalesce_runtime_fix.sql",
+  "202607310002_agent_terminalize_definition_guard.sql",
+  "202607310003_agent_terminalize_exact_acl_guard.sql",
 ] as const;
 
 const userId = "11111111-1111-4111-8111-111111111111";

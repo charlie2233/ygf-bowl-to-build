@@ -30,17 +30,17 @@ after this document is committed.
 
 | Gate | Required command or evidence | Status |
 | --- | --- | --- |
-| Lint | `pnpm lint` | Pass on July 29, 2026 |
-| TypeScript | `pnpm typecheck` | Pass on July 29, 2026 |
-| Unit/integration/security contracts | each discovered Vitest file in a fresh `pnpm vitest run <file>` process | Pass on July 29, 2026: 74/74 files and 543/543 tests, including 68 non-PGlite files (528 tests) and 6 PGlite files (15 tests), with every process exiting 0 |
-| Production compilation | `pnpm build` | Pass on July 29, 2026: optimized build, page generation, and dynamic route manifest |
+| Lint | `pnpm lint` | Pass on July 31, 2026 |
+| TypeScript | `pnpm typecheck` | Pass on July 31, 2026 |
+| Unit/integration/security contracts | complete single-worker `pnpm vitest run --maxWorkers=1 --fileParallelism=false` plus focused privileged-settlement rerun | Pass on July 31, 2026: 81/81 files and 612/612 tests with a normal process exit; focused settlement/full-chain checks passed 14/14 |
+| Production compilation | `pnpm build` | Pass on July 31, 2026: optimized build, page generation, and dynamic route manifest |
 | Production dependency audit | `pnpm audit --prod` | Pass on July 29, 2026: 0 known vulnerabilities |
-| Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 29, 2026: 83 tests across setup, desktop Chromium, and iPhone WebKit projects |
-| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 41 desktop checks; the shared setup passed once |
-| Full Playwright matrix | `pnpm test:e2e` | Pass on July 29, 2026: 83/83 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
-| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 29, 2026: 41 WebKit checks after the shared setup |
+| Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 31, 2026: 83 tests across setup, desktop Chromium, and iPhone WebKit projects |
+| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on July 31, 2026: 41 desktop checks; the shared setup passed once |
+| Full Playwright matrix | `pnpm test:e2e` | Pass on July 31, 2026: 83/83 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
+| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 31, 2026: 41 WebKit checks after the shared setup |
 | Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 29, 2026; no OpenAI, personal Agent, or JWT-shaped secret values found in built client output. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI |
-| Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 29, 2026; all medium-or-higher review findings remediated and independently rechecked before checkpoint |
+| Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 31, 2026; the runtime repair, exact definition/security guard, exact two-row ACL guard, tests, and receipt were independently rechecked with no remaining actionable finding |
 | Remote identity | local SHA equals GitHub branch SHA after push | Pending for this pre-commit candidate; the final handoff records the exact local/upstream/`ls-remote`/Vercel SHA comparison without embedding a commit's own identity here |
 
 Required behavioral evidence:
@@ -208,21 +208,28 @@ satisfied by this checkout.
   expiry/lease indexes. Logical expiry alone is not physical deletion proof.
 - [ ] Install independent production claim-cookie, abuse-signal, and task
   fingerprint secrets.
-- [ ] Install independent Agent key-digest and request-fingerprint secrets;
-  test rotation with the documented incident process.
-- [ ] Install the server-only `OPENAI_API_KEY`; verify project billing/limits,
-  all four pinned snapshots, current token prices, the fixed OpenAI endpoint,
-  request timeout, safe error mapping, usage accounting, and billing alerts.
-- [ ] Keep `YGF_AGENT_GATEWAY_ENABLED=false` until a staging key lifecycle,
-  `/v1/models`, one completion, idempotent replay, provider failure refund,
-  rate/concurrency limit, and wallet-wide $3.00 cap smoke all pass.
+- [ ] Independent Agent key-digest and request-fingerprint secrets are
+  installed and live key creation passed on 2026-07-31. Rotation/revocation
+  incident rehearsal remains open.
+- [ ] The server-only `OPENAI_API_KEY`, pinned fast snapshot, fixed OpenAI
+  endpoint, safe error mapping, variable-cost accounting, and one live
+  completion passed on 2026-07-31. Project billing alerts and the remaining
+  pinned-model live matrix are still external gates.
+- [x] Enable `YGF_AGENT_GATEWAY_ENABLED` only after provider preflight and a
+  controlled production acceptance. The 2026-07-31 flow passed fresh
+  redemption, Google upgrade, one-time key creation, a real completion,
+  wallet-scoped replay, and failure Credit recovery. See
+  `docs/operations/production-agent-acceptance-2026-07-31.md`. Deliberate
+  rate/concurrency, expired/rotated/revoked key, provider-outage, and
+  wallet-wide $3.00 exhaustion drills remain staging-only gates.
 - [ ] Confirm production logs contain no plaintext claim, raw IP, submitted
   prompt, provider credential, service-role value, or full provider payload.
 - [ ] Verify alerting and the server-side stop paths: production requires
   exact `true` for `YGF_REDEMPTION_ENABLED` and `YGF_WEB_TASKS_ENABLED`, and
-  keeps `YGF_AGENT_GATEWAY_ENABLED=false` until its own staging proof. Rehearse
-  setting each relevant value to `false` and rolling it out without a wallet
-  mutation or provider call. The July 29 production smoke confirmed
+  now enables `YGF_AGENT_GATEWAY_ENABLED` after the July 31 controlled
+  production proof. Rehearse setting each relevant value to `false` and
+  rolling it out without a wallet mutation or provider call. The July 29
+  production smoke confirmed
   `REDEMPTION_PAUSED`, `WEB_TASKS_PAUSED`, and `gateway_not_enabled`; alerting
   and the controlled rollout rehearsal remain open.
 - [ ] Confirm the OpenAI API data controls for the production project.

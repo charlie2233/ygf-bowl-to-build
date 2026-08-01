@@ -384,7 +384,9 @@ dollars ($3.00) for one wallet. The same wallet row aggregates web tasks and
 every personal key, so creating multiple keys cannot increase the limit.
 Integer columns and functions are ledger
 authority; floating-point dollar values are not accepted for limits or state
-transitions.
+transitions. Provider-cost fields remain internal: customer key descriptors
+and OpenAI-compatible chat responses expose Credits, expiry, and token usage,
+not provider-dollar estimates.
 
 ## Distributed task execution
 
@@ -576,16 +578,29 @@ digest prevent duplicate dispatch locally. Demo mode returns a deterministic
 connection response. In production the Agent provider path fails closed until
 `YGF_AGENT_GATEWAY_ENABLED=true` and `OPENAI_API_KEY` are both present.
 
-OpenAI prompt, cached-prompt, and completion token counts are validated and
-converted with server-owned integer micro-USD-per-million prices using exact
-ceiling arithmetic. The ledger stores aggregate input/output units and
-provider cost by user/wallet; cached units affect the calculation without a new
-database column. Successful cost is a static-price estimate and uncertain
-post-admission failures conservatively book the request ceiling; neither value
-is invoice truth. The pinned snapshots and prices were reviewed on 2026-07-27
-and remain a pre-launch availability/pricing verification gate.
+The Agent-only allowlist contains `gpt-5.6-luna`, `gpt-5.6-terra`, and
+`gpt-5.6-sol`; it is separate from the ready-made web-task catalog. The
+connection UI defaults to Terra and applies its selection only to copied JSON
+and the next connection test, never to key persistence. The server fixes all
+three models at medium reasoning. The public request parser does not accept a
+reasoning-effort field, and neither model responses nor analytics expose it.
+Legacy `fast`, `balanced`, `coding`, and `reasoning` request aliases resolve to
+the canonical allowlist during the compatibility window but are omitted from
+`GET /v1/models`.
 
-`store:false` disables Chat Completions application-state storage; it is not a
+OpenAI prompt, cached-prompt, cache-write, and completion token counts are
+validated and converted with server-owned integer micro-USD-per-million prices
+using exact ceiling arithmetic. Cached plus cache-write units may not exceed
+total prompt units. The ledger stores aggregate input/output units and provider
+cost by user/wallet without adding a prompt-retention column. Successful cost
+is a static-price estimate and uncertain post-admission failures
+conservatively book the request ceiling; neither value is invoice truth. The
+GPT-5.6 standard short-context prices were reviewed on 2026-07-31 and remain a
+pre-launch availability/pricing verification gate.
+
+`store:false` disables Chat Completions application-state storage. Agent
+GPT-5.6 requests also set explicit prompt-cache mode without a breakpoint, so
+the gateway does not request implicit cache writes. Neither setting is a
 zero-retention promise. Default abuse-monitoring logs may retain content for up
 to 30 days. OpenAI API data is not used for training by default unless the
 account opts in. Zero Data Retention eligibility/configuration remains an

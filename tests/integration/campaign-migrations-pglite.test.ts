@@ -26,6 +26,7 @@ const migrationNames = [
   "202607310001_agent_terminalize_coalesce_runtime_fix.sql",
   "202607310002_agent_terminalize_definition_guard.sql",
   "202607310003_agent_terminalize_exact_acl_guard.sql",
+  "202607310004_agent_model_event_allowlist.sql",
 ] as const;
 
 const userId = "11111111-1111-4111-8111-111111111111";
@@ -222,6 +223,65 @@ describe("disposable Postgres campaign migrations", () => {
       .sort();
 
     expect([...migrationNames]).toEqual(migrationFiles);
+  });
+
+  it("accepts canonical Agent model analytics and rejects unknown models", async () => {
+    const database = new PGlite({ extensions: { pgcrypto } });
+
+    try {
+      await database.exec(bootstrapSql);
+      for (const migrationName of migrationNames) {
+        const migration = await readFile(
+          path.join(
+            process.cwd(),
+            "supabase/migrations",
+            migrationName,
+          ),
+          "utf8",
+        );
+        await database.exec(migration);
+      }
+
+      for (const model of [
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+        "gpt-5.6-sol",
+      ]) {
+        const validation = await onlyRow<{ valid: boolean }>(
+          database,
+          `
+            select public.is_safe_campaign_event_payload(
+              'agent_call_completed',
+              'agent',
+              pg_catalog.jsonb_build_object(
+                'credits', 1,
+                'model', $1::text,
+                'outcome', 'success'
+              )
+            ) as valid;
+          `,
+          [model],
+        );
+        expect(validation.valid).toBe(true);
+      }
+
+      const unknown = await onlyRow<{ valid: boolean }>(
+        database,
+        `
+          select public.is_safe_campaign_event_payload(
+            'agent_call_failed',
+            'agent',
+            pg_catalog.jsonb_build_object(
+              'model', 'gpt-5.6-unapproved',
+              'outcome', 'failure'
+            )
+          ) as valid;
+        `,
+      );
+      expect(unknown.valid).toBe(false);
+    } finally {
+      await database.close();
+    }
   });
 
   it(

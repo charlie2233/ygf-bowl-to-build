@@ -5,6 +5,7 @@ import {
   rotatePersonalAgentKey,
 } from "@/lib/agent/key-service";
 import { digestAgentApiKey } from "@/lib/agent/api-key";
+import { publicAgentKeySummary } from "@/lib/agent/public-key";
 import { createKeyCollectionHandlers } from "@/app/api/keys/route";
 import { createKeyRevokeHandler } from "@/app/api/keys/[id]/route";
 import { createKeyRotateHandler } from "@/app/api/keys/[id]/rotate/route";
@@ -69,6 +70,30 @@ function mutation(path: string, method = "POST") {
 }
 
 describe("personal Agent key APIs", () => {
+  it("projects only the explicit customer-safe key fields", async () => {
+    const context = await setup();
+    const created = await context.createKey("demo-user");
+    const repositoryValue = {
+      ...created.key,
+      futureProviderCostField: 123,
+      providerReservedMicroUsd: 456,
+    };
+
+    expect(publicAgentKeySummary(repositoryValue)).toEqual({
+      createdAt: created.key.createdAt,
+      expiresAt: created.key.expiresAt,
+      id: created.key.id,
+      last4: created.key.last4,
+      lastUsedAt: created.key.lastUsedAt,
+      prefix: created.key.prefix,
+      remainingCredits: created.key.remainingCredits,
+      revokedAt: created.key.revokedAt,
+    });
+    expect(
+      JSON.stringify(publicAgentKeySummary(repositoryValue)),
+    ).not.toContain("Provider");
+  });
+
   it("creates plaintext once while list serialization remains secret-free", async () => {
     const context = await setup();
     const handlers = createKeyCollectionHandlers({
@@ -90,11 +115,15 @@ describe("personal Agent key APIs", () => {
       /^ygf_[A-Za-z0-9_-]{43}$/u,
     );
     expect(created.notice).toContain("not be shown again");
+    expect(JSON.stringify(created)).not.toContain(
+      "providerCommittedMicroUsd",
+    );
 
     const listResponse = await handlers.get();
     const listText = await listResponse.text();
     expect(listResponse.status).toBe(200);
     expect(listText).not.toContain(created.apiKey);
+    expect(listText).not.toContain("providerCommittedMicroUsd");
     expect(JSON.stringify(context.repository)).not.toContain(
       created.apiKey,
     );
@@ -223,6 +252,9 @@ describe("personal Agent key APIs", () => {
       first.key.id,
     );
     expect(revoked.status).toBe(200);
+    expect(await revoked.text()).not.toContain(
+      "providerCommittedMicroUsd",
+    );
     await expect(
       context.repository.authenticateKey(
         digestAgentApiKey(
@@ -254,6 +286,9 @@ describe("personal Agent key APIs", () => {
       /^ygf_[A-Za-z0-9_-]{43}$/u,
     );
     expect(rotated.apiKey).not.toBe(second.apiKey);
+    expect(JSON.stringify(rotated)).not.toContain(
+      "providerCommittedMicroUsd",
+    );
     const keys = await context.repository.listKeys("demo-user");
     expect(
       keys.find((key) => key.id === second.key.id)?.revokedAt,

@@ -17,12 +17,71 @@ import {
   resolveAgentModel,
 } from "@/lib/agent/policy";
 import { PROVIDER_COST_CAP_MICRO_USD } from "@/lib/campaign/credits";
-import { MODEL_CATALOG } from "@/lib/providers/model-catalog";
+import { AGENT_MODEL_CATALOG } from "@/lib/agent/model-catalog";
+import {
+  AGENT_MODEL_CHOICES,
+  DEFAULT_AGENT_MODEL_ID,
+} from "@/lib/agent/models";
 
 describe("Agent server policy", () => {
-  it("derives its exact model allowlist from the server catalog", () => {
-    expect(AGENT_MODEL_ALLOWLIST).toBe(MODEL_CATALOG);
-    expect(resolveAgentModel("balanced")).toBe(MODEL_CATALOG[0]);
+  it("uses a separate canonical GPT-5.6 allowlist with safe legacy aliases", () => {
+    expect(AGENT_MODEL_ALLOWLIST).toBe(AGENT_MODEL_CATALOG);
+    expect(AGENT_MODEL_ALLOWLIST.map((model) => model.id)).toEqual([
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol",
+    ]);
+    expect(AGENT_MODEL_CHOICES.map((model) => model.id)).toEqual(
+      AGENT_MODEL_ALLOWLIST.map((model) => model.id),
+    );
+    expect(DEFAULT_AGENT_MODEL_ID).toBe("gpt-5.6-terra");
+    expect(
+      AGENT_MODEL_ALLOWLIST.map((model) => ({
+        ceiling: model.maxCostMicroUsd,
+        effort: model.reasoningEffort,
+        id: model.id,
+        pricing: model.pricingMicroUsdPerMillion,
+      })),
+    ).toEqual([
+      {
+        ceiling: 25_000,
+        effort: "medium",
+        id: "gpt-5.6-luna",
+        pricing: {
+          cacheWrite: 250_000,
+          cachedInput: 20_000,
+          input: 200_000,
+          output: 1_200_000,
+        },
+      },
+      {
+        ceiling: 250_000,
+        effort: "medium",
+        id: "gpt-5.6-terra",
+        pricing: {
+          cacheWrite: 2_500_000,
+          cachedInput: 200_000,
+          input: 2_000_000,
+          output: 12_000_000,
+        },
+      },
+      {
+        ceiling: 500_000,
+        effort: "medium",
+        id: "gpt-5.6-sol",
+        pricing: {
+          cacheWrite: 6_250_000,
+          cachedInput: 500_000,
+          input: 5_000_000,
+          output: 30_000_000,
+        },
+      },
+    ]);
+    expect(resolveAgentModel("fast").id).toBe("gpt-5.6-luna");
+    expect(resolveAgentModel("balanced").id).toBe("gpt-5.6-terra");
+    expect(resolveAgentModel("coding").id).toBe("gpt-5.6-terra");
+    expect(resolveAgentModel("reasoning").id).toBe("gpt-5.6-sol");
+    expect(resolveAgentModel("gpt-5.6-sol").id).toBe("gpt-5.6-sol");
     expect(() =>
       resolveAgentModel("gpt-4.1-mini-2025-04-14"),
     ).toThrow("AGENT_MODEL_NOT_ALLOWED");

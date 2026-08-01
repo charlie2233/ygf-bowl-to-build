@@ -4197,6 +4197,61 @@ textarea {
   gap: 0.8rem;
 }
 
+.agent-model-picker {
+  display: grid;
+  padding: 1rem 1.1rem;
+  border: 1px solid #e8ded5;
+  border-radius: var(--radius-control);
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, #fffaf5, #fff 72%);
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 17rem);
+  align-items: center;
+  gap: 1rem;
+}
+
+.agent-model-picker > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.agent-model-picker > div > span {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agent-model-picker strong {
+  color: #111827;
+  font-size: 1rem;
+}
+
+.agent-model-picker p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.agent-model-picker select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 2.5rem 0.7rem 0.85rem;
+  border: 1px solid #d8c9bd;
+  border-radius: 0.7rem;
+  background: #fff;
+  color: #171717;
+  font: inherit;
+  font-weight: 800;
+}
+
+.agent-model-picker select:focus-visible {
+  border-color: var(--color-primary);
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  outline-offset: 2px;
+}
+
 .agent-config-grid article {
   display: grid;
   min-width: 0;
@@ -4371,6 +4426,10 @@ textarea {
   }
 
   .agent-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agent-model-picker {
     grid-template-columns: 1fr;
   }
 

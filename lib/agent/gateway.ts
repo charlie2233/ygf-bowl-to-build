@@ -1,5 +1,6 @@
 import { createHmac, randomUUID } from "node:crypto";
 
+import type { CampaignEventMetadata } from "@/lib/campaign/types";
 import type {
   ParsedAgentChatRequest,
 } from "@/lib/agent/openai-contract";
@@ -38,6 +39,8 @@ interface RunAgentChatDependencies {
   repository?: AgentGatewayRepository;
 }
 
+type AgentEventModel = NonNullable<CampaignEventMetadata["model"]>;
+
 async function recordSafely(
   recordEvent: (input: RecordEventInput) => Promise<unknown>,
   input: RecordEventInput,
@@ -71,19 +74,82 @@ function validIdempotencyKey(value: string) {
   );
 }
 
-function replayPayload(value: unknown): Readonly<Record<string, unknown>> {
+function plainRecord(
+  value: unknown,
+): value is Readonly<Record<string, unknown>> {
   if (
     typeof value !== "object" ||
     value === null ||
-    Array.isArray(value) ||
-    typeof (value as { response?: unknown }).response !== "object" ||
-    (value as { response?: unknown }).response === null ||
-    Array.isArray((value as { response?: unknown }).response)
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function nonnegativeSafeInteger(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= 0
+  );
+}
+
+function replayPayload(value: unknown): Readonly<Record<string, unknown>> {
+  if (!plainRecord(value) || !plainRecord(value.response)) {
+    throw new AgentGatewayError("UNAVAILABLE");
+  }
+  const response = value.response;
+  const choices = response.choices;
+  const usage = response.usage;
+  const ygf = response.ygf;
+  if (
+    !Array.isArray(choices) ||
+    choices.length !== 1 ||
+    !plainRecord(choices[0]) ||
+    choices[0].finish_reason !== "stop" ||
+    choices[0].index !== 0 ||
+    !plainRecord(choices[0].message) ||
+    choices[0].message.role !== "assistant" ||
+    typeof choices[0].message.content !== "string" ||
+    choices[0].message.content.length < 1 ||
+    choices[0].message.content.length > 32_000 ||
+    response.object !== "chat.completion" ||
+    typeof response.id !== "string" ||
+    !/^chatcmpl_[A-Za-z0-9_-]{1,160}$/u.test(response.id) ||
+    typeof response.model !== "string" ||
+    !/^[a-z0-9][a-z0-9.-]{0,127}$/u.test(response.model) ||
+    !nonnegativeSafeInteger(response.created) ||
+    !plainRecord(usage) ||
+    !nonnegativeSafeInteger(usage.prompt_tokens) ||
+    !nonnegativeSafeInteger(usage.completion_tokens) ||
+    !nonnegativeSafeInteger(usage.total_tokens) ||
+    usage.total_tokens !==
+      usage.prompt_tokens + usage.completion_tokens ||
+    !plainRecord(ygf) ||
+    !nonnegativeSafeInteger(ygf.credits_used) ||
+    ygf.credits_used > 3_000 ||
+    !nonnegativeSafeInteger(ygf.remaining_credits) ||
+    ygf.remaining_credits > 3_000
   ) {
     throw new AgentGatewayError("UNAVAILABLE");
   }
-  return (value as { response: Readonly<Record<string, unknown>> })
-    .response;
+
+  // Reconstruct the public response instead of replaying stored JSON. This
+  // strips legacy/internal fields (including provider-cost estimates) from
+  // pre-deploy idempotency rows and prevents future persistence fields from
+  // crossing the customer response boundary.
+  return responseObject({
+    content: choices[0].message.content,
+    created: response.created,
+    creditsUsed: ygf.credits_used,
+    id: response.id.slice("chatcmpl_".length),
+    inputUnits: usage.prompt_tokens,
+    model: response.model,
+    outputUnits: usage.completion_tokens,
+    remainingCredits: ygf.remaining_credits,
+  });
 }
 
 function canonicalJson(value: unknown): string {
@@ -154,7 +220,6 @@ function responseObject({
   inputUnits,
   model,
   outputUnits,
-  providerCostMicroUsd,
   creditsUsed,
   remainingCredits,
 }: {
@@ -165,7 +230,6 @@ function responseObject({
   inputUnits: number;
   model: string;
   outputUnits: number;
-  providerCostMicroUsd: number;
   remainingCredits: number;
 }): Readonly<Record<string, unknown>> {
   return {
@@ -190,7 +254,6 @@ function responseObject({
     },
     ygf: {
       credits_used: creditsUsed,
-      provider_cost_micro_usd: providerCostMicroUsd,
       remaining_credits: remainingCredits,
     },
   };
@@ -263,11 +326,7 @@ export async function runAgentChat(
             : "failure";
       if (error.code !== "RATE_LIMITED") await recordSafely(recordEvent, {
         metadata: {
-          model: input.request.model.id as
-            | "balanced"
-            | "fast"
-            | "coding"
-            | "reasoning",
+          model: input.request.model.id as AgentEventModel,
           outcome,
         },
         name: "agent_call_failed",
@@ -340,7 +399,6 @@ export async function runAgentChat(
       inputUnits: result.inputUnits,
       model: input.request.model.id,
       outputUnits: result.outputUnits,
-      providerCostMicroUsd,
       remainingCredits: Math.max(0, projectedRemaining),
     });
     const terminal = await repository.terminalizeRequest({
@@ -362,7 +420,6 @@ export async function runAgentChat(
       inputUnits: result.inputUnits,
       model: input.request.model.id,
       outputUnits: result.outputUnits,
-      providerCostMicroUsd,
       remainingCredits: terminal.remainingCredits,
     });
     if (
@@ -381,11 +438,7 @@ export async function runAgentChat(
     await recordSafely(recordEvent, {
       metadata: {
         credits: creditsUsed,
-        model: input.request.model.id as
-          | "balanced"
-          | "fast"
-          | "coding"
-          | "reasoning",
+        model: input.request.model.id as AgentEventModel,
         outcome: "success",
       },
       name: "agent_call_completed",
@@ -417,11 +470,7 @@ export async function runAgentChat(
       .catch(() => undefined);
     await recordSafely(recordEvent, {
       metadata: {
-        model: input.request.model.id as
-          | "balanced"
-          | "fast"
-          | "coding"
-          | "reasoning",
+        model: input.request.model.id as AgentEventModel,
         outcome: "failure",
       },
       name: "agent_call_failed",

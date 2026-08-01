@@ -21,7 +21,15 @@ const TASK_TYPES = new Set<TaskType>([
 ]);
 const AGENT_MODELS = new Set<
   NonNullable<CampaignEventMetadata["model"]>
->(["balanced", "fast", "coding", "reasoning"]);
+>([
+  "balanced",
+  "fast",
+  "coding",
+  "reasoning",
+  "gpt-5.6-luna",
+  "gpt-5.6-terra",
+  "gpt-5.6-sol",
+]);
 const OUTCOMES = new Set<CampaignEventOutcome>([
   "success",
   "failure",

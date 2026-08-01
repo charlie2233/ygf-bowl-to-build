@@ -436,7 +436,7 @@ header for all calls):
 ```ts
 const retryId = crypto.randomUUID();
 await client.chat.completions.create(
-  { model: "fast", messages },
+  { model: "gpt-5.6-terra", messages },
   { headers: { "Idempotency-Key": retryId } },
 );
 ```
@@ -450,15 +450,20 @@ API key are separate bearer credentials. Production inference goes directly
 from the server to OpenAI’s fixed Chat Completions endpoint; neither a browser
 nor a diner can choose or override that destination.
 
-The server currently pins these OpenAI snapshots: `gpt-5.4-mini-2026-03-17`,
-`gpt-5.4-nano-2026-03-17`, `gpt-4.1-mini-2025-04-14`, and
-`gpt-5-mini-2025-08-07`. Pricing constants were checked against OpenAI’s
-standard token prices on 2026-07-27 and must be rechecked before launch.
-Displayed provider spend is an estimate from validated token usage and static
-prices; uncertain failed attempts conservatively book their ceiling, so this
-ledger is not the OpenAI invoice.
-Requests set `store:false`; this prevents Chat Completions application-state
-storage, but does not claim zero retention. OpenAI’s default abuse-monitoring
+The Agent gateway allowlists `gpt-5.6-luna`, `gpt-5.6-terra`, and
+`gpt-5.6-sol`; Terra is the connection-page default. The server forces medium
+reasoning for all three models and does not accept or expose a client-side
+reasoning-effort setting. The older `fast`, `balanced`, `coding`, and
+`reasoning` aliases remain accepted for existing integrations but are omitted
+from the current model list. Agent pricing constants were checked against
+OpenAI’s standard short-context API prices on 2026-07-31 and include GPT-5.6
+cache-write accounting. Customer key and chat responses omit provider-cost
+fields while the internal wallet ledger retains exact validated-token and
+conservative failed-attempt accounting for the hard cap.
+
+Agent requests set `store:false` and disable implicit prompt-cache breakpoints;
+this prevents Chat Completions application-state storage and unexpected cache
+writes, but does not claim zero retention. OpenAI’s default abuse-monitoring
 logs may retain content for up to 30 days. API data is not used for training
 by default unless the account opts in. Zero Data Retention eligibility and
 configuration remain an external production gate.

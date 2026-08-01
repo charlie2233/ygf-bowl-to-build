@@ -6,6 +6,7 @@ import {
   OpenAIChatClient,
   OpenAIChatClientError,
 } from "@/lib/providers/openai-chat-client";
+import { resolveAgentModel } from "@/lib/agent/policy";
 import { resolveModel } from "@/lib/providers/model-catalog";
 
 const model = resolveModel("study", "balanced");
@@ -31,6 +32,7 @@ describe("OpenAIChatClient", () => {
   });
 
   it("uses the fixed official endpoint and privacy-safe request fields", async () => {
+    const agentModel = resolveAgentModel("gpt-5.6-terra");
     const fetchMock = vi.fn<typeof fetch>(async (url, init) => {
       expect(url).toBe(OPENAI_CHAT_COMPLETIONS_ENDPOINT);
       expect(init).toMatchObject({
@@ -47,8 +49,10 @@ describe("OpenAIChatClient", () => {
       >;
       expect(body).toMatchObject({
         max_completion_tokens: 100,
-        model: model.providerId,
+        model: agentModel.providerId,
         n: 1,
+        prompt_cache_options: { mode: "explicit" },
+        reasoning_effort: "medium",
         safety_identifier: "a".repeat(64),
         store: false,
         stream: false,
@@ -56,7 +60,7 @@ describe("OpenAIChatClient", () => {
       expect(body).not.toHaveProperty("max_tokens");
       expect(body).not.toHaveProperty("user");
       expect(body).not.toHaveProperty("temperature");
-      return successResponse();
+      return successResponse({ model: agentModel.providerId });
     });
     const client = new OpenAIChatClient({
       apiKey: "server-secret",
@@ -66,7 +70,7 @@ describe("OpenAIChatClient", () => {
     const result = await client.complete({
       maxCompletionTokens: 100,
       messages: [{ content: "Hello", role: "user" }],
-      model,
+      model: agentModel,
       requestTraceId: "execution-1",
       safetyIdentifier: "a".repeat(64),
       temperature: 0.25,
@@ -75,7 +79,7 @@ describe("OpenAIChatClient", () => {
     expect(result).toMatchObject({
       content: "Useful response",
       inputUnits: 11,
-      model: model.providerId,
+      model: agentModel.providerId,
       outputUnits: 7,
       requestId: "chatcmpl-test_1",
     });
@@ -88,9 +92,10 @@ describe("OpenAIChatClient", () => {
       ...model,
       maxCostMicroUsd: 100,
       pricingMicroUsdPerMillion: {
-        cachedInput: 2,
-        input: 3,
-        output: 5,
+        cacheWrite: 7_000_000,
+        cachedInput: 2_000_000,
+        input: 3_000_000,
+        output: 5_000_000,
       },
     };
     const client = new OpenAIChatClient({
@@ -100,8 +105,11 @@ describe("OpenAIChatClient", () => {
           model: tinyModel.providerId,
           usage: {
             completion_tokens: 1,
-            prompt_tokens: 2,
-            prompt_tokens_details: { cached_tokens: 1 },
+            prompt_tokens: 3,
+            prompt_tokens_details: {
+              cache_write_tokens: 1,
+              cached_tokens: 1,
+            },
           },
         }),
       ),
@@ -114,7 +122,7 @@ describe("OpenAIChatClient", () => {
       safetyIdentifier: "a".repeat(64),
     });
 
-    expect(result.providerCostMicroUsd).toBe(1);
+    expect(result.providerCostMicroUsd).toBe(17);
   });
 
   it("requires the exact fixed model and rejects invalid usage or over-budget cost", async () => {
@@ -131,6 +139,23 @@ describe("OpenAIChatClient", () => {
         usage: {
           completion_tokens: Number.MAX_SAFE_INTEGER,
           prompt_tokens: Number.MAX_SAFE_INTEGER,
+        },
+      }),
+      successResponse({
+        usage: {
+          completion_tokens: 1,
+          prompt_tokens: 2,
+          prompt_tokens_details: {
+            cache_write_tokens: 1,
+            cached_tokens: 2,
+          },
+        },
+      }),
+      successResponse({
+        usage: {
+          completion_tokens: 1,
+          prompt_tokens: 2,
+          prompt_tokens_details: { cache_write_tokens: -1 },
         },
       }),
     ]) {

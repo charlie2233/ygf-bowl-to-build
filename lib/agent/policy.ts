@@ -1,10 +1,11 @@
 import type { ModelCatalogEntry } from "@/lib/providers/model-catalog";
 import {
-  MODEL_CATALOG,
-} from "@/lib/providers/model-catalog";
+  AGENT_MODEL_CATALOG,
+  LEGACY_AGENT_MODEL_ALIASES,
+} from "@/lib/agent/model-catalog";
 import { PROVIDER_COST_CAP_MICRO_USD } from "@/lib/campaign/credits";
 
-export const AGENT_MODEL_ALLOWLIST = MODEL_CATALOG;
+export const AGENT_MODEL_ALLOWLIST = AGENT_MODEL_CATALOG;
 
 export const DEFAULT_MICRO_USD_PER_CREDIT = 1_000;
 export const AGENT_WALLET_COST_CAP_MICRO_USD =
@@ -71,8 +72,12 @@ export function resolveAgentModel(
     throw new Error("AGENT_MODEL_NOT_ALLOWED");
   }
 
+  const canonicalId =
+    LEGACY_AGENT_MODEL_ALIASES[
+      selected as keyof typeof LEGACY_AGENT_MODEL_ALIASES
+    ] ?? selected;
   const model = AGENT_MODEL_ALLOWLIST.find(
-    (candidate) => candidate.id === selected,
+    (candidate) => candidate.id === canonicalId,
   );
   if (!model) {
     throw new Error("AGENT_MODEL_NOT_ALLOWED");

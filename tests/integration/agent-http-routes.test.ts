@@ -112,15 +112,28 @@ describe("OpenAI-compatible HTTP routes", () => {
     expect(modelList).toMatchObject({
       object: "list",
     });
+    expect(modelList.data).toHaveLength(3);
+    expect(
+      modelList.data.map((model: { id: string }) => model.id),
+    ).toEqual([
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol",
+    ]);
     expect(modelList.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "balanced",
+          id: "gpt-5.6-luna",
           object: "model",
           owned_by: "ygf",
         }),
         expect.objectContaining({
-          id: "fast",
+          id: "gpt-5.6-terra",
+          object: "model",
+          owned_by: "ygf",
+        }),
+        expect.objectContaining({
+          id: "gpt-5.6-sol",
           object: "model",
           owned_by: "ygf",
         }),
@@ -130,7 +143,7 @@ describe("OpenAI-compatible HTTP routes", () => {
     const body = {
       max_tokens: 60,
       messages: [{ content: "Connection check.", role: "user" }],
-      model: "fast",
+      model: "gpt-5.6-terra",
       stream: false,
     };
     const first = await context.chat(
@@ -158,13 +171,16 @@ describe("OpenAI-compatible HTTP routes", () => {
           },
         },
       ],
-      model: "fast",
+      model: "gpt-5.6-terra",
       object: "chat.completion",
       ygf: {
         credits_used: 1,
         remaining_credits: 2999,
       },
     });
+    expect(JSON.stringify(await replay.clone().json())).not.toContain(
+      "provider_cost",
+    );
     expect(await replay.json()).toMatchObject({
       ygf: { remaining_credits: 2999 },
     });
@@ -207,6 +223,18 @@ describe("OpenAI-compatible HTTP routes", () => {
         type: "invalid_request_error",
       },
     });
+
+    const blockedEffort = await context.chat(
+      request(
+        context.created.apiKey,
+        {
+          ...body,
+          reasoning_effort: "high",
+        },
+        { idempotencyKey: "blocked-effort-request" },
+      ),
+    );
+    expect(blockedEffort.status).toBe(400);
   });
 
   it("rejects non-number and non-integer max_tokens values", async () => {

@@ -24,7 +24,6 @@ const KEY = {
   },
   ownerId: "demo-user",
   prefix: API_KEY.slice(0, 8),
-  providerCommittedMicroUsd: 0,
   remainingCredits: 3000,
   revokedAt: null,
   rotatedAt: null,
@@ -105,17 +104,12 @@ describe("AgentSetup", () => {
     ).toBeTruthy();
   });
 
-  it("renders bounded provider spend without revealing a stored secret", async () => {
+  it("shows the canonical model selector without provider spend or effort", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
         jsonResponse({
-          keys: [
-            {
-              ...KEY,
-              providerCommittedMicroUsd: 12_345,
-            },
-          ],
+          keys: [KEY],
         }),
       ),
     );
@@ -125,10 +119,25 @@ describe("AgentSetup", () => {
     });
     await settle();
 
-    expect(container.textContent).toContain(
+    const selector = container.querySelector<HTMLSelectElement>(
+      'select[aria-label="Agent model"]',
+    );
+    expect(selector?.getAttribute("aria-describedby")).toBe(
+      "agent-model-description",
+    );
+    expect(selector?.value).toBe("gpt-5.6-terra");
+    expect(
+      Array.from(selector?.options ?? []).map((option) => option.value),
+    ).toEqual([
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol",
+    ]);
+    expect(container.textContent).not.toContain(
       "Estimated provider spend",
     );
-    expect(container.textContent).toContain("$0.0123");
+    expect(container.textContent?.toLowerCase()).not.toContain("effort");
+    expect(container.textContent).not.toMatch(/\bmedium\b/iu);
     expect(container.textContent).not.toContain(API_KEY);
   });
 
@@ -173,7 +182,6 @@ describe("AgentSetup", () => {
             {
               ...KEY,
               lastUsedAt: "2026-07-31T20:00:00.000Z",
-              providerCommittedMicroUsd: 12_345,
               remainingCredits: 2999,
             },
           ],
@@ -183,7 +191,9 @@ describe("AgentSetup", () => {
     });
 
     expect(container.textContent).toContain("2,999");
-    expect(container.textContent).toContain("$0.0123");
+    expect(container.textContent).not.toContain(
+      "Estimated provider spend",
+    );
     expect(container.querySelector('[role="status"]')?.textContent).toBe(
       "Your key list is up to date.",
     );
@@ -258,6 +268,17 @@ describe("AgentSetup", () => {
     expect(container.textContent).toContain("Shown once");
     expect(container.textContent).toContain("3,000");
 
+    const selector = container.querySelector<HTMLSelectElement>(
+      'select[aria-label="Agent model"]',
+    );
+    await act(async () => {
+      if (selector) {
+        selector.value = "gpt-5.6-sol";
+        selector.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    expect(selector?.value).toBe("gpt-5.6-sol");
+
     const copyEnv = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent?.includes("Copy .env"),
     );
@@ -283,7 +304,7 @@ describe("AgentSetup", () => {
         {
           apiKey: API_KEY,
           baseURL: `${window.location.origin}/v1`,
-          model: "fast",
+          model: "gpt-5.6-sol",
         },
         null,
         2,
@@ -324,6 +345,12 @@ describe("AgentSetup", () => {
     ).toBe(`Bearer ${API_KEY}`);
     expect(String(connectionCall?.[0])).not.toContain(API_KEY);
     expect(connectionCall?.[1]?.body).not.toContain(API_KEY);
+    const connectionBody = JSON.parse(
+      String(connectionCall?.[1]?.body),
+    ) as Record<string, unknown>;
+    expect(connectionBody.model).toBe("gpt-5.6-sol");
+    expect(connectionBody.max_tokens).toBe(256);
+    expect(connectionBody).not.toHaveProperty("reasoning_effort");
 
     const refresh = Array.from(
       container.querySelectorAll("button"),

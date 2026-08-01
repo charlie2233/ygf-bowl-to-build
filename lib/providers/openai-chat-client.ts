@@ -149,7 +149,14 @@ function validateModel(model: ModelCatalogEntry) {
     model.providerId.length > 128 ||
     !Number.isSafeInteger(model.maxCostMicroUsd) ||
     model.maxCostMicroUsd < 1 ||
-    ![prices.input, prices.cachedInput, prices.output].every(
+    (model.reasoningEffort !== undefined &&
+      model.reasoningEffort !== "medium") ||
+    ![
+      prices.input,
+      prices.cachedInput,
+      prices.cacheWrite ?? prices.input,
+      prices.output,
+    ].every(
       (price) =>
         Number.isSafeInteger(price) && price >= 0,
     )
@@ -159,21 +166,26 @@ function validateModel(model: ModelCatalogEntry) {
 }
 
 function calculateCostMicroUsd({
+  cacheWriteInputUnits,
   cachedInputUnits,
   inputUnits,
   model,
   outputUnits,
 }: {
+  cacheWriteInputUnits: number;
   cachedInputUnits: number;
   inputUnits: number;
   model: ModelCatalogEntry;
   outputUnits: number;
 }) {
-  const uncachedInputUnits = inputUnits - cachedInputUnits;
+  const uncachedInputUnits =
+    inputUnits - cachedInputUnits - cacheWriteInputUnits;
   const prices = model.pricingMicroUsdPerMillion;
   const numerator =
     BigInt(uncachedInputUnits) * BigInt(prices.input) +
     BigInt(cachedInputUnits) * BigInt(prices.cachedInput) +
+    BigInt(cacheWriteInputUnits) *
+      BigInt(prices.cacheWrite ?? prices.input) +
     BigInt(outputUnits) * BigInt(prices.output);
   const cost =
     (numerator + BigInt(999_999)) / BigInt(1_000_000);
@@ -275,6 +287,10 @@ export class OpenAIChatClient {
         store: false,
         stream: false,
       };
+      if (input.model.reasoningEffort) {
+        requestBody.prompt_cache_options = { mode: "explicit" };
+        requestBody.reasoning_effort = input.model.reasoningEffort;
+      }
       if (input.responseFormat) {
         requestBody.response_format = input.responseFormat;
       }
@@ -325,21 +341,33 @@ export class OpenAIChatClient {
         throw new OpenAIChatClientError();
       }
       let cachedInputUnits = 0;
+      let cacheWriteInputUnits = 0;
       if (usage.prompt_tokens_details !== undefined) {
         if (!plainRecord(usage.prompt_tokens_details)) {
           throw new OpenAIChatClientError();
         }
         const cached = usage.prompt_tokens_details.cached_tokens;
+        const cacheWrite =
+          usage.prompt_tokens_details.cache_write_tokens;
         if (cached !== undefined && !safeInteger(cached)) {
+          throw new OpenAIChatClientError();
+        }
+        if (cacheWrite !== undefined && !safeInteger(cacheWrite)) {
           throw new OpenAIChatClientError();
         }
         cachedInputUnits =
           typeof cached === "number" ? cached : 0;
+        cacheWriteInputUnits =
+          typeof cacheWrite === "number" ? cacheWrite : 0;
       }
-      if (cachedInputUnits > usage.prompt_tokens) {
+      if (
+        cachedInputUnits + cacheWriteInputUnits >
+        usage.prompt_tokens
+      ) {
         throw new OpenAIChatClientError();
       }
       const providerCostMicroUsd = calculateCostMicroUsd({
+        cacheWriteInputUnits,
         cachedInputUnits,
         inputUnits: usage.prompt_tokens,
         model: input.model,

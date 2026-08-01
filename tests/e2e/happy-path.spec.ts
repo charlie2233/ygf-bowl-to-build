@@ -109,6 +109,22 @@ test("Agent setup is reusable, accessible, and responsive", async ({
   await expect(
     page.getByText("2,879", { exact: true }),
   ).toBeVisible();
+  const modelSelector = page.getByRole("combobox", {
+    name: "Agent model",
+  });
+  await expect(modelSelector).toHaveValue("gpt-5.6-terra");
+  await expect(modelSelector.locator("option")).toHaveText([
+    "GPT-5.6 Luna",
+    "GPT-5.6 Terra",
+    "GPT-5.6 Sol",
+  ]);
+  await modelSelector.selectOption("gpt-5.6-sol");
+  await expect(modelSelector).toHaveValue("gpt-5.6-sol");
+  await expect(
+    page.getByText("Estimated provider spend"),
+  ).toHaveCount(0);
+  await expect(page.getByText(/reasoning effort/i)).toHaveCount(0);
+  await expect(page.getByText(/\bmedium\b/i)).toHaveCount(0);
   await expectNoHorizontalOverflow(page, "/connect/agent");
   await expectNoAccessibilityViolations(page, "/connect/agent");
 });

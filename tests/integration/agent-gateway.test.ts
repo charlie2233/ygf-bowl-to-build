@@ -151,6 +151,29 @@ function transformTerminalResult(
   });
 }
 
+function transformBeginResult(
+  repository: AgentGatewayRepository,
+  transform: (
+    value: Awaited<
+      ReturnType<AgentGatewayRepository["beginRequest"]>
+    >,
+  ) => Awaited<ReturnType<AgentGatewayRepository["beginRequest"]>>,
+): AgentGatewayRepository {
+  return new Proxy(repository, {
+    get(target, property) {
+      if (property === "beginRequest") {
+        return async (
+          input: Parameters<
+            AgentGatewayRepository["beginRequest"]
+          >[0],
+        ) => transform(await target.beginRequest(input));
+      }
+      const value = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
+
 function reverseJsonObjectKeys(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(reverseJsonObjectKeys);
@@ -214,14 +237,14 @@ describe("OpenAI-compatible Agent gateway", () => {
           },
         },
       ],
-      model: "fast",
+      model: "gpt-5.6-luna",
       object: "chat.completion",
       ygf: {
         credits_used: 1,
-        provider_cost_micro_usd: 840,
         remaining_credits: 2999,
       },
     });
+    expect(JSON.stringify(first)).not.toContain("provider_cost");
     expect(provider.run).toHaveBeenCalledTimes(1);
     await expect(
       context.campaign.getWallet({ userId: "demo-user" }),
@@ -262,6 +285,69 @@ describe("OpenAI-compatible Agent gateway", () => {
         reservedAfter: 0,
       }),
     ]);
+  });
+
+  it("strips legacy provider spend from a completed replay payload", async () => {
+    const context = await setup();
+    const { generated } = await context.createKey();
+    const principal = await context.repository.authenticateKey(
+      generated.persistence.digest,
+    );
+    const provider = successfulProvider();
+    const input = {
+      idempotencyKey: idem("agent-legacy-spend-replay"),
+      keyDigest: generated.persistence.digest,
+      principal,
+      request: chatRequest(),
+    };
+    const first = await runAgentChat(input, {
+      environment: ENVIRONMENT,
+      now: context.now,
+      provider,
+      repository: context.repository,
+    });
+    const legacyReplayRepository = transformBeginResult(
+      context.repository,
+      (execution) => {
+        if (
+          execution.state !== "completed" ||
+          !execution.resultPayload ||
+          typeof execution.resultPayload.response !== "object" ||
+          execution.resultPayload.response === null ||
+          Array.isArray(execution.resultPayload.response)
+        ) {
+          return execution;
+        }
+        const response = execution.resultPayload.response as Readonly<
+          Record<string, unknown>
+        >;
+        const ygf = response.ygf as Readonly<Record<string, unknown>>;
+        return {
+          ...execution,
+          resultPayload: {
+            ...execution.resultPayload,
+            response: {
+              ...response,
+              ygf: {
+                ...ygf,
+                provider_cost_micro_usd: 840,
+              },
+            },
+          },
+        };
+      },
+    );
+
+    const replay = await runAgentChat(input, {
+      environment: ENVIRONMENT,
+      now: context.now,
+      provider,
+      repository: legacyReplayRepository,
+    });
+
+    expect(replay).toEqual(first);
+    expect(JSON.stringify(replay)).not.toContain("provider_cost");
+    expect(provider.run).toHaveBeenCalledTimes(1);
   });
 
   it("accepts a semantically identical terminal response with recursively reordered object keys", async () => {
@@ -826,7 +912,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         throw new Error("upstream admission may have billed");
       }),
     };
-    for (let attempt = 0; attempt < 120; attempt += 1) {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
       context.setNow(
         new Date(
           Date.parse("2026-07-27T20:00:00.000Z") +
@@ -867,7 +953,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         },
       ),
     ).rejects.toMatchObject({ code: "PROVIDER_LIMIT_REACHED" });
-    expect(provider.run).toHaveBeenCalledTimes(120);
+    expect(provider.run).toHaveBeenCalledTimes(6);
     await expect(
       context.campaign.getWallet({ userId: "demo-user" }),
     ).resolves.toMatchObject({
@@ -893,7 +979,7 @@ describe("OpenAI-compatible Agent gateway", () => {
         (input) =>
           new Promise<AgentProviderResult>((resolve) => {
             release = resolve;
-            expect(input.model.id).toBe("fast");
+            expect(input.model.id).toBe("gpt-5.6-luna");
           }),
       ),
     };

@@ -32,7 +32,7 @@ after this document is committed.
 | --- | --- | --- |
 | Lint | `pnpm lint` | Pass on July 31, 2026 |
 | TypeScript | `pnpm typecheck` | Pass on July 31, 2026 |
-| Unit/integration/security contracts | complete single-worker `pnpm vitest run --maxWorkers=1 --fileParallelism=false` plus focused privileged-settlement rerun | Pass on July 31, 2026: 81/81 files and 612/612 tests with a normal process exit; focused settlement/full-chain checks passed 14/14 |
+| Unit/integration/security contracts | complete single-worker `pnpm vitest run --maxWorkers=1 --fileParallelism=false` plus focused privileged-settlement rerun | Pass on July 31, 2026: 82/82 files and 643/643 tests with a normal process exit; focused settlement/full-chain checks passed 14/14 |
 | Production compilation | `pnpm build` | Pass on July 31, 2026: optimized build, page generation, and dynamic route manifest |
 | Production dependency audit | `pnpm audit --prod` | Pass on July 29, 2026: 0 known vulnerabilities |
 | Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 31, 2026: 83 tests across setup, desktop Chromium, and iPhone WebKit projects |
@@ -62,6 +62,11 @@ Required behavioral evidence:
   failure refunds, and expired replay content cannot re-execute;
 - ordinary redemption reaches a useful AI task without exposing API concepts,
   while the optional Agent page copies config and tests a bounded request;
+- the Agent page defaults to GPT-5.6 Terra, offers only Luna, Terra, and Sol,
+  updates the selected request model, and exposes neither reasoning effort nor
+  internal provider-spend estimates;
+- customer key and completion responses omit internal provider-cost fields,
+  while wallet-wide settlement and the provider-cost ceiling remain enforced;
 - the user-triggered check-in card contains no claim, private QR, key, email,
   user ID, or exact remaining balance;
 - all four task presets use a small server allowlist of models;
@@ -216,10 +221,11 @@ satisfied by this checkout.
 - [ ] Independent Agent key-digest and request-fingerprint secrets are
   installed and live key creation passed on 2026-07-31. Rotation/revocation
   incident rehearsal remains open.
-- [ ] The server-only `OPENAI_API_KEY`, pinned fast snapshot, fixed OpenAI
-  endpoint, safe error mapping, variable-cost accounting, and one live
-  completion passed on 2026-07-31. Project billing alerts and the remaining
-  pinned-model live matrix are still external gates.
+- [ ] The server-only `OPENAI_API_KEY`, historical pinned-fast snapshot,
+  fixed OpenAI endpoint, safe error mapping, variable-cost accounting, and
+  one live legacy completion passed on 2026-07-31. The current Luna, Terra,
+  and Sol selector has local contract coverage; live completion proof for
+  each canonical model and project billing alerts remain external gates.
 - [x] Enable `YGF_AGENT_GATEWAY_ENABLED` only after provider preflight and a
   controlled production acceptance. The 2026-07-31 flow passed fresh
   redemption, Google upgrade, one-time key creation, a real completion,

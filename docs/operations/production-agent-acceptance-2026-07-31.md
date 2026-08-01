@@ -1,5 +1,9 @@
 # Production redemption and Agent API acceptance — 2026-07-31
 
+> Historical receipt: this acceptance predates the GPT-5.6 Luna, Terra, and
+> Sol selector. It proves the legacy `fast` alias and pinned GPT-5.4 provider
+> snapshot only; it is not live GPT-5.6 model-matrix evidence.
+
 This receipt intentionally omits plaintext claim codes, claim URLs, private QR
 payloads, personal API-key material, provider credentials, user identifiers,
 raw prompts, and raw IP addresses.

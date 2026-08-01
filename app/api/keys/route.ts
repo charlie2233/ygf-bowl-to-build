@@ -1,6 +1,7 @@
 import { isSameOriginMutation } from "@/lib/auth/admin";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import { createPersonalAgentKey } from "@/lib/agent/key-service";
+import { publicAgentKeySummary } from "@/lib/agent/public-key";
 import { readBoundedRequestText } from "@/lib/admin/http";
 import { isAgentGatewayReady } from "@/lib/agent/readiness";
 import {
@@ -84,11 +85,12 @@ export function createKeyCollectionHandlers({
       return response({ error: "AUTHENTICATION_REQUIRED" }, 401);
     }
     try {
+      const keys = await (
+        repository ?? getAgentGatewayRepository()
+      ).listKeys(user.id);
       return response(
         {
-          keys: await (
-            repository ?? getAgentGatewayRepository()
-          ).listKeys(user.id),
+          keys: keys.map(publicAgentKeySummary),
         },
         200,
       );
@@ -160,7 +162,7 @@ export function createKeyCollectionHandlers({
       return response(
         {
           apiKey: created.apiKey,
-          key: created.key,
+          key: publicAgentKeySummary(created.key),
           notice:
             "Copy this key now. It will not be shown again.",
         },

@@ -29,7 +29,7 @@ test("demo administrator can inspect campaign metrics and code operations", asyn
     page.getByRole("heading", { name: "Agent model usage" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("row", { name: "fast 1" }),
+    page.getByRole("row", { name: "gpt-5.6-terra 1" }),
   ).toBeVisible();
   await expect(
     page.locator('meta[name="robots"]'),

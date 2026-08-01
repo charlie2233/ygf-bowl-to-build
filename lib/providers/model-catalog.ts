@@ -6,11 +6,13 @@ export interface ModelCatalogEntry {
   id: string;
   maxCostMicroUsd: number;
   pricingMicroUsdPerMillion: {
+    cacheWrite?: number;
     cachedInput: number;
     input: number;
     output: number;
   };
   providerId: string;
+  reasoningEffort?: "medium";
 }
 
 export interface FriendlyModelChoice {

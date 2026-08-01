@@ -91,6 +91,13 @@ handoff:
    redemption and web tasks now fail closed without their exact enablement
    flags, while a bounded service-only daily-maintenance contract handles idle
    stale reservations and expiry work without accepting a public batch size.
+10. customer key and chat payloads exposed internal provider-cost estimates;
+    public DTOs now omit those fields while the wallet ledger and admin
+    accounting retain them for the hard cap.
+11. the GPT-5.6 rollout requires cache-write cost accounting and a hidden,
+    server-owned reasoning setting; usage validation now accounts for
+    `cache_write_tokens`, the client cannot submit reasoning effort, and the
+    provider adapter fixes it to medium.
 
 ## Local evidence
 
@@ -106,6 +113,9 @@ Dedicated unit and integration contracts cover:
   active-key limit;
 - valid demo model listing and chat completion plus invalid, URL-carried,
   revoked, expired, and rotated keys;
+- Luna/Terra/Sol canonical listing and selection, legacy alias compatibility,
+  server-owned medium reasoning, cache-write accounting, and customer payloads
+  without provider-cost estimates;
 - model allowlist, per-key limits, wallet-wide provider cap, failure credit refund with conservative provider-cost settlement,
   concurrent/repeated idempotency, and expired replay behavior;
 - forced RLS/service-only migration contracts and absence of a raw-prompt

@@ -18,6 +18,12 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  AGENT_MODEL_CHOICES,
+  DEFAULT_AGENT_MODEL_ID,
+  isAgentModelId,
+  type AgentModelId,
+} from "@/lib/agent/models";
 import { copyText } from "@/lib/browser/copy-text";
 import { browserRandomUuid } from "@/lib/browser/uuid";
 
@@ -28,7 +34,6 @@ interface AgentKeyDescriptor {
   last4: string;
   lastUsedAt: string | null;
   prefix: string;
-  providerCommittedMicroUsd: number;
   remainingCredits: number;
   revokedAt: string | null;
 }
@@ -77,9 +82,7 @@ function isKeyDescriptor(value: unknown): value is AgentKeyDescriptor {
       (typeof key.revokedAt === "string" &&
         Number.isFinite(new Date(key.revokedAt).getTime()))) &&
     Number.isSafeInteger(key.remainingCredits) &&
-    Number(key.remainingCredits) >= 0 &&
-    Number.isSafeInteger(key.providerCommittedMicroUsd) &&
-    Number(key.providerCommittedMicroUsd) >= 0
+    Number(key.remainingCredits) >= 0
   );
 }
 
@@ -131,15 +134,6 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function formatProviderSpend(microUsd: number) {
-  return new Intl.NumberFormat("en-US", {
-    currency: "USD",
-    maximumFractionDigits: 4,
-    minimumFractionDigits: 4,
-    style: "currency",
-  }).format(microUsd / 1_000_000);
-}
-
 function keyLabel(key: AgentKeyDescriptor) {
   return `${key.prefix}••••••••${key.last4}`;
 }
@@ -177,6 +171,9 @@ export function AgentSetup({
     () => "",
   );
   const [keys, setKeys] = useState<AgentKeyDescriptor[]>([]);
+  const [selectedModel, setSelectedModel] = useState<AgentModelId>(
+    DEFAULT_AGENT_MODEL_ID,
+  );
   const [revealed, setRevealed] = useState<RevealedKey | null>(null);
   const [status, setStatus] = useState(
     "Loading your developer keys…",
@@ -190,6 +187,9 @@ export function AgentSetup({
     : "This site’s /v1 endpoint";
   const activeKeys = keys.filter((key) => key.revokedAt === null);
   const currentKey = revealed?.apiKey ?? "";
+  const selectedModelChoice =
+    AGENT_MODEL_CHOICES.find((model) => model.id === selectedModel) ??
+    AGENT_MODEL_CHOICES[1];
   const snippets = useMemo(() => {
     const baseUrl = browserOrigin ? `${browserOrigin}/v1` : "";
     return {
@@ -201,14 +201,14 @@ export function AgentSetup({
             {
               apiKey: currentKey,
               baseURL: baseUrl || "<this-site-origin>/v1",
-              model: "fast",
+              model: selectedModel,
             },
             null,
             2,
           )
         : "",
     };
-  }, [browserOrigin, currentKey]);
+  }, [browserOrigin, currentKey, selectedModel]);
 
   const loadKeys = useCallback(async (message = "") => {
     setAction("load");
@@ -396,14 +396,14 @@ export function AgentSetup({
         "/v1/chat/completions",
         {
           body: JSON.stringify({
-            max_tokens: 60,
+            max_tokens: 256,
             messages: [
               {
                 content: "Return a short YGF connection check.",
                 role: "user",
               },
             ],
-            model: "fast",
+            model: selectedModel,
             stream: false,
           }),
           cache: "no-store",
@@ -535,6 +535,35 @@ export function AgentSetup({
           </p>
         ) : null}
 
+        <div className="agent-model-picker">
+          <div>
+            <span>Agent model</span>
+            <strong>{selectedModelChoice.label}</strong>
+            <p id="agent-model-description">
+              {selectedModelChoice.description}
+            </p>
+          </div>
+          <label>
+            <span className="visually-hidden">Select Agent model</span>
+            <select
+              aria-describedby="agent-model-description"
+              aria-label="Agent model"
+              onChange={(event) => {
+                if (isAgentModelId(event.target.value)) {
+                  setSelectedModel(event.target.value);
+                }
+              }}
+              value={selectedModel}
+            >
+              {AGENT_MODEL_CHOICES.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <div className="agent-config-grid">
           <article>
             <span>Base URL</span>
@@ -656,14 +685,6 @@ export function AgentSetup({
                       <dt>Credits remaining</dt>
                       <dd>
                         {key.remainingCredits.toLocaleString("en-US")}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Estimated provider spend</dt>
-                      <dd>
-                        {formatProviderSpend(
-                          key.providerCommittedMicroUsd,
-                        )}
                       </dd>
                     </div>
                     <div>

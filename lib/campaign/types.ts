@@ -115,7 +115,14 @@ export type CampaignConnectionState =
 
 export interface CampaignEventMetadata {
   taskType?: TaskType;
-  model?: "balanced" | "fast" | "coding" | "reasoning";
+  model?:
+    | "balanced"
+    | "fast"
+    | "coding"
+    | "reasoning"
+    | "gpt-5.6-luna"
+    | "gpt-5.6-terra"
+    | "gpt-5.6-sol";
   outcome?: CampaignEventOutcome;
   count?: number;
   credits?: number;

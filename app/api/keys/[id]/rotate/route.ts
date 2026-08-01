@@ -1,6 +1,7 @@
 import { rotatePersonalAgentKey } from "@/lib/agent/key-service";
 import { isSameOriginMutation } from "@/lib/auth/admin";
 import { isAgentGatewayReady } from "@/lib/agent/readiness";
+import { publicAgentKeySummary } from "@/lib/agent/public-key";
 import { getAuthenticatedUser } from "@/lib/auth/user";
 import {
   AgentGatewayError,
@@ -75,7 +76,7 @@ export function createKeyRotateHandler({
       return response(
         {
           apiKey: rotated.apiKey,
-          key: rotated.key,
+          key: publicAgentKeySummary(rotated.key),
           notice:
             "The previous key is revoked. Copy this replacement now.",
         },

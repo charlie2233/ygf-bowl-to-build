@@ -1,5 +1,6 @@
 import { isSameOriginMutation } from "@/lib/auth/admin";
 import { getAuthenticatedUser } from "@/lib/auth/user";
+import { publicAgentKeySummary } from "@/lib/agent/public-key";
 import {
   AgentGatewayError,
   getAgentGatewayRepository,
@@ -56,11 +57,12 @@ export function createKeyRevokeHandler({
       return response({ error: "AUTHENTICATION_REQUIRED" }, 401);
     }
     try {
+      const key = await (
+        repository ?? getAgentGatewayRepository()
+      ).revokeKey(user.id, normalized);
       return response(
         {
-          key: await (
-            repository ?? getAgentGatewayRepository()
-          ).revokeKey(user.id, normalized),
+          key: publicAgentKeySummary(key),
           revoked: true,
         },
         200,

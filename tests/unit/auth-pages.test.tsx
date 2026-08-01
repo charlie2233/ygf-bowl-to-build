@@ -189,7 +189,7 @@ describe("authentication pages", () => {
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://build.ygf.example/auth?error=callback",
+      "https://build.ygf.example/auth?error=callback&next=%2Fwallet",
     );
     expect(response.headers.get("cache-control")).toBe(
       "private, no-store",
@@ -204,12 +204,78 @@ describe("authentication pages", () => {
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://build.ygf.example/auth?error=callback",
+      "https://build.ygf.example/auth?error=callback&next=%2Fwallet",
     );
     expect(response.headers.get("cache-control")).toBe(
       "private, no-store",
     );
     expect(createAuthServerClient).not.toHaveBeenCalled();
+  });
+
+  it("explains an existing provider identity without merging or exchanging the guest session", async () => {
+    const response = await authCallback(
+      new NextRequest(
+        "https://build.ygf.example/auth/callback?error=server_error&error_code=identity_already_exists&error_description=private-provider-detail&next=/connect/agent",
+      ),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://build.ygf.example/auth?error=identity-already-exists&next=%2Fconnect%2Fagent",
+    );
+    expect(response.headers.get("location")).not.toContain(
+      "private-provider-detail",
+    );
+    expect(response.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    expect(createAuthServerClient).not.toHaveBeenCalled();
+
+    const page = await AuthPage({
+      searchParams: Promise.resolve({
+        error: "identity-already-exists",
+        next: "/connect/agent",
+      }),
+    });
+    const panel = page.props.children as ReactElement<{
+      initialMessageKey?: string;
+      nextPath: string;
+    }>;
+    expect(panel.props.initialMessageKey).toBe(
+      "identityAlreadyExists",
+    );
+    expect(panel.props.nextPath).toBe("/connect/agent");
+
+    const unsafeNextResponse = await authCallback(
+      new NextRequest(
+        "https://build.ygf.example/auth/callback?error_code=identity_already_exists&next=//attacker.example",
+      ),
+    );
+    expect(unsafeNextResponse.headers.get("location")).toBe(
+      "https://build.ygf.example/auth?error=identity-already-exists&next=%2Fredeem",
+    );
+  });
+
+  it("maps an identity conflict returned during code exchange to the safe recovery state", async () => {
+    exchangeCodeForSession.mockResolvedValue({
+      error: {
+        code: "identity_already_exists",
+        message: "private exchange detail",
+      },
+    });
+
+    const response = await authCallback(
+      new NextRequest(
+        "https://build.ygf.example/auth/callback?code=valid&next=/connect/agent",
+      ),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://build.ygf.example/auth?error=identity-already-exists&next=%2Fconnect%2Fagent",
+    );
+    expect(response.headers.get("location")).not.toContain(
+      "private exchange detail",
+    );
+    expect(exchangeCodeForSession).toHaveBeenCalledWith("valid");
   });
 
   it("redirects an unauthenticated success-page visitor through sign-in", async () => {

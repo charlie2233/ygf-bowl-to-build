@@ -275,6 +275,27 @@ describe("remaining customer-page localization", () => {
     );
   });
 
+  it.each(locales)(
+    "provides localized, non-secret identity-conflict guidance in %s",
+    (locale) => {
+      const message =
+        customerPagesCopy[locale].auth.messages.identityAlreadyExists;
+      expect(message.length).toBeGreaterThan(80);
+      expect(message).not.toMatch(/error_description|identity_already_exists/);
+      if (locale === "en") {
+        expect(message).toMatch(/guest Credits were not moved/i);
+        expect(message).toMatch(
+          /may no longer be accessible from this browser/i,
+        );
+      }
+      if (locale !== "en") {
+        expect(message).not.toBe(
+          customerPagesCopy.en.auth.messages.identityAlreadyExists,
+        );
+      }
+    },
+  );
+
   it("passes auth message keys and a safe next path across the server boundary", async () => {
     authMocks.getAuthenticatedUser.mockResolvedValue(null);
 

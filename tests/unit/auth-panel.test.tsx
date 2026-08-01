@@ -189,6 +189,49 @@ describe("AuthPanel anonymous upgrade", () => {
     ).toBe(true);
   });
 
+  it("keeps the guest session intact when provider linking reports an existing identity", async () => {
+    await act(async () => {
+      root.render(
+        <AuthPanel
+          isAnonymous
+          mode="supabase"
+          nextPath="/connect/agent"
+          providerAvailability={ENABLED_PROVIDERS}
+        />,
+      );
+    });
+
+    authMocks.linkIdentity.mockResolvedValueOnce({
+      data: { provider: "google", url: null },
+      error: {
+        code: "identity_already_exists",
+        message: "private provider detail",
+      },
+    });
+    await act(async () => {
+      Array.from(container.querySelectorAll("button"))
+        .find((button) => button.textContent === "Link Google")
+        ?.click();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
+      /guest Credits were not moved/i,
+    );
+    expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
+      /may no longer be accessible from this browser/i,
+    );
+    expect(container.textContent).not.toContain("private provider detail");
+    expect(
+      Array.from(container.querySelectorAll("button")).every(
+        (button) => !button.disabled,
+      ),
+    ).toBe(true);
+    expect(authMocks.linkIdentity).toHaveBeenCalledTimes(1);
+    expect(authMocks.signInWithOAuth).not.toHaveBeenCalled();
+    expect(authMocks.signInWithOtp).not.toHaveBeenCalled();
+  });
+
   it("fails closed with visible provider buttons and an accessible Magic Link fallback", async () => {
     await act(async () => {
       root.render(

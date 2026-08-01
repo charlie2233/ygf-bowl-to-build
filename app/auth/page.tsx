@@ -48,9 +48,11 @@ export default async function AuthPage({
   const initialMessageKey: AuthMessageKey | undefined =
     error === "callback"
       ? "callbackError"
-      : error === "anonymous"
-        ? "anonymousError"
-        : undefined;
+      : error === "identity-already-exists"
+        ? "identityAlreadyExists"
+        : error === "anonymous"
+          ? "anonymousError"
+          : undefined;
 
   return (
     <section className="auth-page">

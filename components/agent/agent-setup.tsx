@@ -448,6 +448,12 @@ export function AgentSetup({
     }
   }
 
+  function refreshKeys() {
+    setStatus("Refreshing your keys…");
+    setStatusTone("neutral");
+    void loadKeys();
+  }
+
   return (
     <div className="agent-setup">
       <section
@@ -614,7 +620,7 @@ export function AgentSetup({
           </div>
           <Button
             disabled={action !== null}
-            onClick={() => void loadKeys("Refreshing your keys…")}
+            onClick={refreshKeys}
             variant="quiet"
           >
             <RefreshCw aria-hidden="true" />

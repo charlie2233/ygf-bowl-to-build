@@ -132,6 +132,66 @@ describe("AgentSetup", () => {
     expect(container.textContent).not.toContain(API_KEY);
   });
 
+  it("finishes a successful usage refresh instead of leaving a busy status", async () => {
+    let resolveRefresh: (response: Response) => void = () => {
+      throw new Error("Refresh resolver was not initialized");
+    };
+    const pendingRefresh = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    let requestCount = 0;
+    const fetchMock = vi.fn(() => {
+      requestCount += 1;
+      return requestCount === 1
+        ? Promise.resolve(jsonResponse({ keys: [KEY] }))
+        : pendingRefresh;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await act(async () => {
+      root.render(<AgentSetup />);
+    });
+    await settle();
+
+    const refresh = Array.from(
+      container.querySelectorAll("button"),
+    ).find((button) => button.textContent?.includes("Refresh"));
+    await act(async () => {
+      refresh?.click();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      "Refreshing your keys…",
+    );
+    expect(refresh?.disabled).toBe(true);
+
+    await act(async () => {
+      resolveRefresh(
+        jsonResponse({
+          keys: [
+            {
+              ...KEY,
+              lastUsedAt: "2026-07-31T20:00:00.000Z",
+              providerCommittedMicroUsd: 12_345,
+              remainingCredits: 2999,
+            },
+          ],
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.textContent).toContain("2,999");
+    expect(container.textContent).toContain("$0.0123");
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      "Your key list is up to date.",
+    );
+    expect(container.textContent).not.toContain("Refreshing your keys…");
+    expect(refresh?.disabled).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("reveals a new key once, copies configs, and runs a bounded connection check", async () => {
     vi.stubGlobal("crypto", {
       getRandomValues: (bytes: Uint8Array) => {
@@ -264,5 +324,25 @@ describe("AgentSetup", () => {
     ).toBe(`Bearer ${API_KEY}`);
     expect(String(connectionCall?.[0])).not.toContain(API_KEY);
     expect(connectionCall?.[1]?.body).not.toContain(API_KEY);
+
+    const refresh = Array.from(
+      container.querySelectorAll("button"),
+    ).find((button) => button.textContent?.includes("Refresh"));
+    await act(async () => {
+      refresh?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.textContent).toContain(API_KEY);
+    expect(container.textContent).toContain("Shown once");
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      "Your key list is up to date.",
+    );
+    expect(
+      Array.from(container.querySelectorAll("button")).find((button) =>
+        button.textContent?.includes("Copy API key"),
+      ),
+    ).toBeTruthy();
+    expect(testConnection?.disabled).toBe(false);
   });
 });

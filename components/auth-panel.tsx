@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { useCampaignLanguage } from "@/components/campaign-language";
 import { createAuthBrowserClient } from "@/lib/auth/client";
+import { isIdentityAlreadyExistsError } from "@/lib/auth/errors";
 import type { OAuthProviderAvailability } from "@/lib/auth/provider-availability";
 import { safeAuthNextPath } from "@/lib/auth/redirect";
 import {
@@ -86,8 +87,12 @@ export function AuthPanel({
       if (error || !data.url) {
         throw error ?? new Error("OAUTH_REDIRECT_UNAVAILABLE");
       }
-    } catch {
-      setMessageKey("providerError");
+    } catch (error) {
+      setMessageKey(
+        isIdentityAlreadyExistsError(error)
+          ? "identityAlreadyExists"
+          : "providerError",
+      );
       setMessageKind("error");
       setBusy(false);
     }

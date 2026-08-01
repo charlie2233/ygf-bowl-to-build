@@ -6,6 +6,7 @@ type TaskStatus = "completed" | "failed";
 export type AuthMessageKey =
   | "callbackError"
   | "anonymousError"
+  | "identityAlreadyExists"
   | "providerError"
   | "magicLinkError"
   | "magicLinkSent";
@@ -145,6 +146,8 @@ export const customerPagesCopy = {
         callbackError: "We couldn’t complete sign-in. Please try again.",
         anonymousError:
           "Quick guest access is temporarily unavailable. Your secured claim is still waiting.",
+        identityAlreadyExists:
+          "That Google or Apple identity already belongs to another YGF account. Your current guest Credits were not moved. To keep this guest wallet, choose a different identity. Only sign out if you intend to use the existing account—the guest wallet will remain separate and may no longer be accessible from this browser.",
         providerError:
           "Sign-in could not start. Please try another option.",
         magicLinkError:
@@ -289,6 +292,8 @@ export const customerPagesCopy = {
       messages: {
         callbackError: "无法完成登录，请重试。",
         anonymousError: "访客模式暂时不可用。你已保存的兑换权益仍在等待确认。",
+        identityAlreadyExists:
+          "该 Google 或 Apple 身份已属于另一个杨国福账户。当前访客 Credits 未转移。若要保留此访客钱包，请选择其他身份；只有在确定要使用原账户时才退出，访客钱包仍会保持独立，并可能无法再从此浏览器访问。",
         providerError: "无法开始登录，请尝试其他方式。",
         magicLinkError: "无法发送登录链接，请检查邮箱后重试。",
         magicLinkSent: "请查收邮箱中的安全登录链接。",
@@ -430,6 +435,8 @@ export const customerPagesCopy = {
           "No pudimos completar el inicio de sesión. Inténtalo de nuevo.",
         anonymousError:
           "El acceso rápido para invitados no está disponible temporalmente. Tu canje protegido sigue esperando.",
+        identityAlreadyExists:
+          "Esa identidad de Google o Apple ya pertenece a otra cuenta de YGF. Tus Credits de invitado actuales no se movieron. Para conservar esta cartera de invitado, elige otra identidad. Cierra sesión solo si quieres usar la cuenta existente: la cartera de invitado seguirá separada y podría dejar de estar accesible en este navegador.",
         providerError:
           "No se pudo iniciar la sesión. Prueba con otra opción.",
         magicLinkError:
@@ -577,6 +584,8 @@ export const customerPagesCopy = {
           "Nous n’avons pas pu terminer la connexion. Réessayez.",
         anonymousError:
           "L’accès invité rapide est temporairement indisponible. Votre activation sécurisée reste en attente.",
+        identityAlreadyExists:
+          "Cette identité Google ou Apple appartient déjà à un autre compte YGF. Vos Credits invité actuels n’ont pas été déplacés. Pour conserver ce portefeuille invité, choisissez une autre identité. Déconnectez-vous uniquement si vous souhaitez utiliser le compte existant : le portefeuille invité restera séparé et pourrait ne plus être accessible depuis ce navigateur.",
         providerError:
           "La connexion n’a pas pu démarrer. Essayez une autre option.",
         magicLinkError:
@@ -723,6 +732,8 @@ export const customerPagesCopy = {
         callbackError: "Не удалось завершить вход. Повторите попытку.",
         anonymousError:
           "Быстрый гостевой доступ временно недоступен. Сохранённая активация по-прежнему ожидает подтверждения.",
+        identityAlreadyExists:
+          "Эта идентификация Google или Apple уже принадлежит другому аккаунту YGF. Текущие гостевые Credits не перемещались. Чтобы сохранить этот гостевой кошелёк, выберите другую учётную запись. Выходите только если хотите использовать существующий аккаунт: гостевой кошелёк останется отдельным и может стать недоступен в этом браузере.",
         providerError:
           "Не удалось начать вход. Попробуйте другой вариант.",
         magicLinkError:

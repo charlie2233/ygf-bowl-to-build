@@ -137,6 +137,9 @@ describe("Agent server policy", () => {
     expect(AGENT_WALLET_COST_CAP_MICRO_USD).toBe(
       PROVIDER_COST_CAP_MICRO_USD,
     );
+    expect(costMicroUsdToCredits(AGENT_WALLET_COST_CAP_MICRO_USD)).toBe(
+      3_000,
+    );
   });
 
   it("uses conservative fixed request bounds and bounded key configuration", () => {

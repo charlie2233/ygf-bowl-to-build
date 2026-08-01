@@ -5,13 +5,18 @@ YGF Bowl-to-Build turns a qualifying meal into one simple AI balance:
 1. A guest spends $25+ in one completed transaction.
 2. Staff hand over one private row containing the same claim as text and QR.
 3. The guest scans or enters the claim, accepts the terms, and receives 3,000
-   non-cash Build Credits for 14 days in a private guest wallet—without a
-   login screen.
+   non-cash Build Credits in a private guest wallet—without a login screen.
+   The first card sets the wallet expiry to 14 days later. Each distinct
+   eligible card grants once; a later distinct card adds another 3,000 Credits
+   to the same wallet and rolls the entire wallet expiry to 14 days from that
+   successful top-up. Retrying the same card never regrants or extends expiry.
 4. Study, Coding, Career, and Pick My Bowl each spend 120 credits per run.
-5. As an optional advanced path, the guest can link Google or Apple after that
-   Supabase provider is configured, then create a personal, limited `ygf_…`
-   API key and connect an OpenAI-compatible Agent. Agent calls reserve and
-   settle variable credits from the same wallet.
+5. As an optional advanced path, the guest can sign in with Google or Apple
+   after that Supabase provider is configured. A secure account merge lets one
+   identity accumulate multiple distinct cards in one wallet before the user
+   creates a personal, limited `ygf_…` API key and connects an
+   OpenAI-compatible Agent. Agent calls reserve and settle variable credits
+   from the same wallet.
 6. A specially designated claim can also unlock one official prepaid Claude
    subscription gift when a campaign manager has purchased and securely
    attached that gift to the claim. Ordinary claims remain credits-only.
@@ -181,18 +186,19 @@ pnpm dev
 ```
 
 Enable Supabase anonymous sign-ins for the scan-first wallet. Configure the
-approved Google and Apple providers, exact callback URLs, and manual identity
-linking in the Supabase console. Magic link remains a manual fallback for a
+approved Google and Apple providers and exact callback URLs in the Supabase
+console. Magic link remains a manual fallback for a
 non-anonymous account; it is intentionally hidden while upgrading an
 anonymous wallet because it must not create a separate account.
 
 Anonymous users receive Supabase’s `authenticated` database role and stay
 inside the same user-bound wallet/task RLS policies. They are not custom guest
-IDs. Until an identity is linked, clearing site data can permanently lose
-access to that wallet. Anonymous-user cleanup is not automatic in this
-repository. Creating a hostname-restricted Cloudflare Turnstile widget,
+IDs. Until Google or Apple sign-in and the account merge both finish, clearing
+site data can permanently lose access to that wallet. Anonymous-user cleanup
+is not automatic in this repository. Creating a hostname-restricted
+Cloudflare Turnstile widget,
 installing its production keys, checking its analytics, edge rate limits,
-manual-linking behavior, anonymous cleanup, and a live upgrade test are
+account-merge behavior, anonymous cleanup, and a live upgrade test are
 external state and are not completed merely by applying migrations.
 
 Production checkpoint (2026-07-30): the managed Turnstile widget is restricted
@@ -215,22 +221,30 @@ the redemption validation route.
 
 For production, the Supabase redirect allowlist must contain the exact URL
 `https://malatangai.com/auth/callback`; do not add a wildcard or the `www`
-host. Enable **Manual Linking** so an anonymous wallet upgrades through
-`linkIdentity` without changing its Supabase user ID. The Agent page and key
-create/rotate operations remain gated until that same user is no longer
-anonymous. Local development needs its own exact local `/auth/callback` URL.
+host. An anonymous upgrade first creates a 10-minute, one-use merge intent
+whose database record contains only a digest. Normal Google/Apple OAuth then
+buffers destination-session cookies until a service-role-only transaction
+atomically moves wallet-owned records to the authenticated identity and
+tombstones the former anonymous owner. The Agent page and key create/rotate
+operations remain gated until the destination user is non-anonymous. Local
+development needs its own exact local `/auth/callback` URL.
 
 Apply `202607300001_same_account_redemption_retry.sql` and then
 `202607300002_same_account_redemption_retry_wallet_lock.sql`, followed by
-`202607300003_multidimensional_redemption_admission.sql`. The first
+`202607300003_multidimensional_redemption_admission.sql` and
+`202607310005_multi_grant_account_merge.sql`. The first
 introduces same-owner receipt recovery without minting credits; the second
 locks and reads the wallet in that transaction so the returned snapshot is
 the authoritative serialized **current** wallet at commit time. Re-submitting
 the same code from the same authenticated Supabase account includes credits
 already spent or reserved; it never adds another grant, resets the balance to
 3,000, or extends expiry. The same code from a different account remains
-`CODE_ALREADY_REDEEMED`, and an account cannot use a different code to create
-another wallet.
+`CODE_ALREADY_REDEEMED`. The final migration changes the earlier one-card
+account rule: every distinct eligible code adds 3,000 Credits once to the
+account's existing wallet and sets that whole wallet to expire 14 days from
+the successful top-up. It also adds the service-only anonymous-account merge
+boundary. The $3 provider-cost budget remains per identity and is not reset by
+another card or by merging wallets.
 
 The third migration is migration-first and keeps the old service-role-only
 admission RPCs during the rollback window while adding versioned v2 RPCs used
@@ -247,7 +261,7 @@ session/code locks, so old and new callers still serialize on their shared
 dimensions. A redemption attempt is retained for one hour after admission so
 admitted work can finish safely. Same-owner
 retries count toward the five-per-bucket account ceiling, making attempt six a
-429 without changing the one-wallet/one-grant invariant.
+429 without changing the same-code exactly-once invariant.
 
 ## Mode 3: production
 
@@ -269,11 +283,15 @@ Google provider was installed and enabled, the external Google Auth Platform
 app was published to production, and both live paths were verified: an
 anonymous `linkIdentity` round trip returned to `/connect/agent` without
 changing the 3,000-Credit wallet, and a later normal Google OAuth sign-in
-restored that same wallet at `/wallet`. The Apple provider is now installed and
-enabled with Services ID `com.malatangai.web.login`; the production UI reaches
-Apple's authorization endpoint with the exact Supabase callback. Human Apple
-sign-in and the corresponding anonymous-wallet preservation round trip remain
-an explicit live acceptance gate.
+restored that same wallet at `/wallet`. That is historical evidence for the
+superseded linking path, not proof of the new multi-card merge flow. The Apple
+provider is now installed and enabled with Services ID
+`com.malatangai.web.login`; the production UI reaches Apple's authorization
+endpoint with the exact Supabase callback. Human Apple sign-in remains an
+explicit live acceptance gate. Applying
+`202607310005_multi_grant_account_merge.sql` in production and completing live
+anonymous-to-existing-account merge/top-up checks with both Google and Apple
+are pending until deployment and operator testing record non-secret evidence.
 
 The first safe production posture is intentionally narrow: enable claiming
 only after a private code batch exists, and keep both forms of paid inference
@@ -303,26 +321,33 @@ that remains separately guarded by `YGF_AGENT_GATEWAY_ENABLED`.
 
 The checked-in `vercel.json` schedules one daily `04:00 UTC` request to
 `/api/internal/maintenance`. That route accepts only
-`Authorization: Bearer <CRON_SECRET>`, returns no-store responses, and invokes
-the service-role-only bounded maintenance RPC. It has no user-controlled
-parameters. Install a distinct `CRON_SECRET` in the production host and prove
-one authorized run after deploying; do not call the route with a secret in a
-browser URL.
+`Authorization: Bearer <CRON_SECRET>`, returns no-store responses, invokes the
+service-role-only bounded database-maintenance RPC, and atomically claims at
+most 25 retired guest Auth users queued by successful account merges. Each
+claim has a 10-minute lease; missing Auth users are an idempotent completion,
+only an explicit provider `user_not_found` is treated as missing, and only the
+claiming worker can complete a row. One failed deletion does not prevent later
+claimed rows from progressing. The response exposes aggregate counts only.
+It has no user-controlled parameters. Install a distinct `CRON_SECRET` in the
+production host and prove one authorized run after deploying; do not call the
+route with a secret in a browser URL.
 
 Deploy the application only after:
 
 - applying all migrations, including
   `202607300001_same_account_redemption_retry.sql` followed by
   `202607300002_same_account_redemption_retry_wallet_lock.sql` and
-  `202607300003_multidimensional_redemption_admission.sql`, to the intended
-  production project;
+  `202607300003_multidimensional_redemption_admission.sql`, then
+  `202607310005_multi_grant_account_merge.sql`, to the intended production
+  project;
 - verifying RLS and server-only service-role access with separate user/admin
   accounts;
-- retaining the configured exact production callback and Manual Linking
-  setting, retaining the verified Google provider configuration, and repeating
-  both normal OAuth and anonymous `linkIdentity` after any auth change; repeat
-  that live acceptance for Apple before treating its enabled button as a
-  completed identity-recovery path;
+- retaining the exact production callback and verified provider
+  configurations, then repeating normal OAuth plus the 10-minute one-use
+  anonymous-to-existing-account merge for Google and Apple after any auth
+  change; neither provider is accepted for the new merge path until the live
+  destination cookie, atomic transfer, same-code retry, and wallet recovery
+  checks pass;
 - enabling and testing anonymous sign-in; creating a hostname-restricted
   Turnstile widget; installing `YGF_TURNSTILE_ENABLED=true`, its public site
   key, and server-only secret; then proving valid, expired/duplicate,
@@ -407,15 +432,17 @@ the safe prefix/last four, owner/wallet binding, scopes, limits, and lifecycle
 timestamps. Keys expire at the earlier of 14 days or wallet expiry. Every call
 rechecks key state, ownership, wallet expiry, the server model allowlist,
 per-key RPM/concurrency, wallet concurrency, remaining credits, and the
-wallet-wide $3.00 provider-cost ceiling. Provider failures refund user
-Credits but conservatively commit the reserved provider ceiling, so a possibly
-billed upstream attempt cannot evade the wallet cap; wallet-scoped idempotency
-prevents multiple keys from charging the same request twice.
+identity-wide $3.00 provider-cost ceiling enforced on the combined wallet and
+all of its keys. A new card or wallet merge never resets that ceiling.
+Provider failures refund user Credits but conservatively commit the reserved
+provider ceiling, so a possibly billed upstream attempt cannot evade the
+wallet cap; wallet-scoped idempotency prevents multiple keys from charging the
+same request twice.
 
 Anonymous wallet users can use the web tools, history, and safe check-in card,
-but cannot create or rotate Agent keys. They must link Google or Apple to the
-same Supabase user first and become a non-anonymous linked account. Listing or
-revoking an existing key remains safe.
+but cannot create or rotate Agent keys. They must sign in with Google or Apple,
+complete the verified OAuth merge into the destination account, and become a
+non-anonymous user first. Listing or revoking an existing key remains safe.
 
 ```env
 OPENAI_BASE_URL=https://malatangai.com/v1
@@ -591,6 +618,11 @@ test, or approve launch. Those gates are tracked in
   state. Install `202607300001_same_account_redemption_retry.sql` first, then
   `202607300002_same_account_redemption_retry_wallet_lock.sql`; the second
   migration provides the authoritative serialized current-wallet snapshot.
+- After `202607310005_multi_grant_account_merge.sql`, a different eligible
+  code adds exactly 3,000 Credits to that identity's one wallet and rolls the
+  whole wallet expiry to 14 days from the successful top-up. Older remaining
+  Credits share the new expiry; retrying the same code never grants or extends
+  it. The $3 provider-cost budget stays per identity across all cards and keys.
 - Input is bounded to 12,000 text characters. Submitted prompt text is not
   retained by default; a generated output enters history only after an
   explicit save.

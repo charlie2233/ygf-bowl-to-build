@@ -95,6 +95,50 @@ describe("SupabaseCampaignRepository redemption", () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it("accepts aggregate Credits at the $3 provider cap and rejects higher snapshots", async () => {
+    const aggregateRow = {
+      ...redemptionRow,
+      initial_balance: 9000,
+      provider_committed_micro_usd: 3_000_000,
+      remaining_balance: 6120,
+    };
+    mockServiceClient({ data: [aggregateRow], error: null });
+    const repository = new SupabaseCampaignRepository();
+
+    await expect(
+      repository.redeemCode({
+        code: "BOWL7K2A",
+        idempotencyKey: "aggregate-wallet",
+        userId: "user-1",
+      }),
+    ).resolves.toMatchObject({
+      wallet: {
+        initialBalance: 9000,
+        providerCommittedMicroUsd: 3_000_000,
+        providerReservedMicroUsd: 0,
+        remainingBalance: 6120,
+      },
+    });
+
+    mockServiceClient({
+      data: [{
+        ...aggregateRow,
+        provider_committed_micro_usd: 3_000_001,
+      }],
+      error: null,
+    });
+    await expect(
+      repository.redeemCode({
+        code: "BOWL7K2A",
+        idempotencyKey: "over-budget-wallet",
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({
+      message: "CAMPAIGN_REPOSITORY_UNAVAILABLE",
+      name: "CampaignRepositoryUnavailableError",
+    });
+  });
+
   it("keeps authoritative domain failures distinct from infrastructure failures", async () => {
     const repository = new SupabaseCampaignRepository();
     mockServiceClient({
@@ -128,6 +172,21 @@ describe("SupabaseCampaignRepository redemption", () => {
     await expect(infrastructureFailure).rejects.not.toThrow(
       /sensitive internal detail/i,
     );
+
+    mockServiceClient({
+      data: null,
+      error: { message: "ACCOUNT_GRANT_LIMIT_REACHED" },
+    });
+    await expect(
+      repository.redeemCode({
+        code: "BOWL7K2A",
+        idempotencyKey: "redeem-wallet-cap",
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({
+      code: "ACCOUNT_GRANT_LIMIT_REACHED",
+      name: "CampaignDomainError",
+    });
   });
 
   it("treats an incomplete successful RPC row as infrastructure failure", async () => {

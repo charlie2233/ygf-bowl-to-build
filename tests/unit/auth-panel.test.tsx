@@ -7,6 +7,7 @@ const authMocks = vi.hoisted(() => ({
   signInWithOAuth: vi.fn(),
   signInWithOtp: vi.fn(),
 }));
+const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/client", () => ({
   createAuthBrowserClient: () => ({
@@ -33,6 +34,8 @@ describe("AuthPanel anonymous upgrade", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchMock.mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
     authMocks.linkIdentity.mockResolvedValue({
       data: {
         provider: "google",
@@ -59,9 +62,10 @@ describe("AuthPanel anonymous upgrade", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
+    vi.unstubAllGlobals();
   });
 
-  it("links the existing anonymous user instead of signing into another account", async () => {
+  it("prepares a merge intent before signing the anonymous user in", async () => {
     await act(async () => {
       root.render(
         <AuthPanel
@@ -74,20 +78,32 @@ describe("AuthPanel anonymous upgrade", () => {
     });
     const google = Array.from(
       container.querySelectorAll("button"),
-    ).find((button) => button.textContent === "Link Google");
+    ).find(
+      (button) =>
+        button.textContent === "Sign in with Google and combine",
+    );
 
     await act(async () => {
       google?.click();
       await Promise.resolve();
     });
 
-    expect(authMocks.linkIdentity).toHaveBeenCalledWith({
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/merge-intents", {
+      body: JSON.stringify({ provider: "google" }),
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    expect(authMocks.signInWithOAuth).toHaveBeenCalledWith({
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=%2Fconnect%2Fagent`,
       },
       provider: "google",
     });
-    expect(authMocks.signInWithOAuth).not.toHaveBeenCalled();
+    expect(fetchMock.mock.invocationCallOrder[0]).toBeLessThan(
+      authMocks.signInWithOAuth.mock.invocationCallOrder[0] ?? 0,
+    );
+    expect(authMocks.linkIdentity).not.toHaveBeenCalled();
     expect(authMocks.signInWithOtp).not.toHaveBeenCalled();
     expect(container.querySelector('input[type="email"]')).toBeNull();
   });
@@ -123,6 +139,7 @@ describe("AuthPanel anonymous upgrade", () => {
         provider,
       });
       expect(authMocks.linkIdentity).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
     },
   );
 
@@ -189,7 +206,8 @@ describe("AuthPanel anonymous upgrade", () => {
     ).toBe(true);
   });
 
-  it("keeps the guest session intact when provider linking reports an existing identity", async () => {
+  it("does not start OAuth when the merge intent cannot be prepared", async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false });
     await act(async () => {
       root.render(
         <AuthPanel
@@ -201,7 +219,32 @@ describe("AuthPanel anonymous upgrade", () => {
       );
     });
 
-    authMocks.linkIdentity.mockResolvedValueOnce({
+    await act(async () => {
+      Array.from(container.querySelectorAll("button"))
+        .find(
+          (button) =>
+            button.textContent === "Sign in with Google and combine",
+        )
+        ?.click();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
+      /sign-in could not start/i,
+    );
+    expect(
+      Array.from(container.querySelectorAll("button")).every(
+        (button) => !button.disabled,
+      ),
+    ).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(authMocks.signInWithOAuth).not.toHaveBeenCalled();
+    expect(authMocks.linkIdentity).not.toHaveBeenCalled();
+    expect(authMocks.signInWithOtp).not.toHaveBeenCalled();
+  });
+
+  it("shows safe combine-recovery guidance when OAuth reports an existing identity", async () => {
+    authMocks.signInWithOAuth.mockResolvedValueOnce({
       data: { provider: "google", url: null },
       error: {
         code: "identity_already_exists",
@@ -209,27 +252,35 @@ describe("AuthPanel anonymous upgrade", () => {
       },
     });
     await act(async () => {
+      root.render(
+        <AuthPanel
+          isAnonymous
+          mode="supabase"
+          nextPath="/connect/agent"
+          providerAvailability={ENABLED_PROVIDERS}
+        />,
+      );
+    });
+
+    await act(async () => {
       Array.from(container.querySelectorAll("button"))
-        .find((button) => button.textContent === "Link Google")
+        .find(
+          (button) =>
+            button.textContent === "Sign in with Google and combine",
+        )
         ?.click();
       await Promise.resolve();
     });
 
-    expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
-      /guest Credits were not moved/i,
-    );
-    expect(container.querySelector('[role="alert"]')?.textContent).toMatch(
-      /may no longer be accessible from this browser/i,
-    );
+    const alert = container.querySelector('[role="alert"]')?.textContent;
+    expect(alert).toMatch(/couldn’t complete.*wallet combine/i);
+    expect(alert).toMatch(/guest wallet remains safe/i);
+    expect(alert).toMatch(/try again/i);
+    expect(alert).not.toMatch(/already belongs|another YGF account/i);
     expect(container.textContent).not.toContain("private provider detail");
-    expect(
-      Array.from(container.querySelectorAll("button")).every(
-        (button) => !button.disabled,
-      ),
-    ).toBe(true);
-    expect(authMocks.linkIdentity).toHaveBeenCalledTimes(1);
-    expect(authMocks.signInWithOAuth).not.toHaveBeenCalled();
-    expect(authMocks.signInWithOtp).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(authMocks.signInWithOAuth).toHaveBeenCalledTimes(1);
+    expect(authMocks.linkIdentity).not.toHaveBeenCalled();
   });
 
   it("fails closed with visible provider buttons and an accessible Magic Link fallback", async () => {

@@ -435,9 +435,11 @@ describe("authentication pages", () => {
 
     expect(html).toContain("Upgrade to connect an Agent");
     expect(html).toContain("clearing this browser");
-    expect(html).toContain("Link Google");
-    expect(html).toContain("Link Apple");
-    expect(html).toContain("Google and Apple linking aren’t available yet");
+    expect(html).toContain("Sign in with Google and combine");
+    expect(html).toContain("Sign in with Apple and combine");
+    expect(html).toContain(
+      "Google and Apple sign-in and combine aren’t available yet",
+    );
     expect(html).not.toContain("Email me a sign-in link");
   });
 

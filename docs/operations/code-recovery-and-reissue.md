@@ -12,7 +12,12 @@ changes are **manager-only**.
 - Reissue creates a new code and audit event. It does not “reset” the old code.
 - If the old credential might still work, revoke it before handing over the
   replacement.
-- One redemption per person/account remains in force.
+- Each distinct valid physical card grants exactly once. The same code never
+  grants again, while one account wallet may accumulate multiple distinct
+  cards.
+- Every successful new-card top-up adds 3,000 Credits and sets the aggregate
+  wallet expiry to 14 days from that top-up. Older remaining Credits share the
+  updated expiry.
 - A public campaign QR cannot prove purchase and can never be reissued as a
   private claim QR.
 
@@ -43,7 +48,9 @@ changes are **manager-only**.
    - escalate without changing code state.
    A same-account retry returns that wallet's current credits and expiry. It
    never restores spent credits, resets the balance to 3,000, or extends the
-   promotional period.
+   promotional period. A separate, distinct eligible card is not a retry: it
+   adds 3,000 Credits once and rolls the whole wallet expiry to 14 days from
+   that successful top-up.
 6. For a reissue, record operator, timestamp, batch/source, reason category,
    original non-secret record identifier, and replacement non-secret record
    identifier. Do not put either plaintext code in the note.
@@ -68,7 +75,9 @@ A reissue may be appropriate when all of these are true:
 - the manager records the decision in the audit trail.
 
 A reissue is not appropriate simply because a guest used the code, spent the
-credits, changed accounts, shared the row, or reached the stated expiry.
+credits, changed accounts, shared the row, or reached the stated expiry. A
+later qualifying purchase may receive its own distinct card under the normal
+campaign policy; that is a new grant, not a reissue or reset of the old code.
 
 ## Privacy-safe escalation template
 

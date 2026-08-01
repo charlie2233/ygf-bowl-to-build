@@ -66,7 +66,7 @@ const variants = [
 ] as const;
 
 const finePrint =
-  "Limited-time YGF promotional Build Credits. Qualifying purchase required. One redemption per person/account. Non-transferable. No cash value. Expires 14 days after redemption. Eligible AI tasks only. Terms and privacy apply.";
+  "Limited-time YGF promotional Build Credits. Qualifying purchase required. Each distinct eligible code grants 3,000 Credits once; multiple distinct cards may top up one wallet. A successful new-card top-up sets the entire wallet to expire 14 days later. Non-transferable. No cash value. Eligible AI tasks only. Terms and privacy apply.";
 const universityDisclaimer =
   "This promotion is offered by YGF for the USC community and is not sponsored, endorsed by, or administered by the University of Southern California.";
 
@@ -411,6 +411,15 @@ describe("campaign asset renderer", () => {
     expect(claimRow).toContain('data-private-claim="true"');
     expect(claimRow).toContain('width="3.5in"');
     expect(decodeXmlText(claimRow)).toContain(code);
+    expect(decodeXmlText(claimRow)).toContain(
+      "Each distinct code grants once.",
+    );
+    expect(decodeXmlText(claimRow)).toContain(
+      "The same code never regrants.",
+    );
+    expect(decodeXmlText(claimRow)).toContain(
+      "A new card rolls wallet expiry to 14 days.",
+    );
     expect(qr.quietZone).toBeGreaterThanOrEqual(4);
     expect(qr.url).toBe(claimUrl);
     expect(decoded).toBe(claimUrl);

@@ -140,8 +140,11 @@ describe("public campaign pages", () => {
     const termsText = normalizedText(renderPage(<TermsPage />));
 
     expect(offerText).toContain("Spend $25+ in one transaction");
-    expect(offerText).toMatch(/14 days after redemption/i);
-    expect(termsText).toContain("One redemption per person/account");
+    expect(offerText).toMatch(/new-card top-up.*14 days/i);
+    expect(termsText).toMatch(
+      /each distinct eligible code grants 3,000 Credits once/i,
+    );
+    expect(termsText).toMatch(/same-code retry does not extend/i);
     expect(termsText).toContain("No cash value");
   });
 

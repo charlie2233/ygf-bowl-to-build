@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a validated, production-oriented YGF-owned beta that turns a qualifying purchase into one effortless QR-scan or code redemption, a 3,000-credit AI balance, four useful task shortcuts, and an optional OpenRouter-style model choice, while also shipping campaign operations, legal copy, analytics, and print assets.
+**Goal:** Build a validated, production-oriented YGF-owned beta that turns a qualifying purchase into one effortless QR-scan or code redemption, a 3,000-credit AI balance, four useful task shortcuts, and an optional first-party Agent connection, while also shipping campaign operations, legal copy, analytics, and print assets.
 
-**Architecture:** Use Next.js 16 App Router with a server-side campaign domain layer, interchangeable in-memory and Supabase repositories, Supabase SSR authentication, and an OpenAI-compatible provider adapter configured for OpenRouter or a gateway. Business rules live outside route handlers. Supabase RPCs provide transaction boundaries for redemption and spend/refund operations; development demo mode uses the same interfaces and deterministic fixtures.
+**Architecture:** Use Next.js 16 App Router with a server-side campaign domain layer, interchangeable in-memory and Supabase repositories, Supabase SSR authentication, and a fixed server-only OpenAI adapter behind the YGF OpenAI-compatible gateway. Business rules live outside route handlers. Supabase RPCs provide transaction boundaries for redemption, account merge, and spend/refund operations; development demo mode uses the same interfaces and deterministic fixtures.
 
 **Tech Stack:** Next.js 16, React 19, TypeScript, CSS Modules/global design tokens, Supabase Auth/Postgres, Zod, Lucide React, QRCode, Vitest, Testing Library, Playwright, axe-core, pnpm 11.
 
@@ -13,20 +13,20 @@
 ## Product decisions that resolve source ambiguity
 
 1. The complete beta ships all four workflows. The report's "one task page" is treated as the first vertical slice, not the launch boundary.
-2. Every successful redemption creates exactly 3,000 non-cash Build Credits that expire 14 days after redemption.
-3. A task reserves 120 Build Credits before provider execution. Success commits the reservation; provider failure refunds it. The separate provider-cost ledger enforces a USD hard cap of $0.25 per user.
+2. Every distinct eligible card adds exactly 3,000 non-cash Build Credits once. A successful new-card top-up sets the aggregate wallet to expire 14 days later; retrying the same card grants nothing and does not extend expiry.
+3. A task reserves 120 Build Credits before provider execution. Success commits the reservation; provider failure refunds it. Web tasks and every personal Agent key share an exact $3 provider-cost hard cap per identity wallet.
 4. Beta claims are scratch-card or receipt-insert codes with the same single-use value printed as text and encoded in a QR URL fragment. Scanning pre-fills the claim without placing the code in requests, referrers, or retained browser history. Automated POS printing is outside this repository.
 5. The public validation step checks syntax and generic eligibility before sign-in without revealing code state. Authenticated redemption performs the authoritative atomic check.
 6. Development uses `BOWL7K2A` and an in-memory repository only when `YGF_DEMO_MODE=true`. Production refuses demo mode and requires Supabase configuration.
-7. OpenRouter-compatible inference is the live beta adapter. `YGF_PROVIDER_BASE_URL` permits a compatible gateway URL. No key or secret is committed.
+7. OpenAI is the only live inference provider. Its credential and endpoint remain server-only, while users receive personal, limited `ygf_` keys for the YGF gateway. No key or secret is committed.
 8. Pick My Bowl never claims live price, availability, ingredient, nutrition, or allergen accuracy. It uses manager-verifiable content and always tells users to confirm the final total and allergens with staff.
 9. Prompt payloads are not retained by default. History stores task type, generated title, an optional user-saved result, usage, and timestamps. Users choose whether to save output.
-10. Google, Apple, and magic-link UI is implemented through Supabase. Provider-console configuration remains an external launch gate.
-11. OpenRouter connection promotion appears only after a completed task. OAuth execution is not enabled until partner credentials and approved partner terms exist.
+10. Google, Apple, and magic-link UI is implemented through Supabase. An anonymous wallet upgrades through a short-lived, digest-backed normal-OAuth merge intent; live provider/account acceptance remains an external gate.
+11. The optional **Connect my Agent** path creates a personal YGF key after redemption. The legacy OpenRouter route redirects internally and no OpenRouter partnership is claimed.
 12. Privacy-preserving abuse controls use HMAC-derived, short-lived network/device signals; raw IP addresses and full plaintext codes are never stored.
 13. The first-use promise is `Eat → scan or enter code → choose a task → get a result`. A signed-in user who scans a valid receipt QR should need at most one confirmation tap before reaching the wallet; no profile setup is required.
 14. The wallet behaves like a deliberately simpler OpenRouter: one visible AI balance can fund multiple allowlisted models, but task-first defaults hide model complexity. An `Advanced: choose a model` control is optional, uses friendly capability labels, and never exposes provider keys or billing setup.
-15. The supplied `南加大杨国福` folder currently contains a cost workbook but no standalone or embedded photos. The generated bowl visual is the beta fallback; replacing it with a manager-supplied, rights-cleared YGF food photo is a named launch gate.
+15. User-supplied YGF food photography is used for the responsive campaign visual. Brand/usage-rights approval and a physical print proof remain named launch gates.
 
 ## Design lock
 
@@ -170,7 +170,7 @@ Expected: FAIL because campaign modules do not exist.
 
 - [x] **Step 3: Implement pure domain functions**
 
-Implement eight-character uppercase code normalization, SHA-256 hashing, HMAC abuse-signal hashing, constant-time comparisons where applicable, receipt claim URL construction/parsing, 120-credit reservations, refunds, expiry checks, and the $0.25 per-user provider-cost ceiling. Claim URLs put the normalized code only in `#code=`, reject unexpected origins/paths/keys, and never send it as a query parameter. Keep provider dollars separate from consumer Build Credits.
+Implement eight-character uppercase code normalization, SHA-256 hashing, HMAC abuse-signal hashing, constant-time comparisons where applicable, receipt claim URL construction/parsing, 120-credit reservations, refunds, expiry checks, and the identity-wallet-wide $3 provider-cost ceiling. Claim URLs put the normalized code only in `#code=`, reject unexpected origins/paths/keys, and never send it as a query parameter. Keep provider dollars separate from consumer Build Credits.
 
 - [x] **Step 4: Define repository interfaces and the memory adapter**
 
@@ -786,7 +786,7 @@ are installed.
   share-card generation metrics without raw prompts, keys, claims, or IPs.
 - [x] Document demo, production-disabled, provider-enabled, deployed, and
   physically proofed states separately.
-- [ ] Run unit/integration, lint, typecheck, production build, desktop/mobile
+- [x] Run unit/integration, lint, typecheck, production build, desktop/mobile
   E2E, axe, deterministic asset verification, decoder checks, secret scan,
   horizontal-access review, and independent code/visual/release QA.
 - [ ] Commit, push, and verify the final GitHub branch SHA.
@@ -985,3 +985,50 @@ production safety switches unchanged.
   checks, and desktop Chromium/iPhone WebKit visual verification.
 - [x] Re-run the complete release matrix, commit, push, deploy the candidate,
   and verify the production deployment and GitHub SHA.
+
+## August 1, 2026 addendum — multi-card wallets, safe OAuth merge, and final mobile pass
+
+This enhancement replaces the earlier one-card/legacy-linking assumptions
+without weakening the code-first ordinary-user flow.
+
+### Source implementation and local acceptance
+
+- [x] Grant 3,000 Credits once for every distinct eligible card while keeping
+  one aggregate wallet per identity. Same-code retries neither regrant nor
+  extend expiry; a successful new-card top-up rolls the whole wallet expiry to
+  14 days after that top-up.
+- [x] Keep web tasks and every personal Agent key inside one identity-wide
+  `3,000,000` micro-USD ($3) committed-plus-reserved provider ceiling.
+  Additional cards, keys, retries, and account merge never reset or bypass it.
+- [x] Replace anonymous `linkIdentity` upgrade with a 10-minute, one-use,
+  digest-backed normal-OAuth merge intent. Keep the bearer only in an HttpOnly
+  `/auth` cookie, validate both sessions, buffer destination cookies until the
+  service-only atomic merge succeeds, tombstone the source, revoke source
+  Agent keys, and queue bounded Auth cleanup.
+- [x] Reject a merge before ownership mutation when the combined provider
+  total would exceed $3, when either wallet has work in flight, or when a
+  privileged/conflicting source would make the transfer unsafe.
+- [x] Offer GPT-5.6 Luna, Terra, and Sol through the fixed OpenAI endpoint,
+  default Terra, keep medium reasoning server-owned, and hide reasoning effort
+  and estimated provider-spend internals from customer UI.
+- [x] Complete the <=430px mobile pass with safe-area gutters, 44px controls,
+  full-width Step 1/Step 2 actions, long-translation containment, and compact
+  Agent key/config controls.
+- [x] Pass lint, typecheck, production dependency audit, production build,
+  693 unit/integration/security assertions, and all 83 desktop Chromium and
+  iPhone WebKit E2E/axe checks. Complete independent security and mobile visual
+  review with no unresolved source finding.
+
+### Deployment and human acceptance gates
+
+- [ ] Apply `202607310005_multi_grant_account_merge.sql` to production during
+  a drained window, refresh the API schema cache, verify ACL/RLS/constraints,
+  run advisors, deploy the matching Git SHA, and smoke the public endpoints.
+- [ ] Complete a real anonymous-to-existing-account merge separately with
+  Google and a human Apple account, including account recovery, additional-card
+  top-up, same-code retry, and unchanged provider budget.
+- [ ] Exercise Auth cleanup with genuine concurrent production Postgres
+  sessions; PGlite proves contract behavior, not multi-session scheduling.
+- [ ] Regenerate the ignored 500-card private output under the current $25+
+  and multi-card terms before any print run, then repeat QR decoding, raster
+  inspection, physical scratch/duplex proof, and store scan testing.

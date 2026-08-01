@@ -16,7 +16,7 @@ export const uscFullDisclaimer =
   "This promotion is offered by YGF for the USC community and is not sponsored, endorsed by, or administered by the University of Southern California.";
 
 export const promotionalFinePrint =
-  "Limited-time YGF promotional Build Credits. Qualifying purchase required. One redemption per person/account. Non-transferable. No cash value. Expires 14 days after redemption. Eligible AI tasks only. Terms and privacy apply.";
+  "Limited-time YGF promotional Build Credits. Qualifying purchase required. Each distinct eligible code grants 3,000 Credits once; multiple distinct cards may top up one wallet. A successful new-card top-up sets the entire wallet to expire 14 days later. Non-transferable. No cash value. Eligible AI tasks only. Terms and privacy apply.";
 
 export const sensitiveDataWarning =
   "Do not submit SSNs, payment card numbers, medical data, or confidential school information.";
@@ -28,7 +28,7 @@ export const publicFaq: readonly PublicFaqItem[] = [
   {
     question: "Who’s eligible?",
     answer:
-      "Guests who spend $25+ in one transaction and receive a code at checkout. One redemption per person/account.",
+      "Guests who spend $25+ in one transaction and receive a distinct code at checkout. Each eligible code may be redeemed once.",
   },
   {
     question: "Is this official USC?",
@@ -36,12 +36,18 @@ export const publicFaq: readonly PublicFaqItem[] = [
   },
   {
     question: "When do credits expire?",
-    answer: "Credits expire 14 days after redemption.",
+    answer:
+      "A first redemption or successful new-card top-up sets the whole wallet to expire 14 days later. Older remaining Credits share that wallet expiry. Retrying the same code does not extend it.",
+  },
+  {
+    question: "Can I add more than one card?",
+    answer:
+      "Yes. One Google or Apple identity can accumulate multiple distinct 3,000-Credit cards in one wallet. Each distinct code grants once; retrying the same code never grants Credits again.",
   },
   {
     question: "Do I need a school email?",
     answer:
-      "No. A receipt scan can create a private guest wallet in this browser without a login screen. Link Google or Apple only if you want recovery, cross-device access, or an Agent API key.",
+      "No. A receipt scan can create a private guest wallet in this browser without a login screen. Sign in with Google or Apple and combine the guest wallet only if you want recovery, cross-device access, or an Agent API key.",
   },
   {
     question: "What are Build Credits?",
@@ -92,10 +98,11 @@ export const promotionalTerms: readonly LegalSection[] = [
   {
     title: "Redemption and use",
     bullets: [
-      "One redemption per person/account.",
+      "Each distinct eligible code grants 3,000 Credits once. One Google or Apple identity may accumulate multiple distinct cards in one wallet; retrying the same code never grants Credits again.",
       "Build Credits are non-transferable and have no cash value.",
       "Build Credits are limited to eligible YGF AI tools and allowlisted Agent API requests.",
-      "Credits expire 14 days after redemption.",
+      "Each successful new-card top-up sets the entire wallet to expire 14 days from that top-up. Older remaining Credits share the updated wallet expiry; a same-code retry does not extend it.",
+      "The AI-provider cost budget remains $3 per Google or Apple identity across its combined wallet and personal keys. Adding another card does not reset that budget.",
       "Optional personal API keys share the wallet’s limits and expiry and may be revoked, rotated, or rate-limited.",
       "Keep personal API keys private. Do not place them in URLs, public repositories, public chats, analytics, or frontend code.",
     ],
@@ -118,7 +125,8 @@ export const privacySections: readonly LegalSection[] = [
   {
     title: "What YGF processes",
     body: [
-      "YGF processes an account identifier, redemption activity, and prompts you submit to provide this promotional AI service. A scan-first guest wallet uses a Supabase anonymous user identifier; YGF receives an email only if you later link or use an email-based account.",
+      "YGF processes an account identifier, redemption activity, and prompts you submit to provide this promotional AI service. A scan-first guest wallet uses a Supabase anonymous user identifier; YGF receives an email only if you later sign in with a provider or use an email-based account.",
+      "When you choose to combine a guest wallet with a Google or Apple account, YGF creates a 10-minute, one-use merge intent. The database stores a digest rather than the bearer value, together with bounded source-session and provider metadata. Secure destination-session cookies are buffered until a service-only transaction atomically moves the wallet records and tombstones the former guest owner.",
       "History stores task type, generated title, an optional user-saved result, usage, and timestamps.",
       "If you create a developer key, YGF stores a keyed digest, a short prefix and last four characters, ownership, expiry, revocation, and usage/accounting records. YGF does not store the full plaintext key.",
       "Agent request accounting stores a keyed request fingerprint, selected allowlisted model, status, credits, provider cost, and timestamps. The raw request prompt is not stored in a separate database column.",
@@ -149,7 +157,8 @@ export const privacySections: readonly LegalSection[] = [
       "A successful Agent response payload is stored in Postgres for a logical 15-minute idempotent replay window. A provider response can repeat or echo submitted input, so the replay payload can contain text derived from the request even though the raw request prompt is not stored as its own field.",
       "After the logical replay window expires, response payload tombstoning is lazy and may be delayed while the gateway is idle. A reviewed, indexed, bounded scheduled cleanup job is still a production launch gate and is not claimed as configured.",
       "Personal API key plaintext is returned only when a key is created or rotated. Only its keyed digest and non-secret display metadata persist.",
-      "A guest wallet remains tied to this browser until an identity is linked. Clearing browser site data can permanently remove access. Supabase anonymous-user cleanup is not automatic in this codebase.",
+      "A guest wallet remains tied to this browser until Google or Apple sign-in and the wallet combine both finish. Clearing browser site data can permanently remove access before then. Supabase anonymous-user cleanup is not automatic in this codebase.",
+      "An account-merge intent becomes unusable after 10 minutes or after its first successful use. That expiry is not itself a promise that its audit record has already been physically deleted.",
       "The current beta has no fixed deletion deadline or self-service deletion for account, redemption, ledger, history, saved-output, or privacy/contact records.",
       "A manager-approved, technically enforced retention/deletion schedule is a launch gate before accepting live redemptions.",
       "Long-lived dietary or allergy histories are avoided unless they are truly needed.",
@@ -186,7 +195,7 @@ export const creatorSections: readonly LegalSection[] = [
     bullets: [
       "Spend $25+ in one transaction.",
       "Get your code at checkout.",
-      "Credits expire 14 days after redemption.",
+      "Each distinct code grants once. A successful new-card top-up sets the whole wallet to expire 14 days later.",
       "Build Credits are limited, non-transferable, and have no cash value.",
     ],
   },
@@ -205,7 +214,7 @@ export const staffSections: readonly LegalSection[] = [
     bullets: [
       "Confirm the guest spent $25+ in one transaction.",
       "Staff only hand the code after the receipt threshold is met.",
-      "One redemption per person/account.",
+      "Each distinct code grants once. A guest may add multiple qualifying cards to one Google or Apple account wallet.",
     ],
   },
   {

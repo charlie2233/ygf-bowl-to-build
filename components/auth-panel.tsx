@@ -75,15 +75,21 @@ export function AuthPanel({
     setMessageKind("status");
     try {
       const client = createAuthBrowserClient();
-      const { data, error } = isAnonymous
-        ? await client.auth.linkIdentity({
-            options: { redirectTo: callbackUrl(nextPath) },
-            provider,
-          })
-        : await client.auth.signInWithOAuth({
-            options: { redirectTo: callbackUrl(nextPath) },
-            provider,
-          });
+      if (isAnonymous) {
+        const response = await fetch("/api/auth/merge-intents", {
+          body: JSON.stringify({ provider }),
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          method: "POST",
+        });
+        if (!response.ok) {
+          throw new Error("MERGE_INTENT_UNAVAILABLE");
+        }
+      }
+      const { data, error } = await client.auth.signInWithOAuth({
+        options: { redirectTo: callbackUrl(nextPath) },
+        provider,
+      });
       if (error || !data.url) {
         throw error ?? new Error("OAUTH_REDIRECT_UNAVAILABLE");
       }

@@ -72,20 +72,42 @@ trusted JWT subject; the application does not invent a browser-controlled
 guest identity. The server derives `isAnonymous` only from the trusted
 `is_anonymous` claim. Anonymous users can redeem and use web AI, but key
 creation/rotation and `/connect/agent` require an identity upgrade.
-Google/Apple upgrades use `linkIdentity`, not a new OAuth sign-in that could
-strand the wallet on a second user. Agent key creation and rotation require
-that same user to become a non-anonymous linked account. Production Supabase
-has Manual Linking enabled and an exact redirect allowlist entry for
-`https://malatangai.com/auth/callback`. Google is live: on July 31, 2026 its
-provider was enabled, its external OAuth app was published to production, an
-anonymous-linking round trip preserved the 3,000-Credit wallet, and a normal
-OAuth sign-in restored that same wallet after sign-out. Apple is also installed
-and enabled: the production button reaches Apple's authorization endpoint with
-the registered Services ID and exact Supabase callback. Its normal sign-in and
-anonymous-wallet preservation round trips remain a separate live acceptance
-gate until a human finishes Apple authentication. Anonymous sign-in,
-CAPTCHA/Turnstile, edge limits, dynamic rendering, and anonymous-user cleanup
-remain separate live controls.
+
+Google/Apple upgrades use an explicit account-merge handoff rather than
+`linkIdentity`. While the source anonymous session is still authoritative, the
+client sends a same-origin request containing only the selected provider. The
+server verifies the trusted anonymous subject and session, confirms that exact
+`auth.sessions` row is still live, creates a random 256-bit bearer value,
+stores only its SHA-256 digest with the bounded source session/provider
+metadata, and returns the bearer only in a Secure HttpOnly SameSite=Lax cookie
+scoped to `/auth`. The intent expires after 10 minutes and can be consumed only
+once. The database checks the live Auth session again at consumption, so a
+signature-valid JWT from a signed-out guest cannot authorize a merge.
+
+The browser then starts normal Google/Apple OAuth. The callback reads the
+trusted source claims before exchanging the code, buffers the destination
+session cookies, and verifies that the resulting non-anonymous user contains
+the requested provider identity. Only then may a service-role-only RPC consume
+the intent. That transaction locks both sides, transfers only unexpired
+remaining balance and audit-owned rows, records removed expired balance in a
+zero-provider-cost `expire` ledger row, preserves already-spent Credits and
+provider cost, revokes any unexpected source Agent keys, tombstones the former
+anonymous owner, and queues auth-user cleanup. The authenticated daily
+maintenance route atomically claims queued retired Auth users with a 10-minute
+lease, deletes them in a bounded batch, and marks only lease-owned outbox rows
+complete. Destination cookies are applied only with
+the successful redirect. No email match or browser-supplied user ID authorizes
+a merge.
+
+The exact production callback remains
+`https://malatangai.com/auth/callback`. The July 31, 2026 Google
+`linkIdentity` and normal-OAuth checks are retained as historical evidence for
+the superseded flow; they do not verify this merge implementation. Apple is
+installed and reaches its authorization endpoint, but its human round trip was
+already pending. Applying the multi-grant/account-merge migration and
+completing live Google and Apple merge checks are both pending deployment
+gates. Anonymous sign-in, CAPTCHA/Turnstile, edge limits, dynamic rendering,
+and anonymous-user cleanup remain separate live controls.
 
 ## Receipt fragment handling
 
@@ -168,13 +190,16 @@ The redemption RPC returns the code identifier, redemption timestamp, and the
 complete wallet snapshot needed for `RedemptionResult` before that transaction
 commits. Apply `202607300001_same_account_redemption_retry.sql` first to add
 exact-idempotency and same-account/same-code recovery, then
-`202607300002_same_account_redemption_retry_wallet_lock.sql`. The second
+`202607300002_same_account_redemption_retry_wallet_lock.sql`, followed by
+`202607310005_multi_grant_account_merge.sql`. The second
 migration takes the wallet row lock used by spend/settlement mutations and
 returns the authoritative serialized **current** wallet at commit time, even
 when later tasks changed its balance. The retry does not insert a second
 grant, reset credits to 3,000, or extend expiry. A different account still
-receives `CODE_ALREADY_REDEEMED`; the one-wallet-per-account check still
-rejects a different code for an account that already has a wallet. The
+receives `CODE_ALREADY_REDEEMED`. The final migration retains one wallet per
+account but permits multiple distinct grants: every new eligible code adds
+exactly 3,000 Credits once and sets that entire wallet's expiry to 14 days from
+the successful top-up. Older remaining Credits share the rolled expiry. The
 Supabase repository maps that single RPC row directly and must not perform a
 follow-up wallet or ledger read: a read failure after commit cannot be allowed
 to report a successful grant as failed.
@@ -368,8 +393,12 @@ entries.
 
 Build Credits are a promotional consumer balance, not money:
 
-- redemption grants exactly 3,000 credits;
-- expiry is exactly 14 days after redemption;
+- each distinct eligible code grants exactly 3,000 credits once;
+- one Google or Apple identity can accumulate multiple distinct grants in one
+  wallet, while a same-code retry never regrants;
+- a successful first redemption or new-card top-up sets the entire wallet to
+  expire exactly 14 days later, so older remaining Credits share the latest
+  successful top-up's wallet expiry;
 - every ready-made web task reserves exactly 120 credits;
 - Agent calls reserve the allowlisted model cost ceiling and settle actual
   provider cost through the configured integer micro-USD-to-credit ratio;
@@ -379,9 +408,12 @@ Build Credits are a promotional consumer balance, not money:
 - credits are non-cash and never converted from provider prices.
 
 Provider cost is separate operational accounting in integer micro-US dollars.
-Committed plus reserved provider cost may never exceed `3000000` micro-US
-dollars ($3.00) for one wallet. The same wallet row aggregates web tasks and
-every personal key, so creating multiple keys cannot increase the limit.
+New provider admission may never take one identity beyond its `3000000`
+micro-US-dollar ($3.00) budget. Its combined wallet aggregates every card, web
+task, and personal key, so adding cards, merging a guest wallet, or creating
+multiple keys cannot reset or increase the limit. A merge whose two committed
+provider-cost totals would exceed $3 fails atomically: neither wallet is moved,
+the guest session remains recoverable, and no spend is clamped or discarded.
 Integer columns and functions are ledger
 authority; floating-point dollar values are not accepted for limits or state
 transitions. Provider-cost fields remain internal: customer key descriptors
@@ -482,8 +514,8 @@ Production admission is wallet-first and atomic:
 3. atomically admit every valid-key HTTP request (models, malformed chat, and
    valid chat) to a bounded per-key minute counter, then enforce concurrency,
    wallet-wide concurrency,
-   remaining credits, per-key cost, and the wallet-wide 3,000,000 micro-USD
-   ($3.00) cap;
+   remaining credits, per-key cost, and the identity-wide 3,000,000 micro-USD
+   ($3.00) cap enforced through the combined wallet;
 4. reserve the model ceiling in credits and provider micro-US dollars;
 5. call the provider without holding a database transaction;
 6. terminalize only with the request owner token, committing actual bounded
@@ -671,6 +703,13 @@ HMAC-derived with a server-only secret, version, purpose, and five-minute time
 bucket. Empty or oversized values and secrets shorter than 32 bytes are
 rejected. Persisted signals have an explicit expiry and can be deleted by a
 retention job without retaining the originating value.
+
+Account merging follows the same secret-minimization boundary. The database
+stores the one-use intent digest, not its bearer value; the bearer stays in a
+10-minute HttpOnly cookie. The service-only merge transaction records a source
+tombstone and cleanup outbox item so a former guest identity cannot receive a
+new wallet. Intent expiry prevents later use but is not itself physical
+deletion proof.
 
 Agent request rows retain a successful response payload for a logical
 15-minute idempotent replay window; the payload may echo submitted input. The

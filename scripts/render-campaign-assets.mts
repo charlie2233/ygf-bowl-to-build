@@ -118,7 +118,7 @@ export const CAMPAIGN_TOKENS = Object.freeze({
   copy: Object.freeze({
     checkout: "Get your code at checkout.",
     finePrint:
-      "Limited-time YGF promotional Build Credits. Qualifying purchase required. One redemption per person/account. Non-transferable. No cash value. Expires 14 days after redemption. Eligible AI tasks only. Terms and privacy apply.",
+      "Limited-time YGF promotional Build Credits. Qualifying purchase required. Each distinct eligible code grants 3,000 Credits once; multiple distinct cards may top up one wallet. A successful new-card top-up sets the entire wallet to expire 14 days later. Non-transferable. No cash value. Eligible AI tasks only. Terms and privacy apply.",
     headline: "Buy a bowl. Build with AI.",
     scan: "Scan to claim",
     shortUniversity:
@@ -847,7 +847,7 @@ export function renderPrivateClaimRowSvg(
     `<text x="52" y="118" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="18" font-weight="700">YOUR PRIVATE CLAIM CODE</text>`,
     `<text x="52" y="183" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="52" font-weight="800" letter-spacing="5">${escapeXml(row.code)}</text>`,
     `<text x="52" y="232" fill="${CAMPAIGN_TOKENS.color.sage}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="18" font-weight="600">Scan the matching QR or enter this code.</text>`,
-    `<text x="52" y="276" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="14" font-weight="500"><tspan x="52" dy="0">Keep private. One redemption per person/account.</tspan><tspan x="52" dy="22">Credits expire 14 days after redemption.</tspan></text>`,
+    `<text x="52" y="276" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="14" font-weight="500"><tspan x="52" dy="0">Keep private. Each distinct code grants once.</tspan><tspan x="52" dy="22">The same code never regrants.</tspan><tspan x="52" dy="22">A new card rolls wallet expiry to 14 days.</tspan></text>`,
     `<text x="52" y="350" fill="${CAMPAIGN_TOKENS.color.accent}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="13" font-weight="800" letter-spacing="1">HAND OUT ONLY AFTER A QUALIFYING $25+ PURCHASE</text>`,
     qr,
     `<text x="465" y="312" fill="${CAMPAIGN_TOKENS.color.ink}" font-family="${escapeXml(CAMPAIGN_TOKENS.fontFamily)}" font-size="13" font-weight="800" letter-spacing="1">PRIVATE CLAIM QR</text>`,

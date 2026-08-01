@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { hashCode } from "@/lib/campaign/code";
+import { MAX_WALLET_CREDITS } from "@/lib/campaign/credits";
 import type {
   RecordEventInput,
   RecordSessionInput,
@@ -52,7 +53,7 @@ describe("MemoryCampaignRepository redemption", () => {
     expect(JSON.stringify(demo)).not.toContain("BOWL7K2A");
   });
 
-  it("redeems once, retries idempotently, and enforces one account per person", async () => {
+  it("redeems distinct codes into one wallet while keeping retries idempotent", async () => {
     const { repository } = demoRepository();
     const first = await redeemDemo(repository);
     const retry = await redeemDemo(repository);
@@ -86,13 +87,135 @@ describe("MemoryCampaignRepository redemption", () => {
       name: "second batch",
       codeHashes: [await hashCode(secondCode)],
     });
+    const toppedUp = await repository.redeemCode({
+      code: secondCode,
+      userId: "user-1",
+      idempotencyKey: "second-code-same-user",
+    });
+
+    expect(toppedUp.wallet).toMatchObject({
+      id: first.wallet.id,
+      initialBalance: 6_000,
+      remainingBalance: 6_000,
+      userId: "user-1",
+    });
     await expect(
       repository.redeemCode({
         code: secondCode,
         userId: "user-1",
-        idempotencyKey: "second-code-same-user",
+        idempotencyKey: "second-code-retry",
       }),
-    ).rejects.toMatchObject({ code: "ACCOUNT_ALREADY_REDEEMED" });
+    ).resolves.toEqual(toppedUp);
+  });
+
+  it("rolls a topped-up wallet expiry while preserving spent Credits and provider accounting", async () => {
+    const { repository, setNow } = demoRepository();
+    const first = await redeemDemo(repository);
+    const reserved = await repository.reserveSpend({
+      idempotencyKey: "top-up-spend-reserve",
+      providerCostMicroUsd: 1_500,
+      userId: "user-1",
+    });
+    await repository.commitSpend({
+      idempotencyKey: "top-up-spend-commit",
+      providerCostMicroUsd: 1_000,
+      reservationId: reserved.reservation.id,
+      userId: "user-1",
+    });
+    const inFlight = await repository.reserveSpend({
+      idempotencyKey: "top-up-in-flight-reserve",
+      providerCostMicroUsd: 500,
+      userId: "user-1",
+    });
+
+    const secondCode = "TOPUP99A";
+    await repository.createBatch({
+      name: "rolling expiry batch",
+      codeHashes: [await hashCode(secondCode)],
+    });
+    setNow("2026-07-29T12:00:00.000Z");
+    const toppedUp = await repository.redeemCode({
+      code: secondCode,
+      idempotencyKey: "rolling-expiry-claim",
+      userId: "user-1",
+    });
+
+    expect(toppedUp.wallet).toMatchObject({
+      createdAt: first.wallet.createdAt,
+      expiresAt: "2026-08-12T12:00:00.000Z",
+      id: first.wallet.id,
+      initialBalance: 6_000,
+      providerCommittedMicroUsd: 1_000,
+      providerReservedMicroUsd: 500,
+      remainingBalance: 5_760,
+      reservedBalance: 120,
+    });
+
+    const refunded = await repository.refundSpend({
+      idempotencyKey: "top-up-in-flight-refund",
+      reservationId: inFlight.reservation.id,
+      userId: "user-1",
+    });
+    expect(refunded.wallet).toMatchObject({
+      initialBalance: 6_000,
+      providerCommittedMicroUsd: 1_000,
+      providerReservedMicroUsd: 0,
+      remainingBalance: 5_880,
+      reservedBalance: 0,
+    });
+
+    setNow("2026-07-30T12:00:00.000Z");
+    const sameCodeRetry = await repository.redeemCode({
+      code: secondCode,
+      idempotencyKey: "rolling-expiry-retry",
+      userId: "user-1",
+    });
+    expect(sameCodeRetry.wallet).toEqual(refunded.wallet);
+  });
+
+  it("rejects a grant above the aggregate wallet cap without consuming its code", async () => {
+    const { repository } = demoRepository();
+    await redeemDemo(repository);
+    const codes = Array.from({ length: 1_000 }, (_, index) =>
+      `Z${index.toString(36).toUpperCase().padStart(7, "0")}`,
+    );
+    await repository.createBatch({
+      name: "wallet cap batch",
+      codeHashes: await Promise.all(codes.map((code) => hashCode(code))),
+    });
+
+    for (let index = 0; index < 999; index += 1) {
+      await repository.redeemCode({
+        code: codes[index]!,
+        idempotencyKey: `wallet-cap-${index}`,
+        userId: "user-1",
+      });
+    }
+    await expect(
+      repository.getWallet({ userId: "user-1" }),
+    ).resolves.toMatchObject({
+      initialBalance: MAX_WALLET_CREDITS,
+      remainingBalance: MAX_WALLET_CREDITS,
+    });
+
+    await expect(
+      repository.redeemCode({
+        code: codes[999]!,
+        idempotencyKey: "wallet-cap-overflow",
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({
+      code: "ACCOUNT_GRANT_LIMIT_REACHED",
+    });
+    await expect(
+      repository.validateCode({ code: codes[999], userId: "user-1" }),
+    ).resolves.toEqual({ eligible: true });
+    await expect(
+      repository.getWallet({ userId: "user-1" }),
+    ).resolves.toMatchObject({
+      initialBalance: MAX_WALLET_CREDITS,
+      remainingBalance: MAX_WALLET_CREDITS,
+    });
   });
 
   it("lets only the owning account retry the same code without restoring spent credits", async () => {

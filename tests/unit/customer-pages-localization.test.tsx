@@ -275,24 +275,51 @@ describe("remaining customer-page localization", () => {
     );
   });
 
-  it.each(locales)(
-    "provides localized, non-secret identity-conflict guidance in %s",
-    (locale) => {
+  it.each([
+    ["en", /couldn’t complete/i, /guest wallet remains safe/i],
+    ["zh", /未能完成/, /访客钱包仍然安全/],
+    ["es", /no pudimos completar/i, /saldo de invitado sigue seguro/i],
+    ["fr", /n’ont pas pu aboutir/i, /solde invité reste protégé/i],
+    ["ru", /не удалось завершить/i, /гостевой баланс остаётся в безопасности/i],
+  ] as const)(
+    "provides localized, non-secret account-combine recovery in %s",
+    (locale, expectedFailure, expectedSafety) => {
       const message =
         customerPagesCopy[locale].auth.messages.identityAlreadyExists;
-      expect(message.length).toBeGreaterThan(80);
+      expect(message.length).toBeGreaterThan(60);
+      expect(message).toMatch(expectedFailure);
+      expect(message).toMatch(expectedSafety);
       expect(message).not.toMatch(/error_description|identity_already_exists/);
-      if (locale === "en") {
-        expect(message).toMatch(/guest Credits were not moved/i);
-        expect(message).toMatch(
-          /may no longer be accessible from this browser/i,
-        );
-      }
+      expect(message).not.toMatch(
+        /already belongs|已属于另一个|pertenece a otra|appartient déjà|принадлежит друг/iu,
+      );
       if (locale !== "en") {
         expect(message).not.toBe(
           customerPagesCopy.en.auth.messages.identityAlreadyExists,
         );
       }
+    },
+  );
+
+  it.each([
+    ["en", /signed in and combined/i],
+    ["zh", /登录.*合并/],
+    ["es", /iniciaste sesión y combinaste/i],
+    ["fr", /connecté.*fusionné/i],
+    ["ru", /вошли и объединили/i],
+  ] as const)(
+    "uses the sign-in-and-combine model on the already-used page in %s",
+    (locale, expectedCombine) => {
+      const copy = customerPagesCopy[locale];
+      expect(copy.terminal.alreadyUsed.description).toMatch(
+        expectedCombine,
+      );
+      expect(copy.terminal.alreadyUsed.description).not.toMatch(
+        /linked|unlinked|绑定|vinculad|asocié|associé|non associé|привяз/iu,
+      );
+      expect(copy.auth.anonymous.title).not.toMatch(
+        /associez|привяжите/iu,
+      );
     },
   );
 

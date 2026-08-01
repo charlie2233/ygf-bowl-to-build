@@ -407,7 +407,7 @@ export function renderPrivateAgentPassBackBody(
     "</g>",
     `<text x="44" y="330" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="20" font-weight="900">刮开后请勿拍照分享</text>`,
     `<text x="44" y="365" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="14" font-weight="800">A claim unlocks credits. It is never an API credential.</text>`,
-    `<text x="44" y="397" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="14" font-weight="700">${escapeXml(AGENT_PASS_COPY.duration)} · One redemption per person/account.</text>`,
+    `<text x="44" y="397" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="14" font-weight="700">${escapeXml(AGENT_PASS_COPY.duration)} · Each distinct code grants once.</text>`,
     `<text x="44" y="430" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="12.5" font-weight="800">ROW REF: ${escapeXml(row.rowReference)}</text>`,
     `<text x="44" y="466" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="17.5" font-weight="700"><tspan x="44" dy="0">This promotion is offered by YGF for the USC community and is not sponsored,</tspan><tspan x="44" dy="22">endorsed by, or administered by the University of Southern California.</tspan></text>`,
     qr,

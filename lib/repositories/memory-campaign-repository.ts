@@ -1,6 +1,7 @@
 import { hashCode } from "@/lib/campaign/code";
 import {
   BUILD_CREDIT_GRANT,
+  MAX_WALLET_CREDITS,
   PROVIDER_COST_CAP_MICRO_USD,
   TASK_CREDIT_COST,
   createCreditWallet,
@@ -67,6 +68,7 @@ interface StoredCode {
 }
 
 interface StoredPartnerReward {
+  assignedAt: string;
   codeId: string;
   expiresAt: string;
   id: string;
@@ -262,6 +264,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
           createdAt,
         });
         this.#partnerRewards.set(codeId, {
+          assignedAt: createdAt,
           codeId,
           expiresAt: expiresAt.toISOString(),
           id: "reward-demo-claude",
@@ -390,27 +393,44 @@ export class MemoryCampaignRepository implements CampaignRepository {
     if (state === "revoked") {
       return domainError("CODE_REVOKED");
     }
-    if (this.#wallets.has(input.userId)) {
-      return domainError("ACCOUNT_ALREADY_REDEEMED");
-    }
-
     const seed = createCreditWallet(now);
-    const wallet: CreditWallet = {
-      id: this.nextId("wallet"),
-      userId: input.userId,
-      initialBalance: seed.initial,
-      remainingBalance: seed.remaining,
-      reservedBalance: 0,
-      providerCommittedMicroUsd: 0,
-      providerReservedMicroUsd: 0,
-      createdAt: seed.createdAt,
-      expiresAt: seed.expiresAt,
-    };
+    const existingWallet = this.#wallets.get(input.userId);
+    let wallet: CreditWallet;
+    if (existingWallet) {
+      const nextInitialBalance =
+        existingWallet.initialBalance + BUILD_CREDIT_GRANT;
+      const nextRemainingBalance =
+        existingWallet.remainingBalance + BUILD_CREDIT_GRANT;
+      if (
+        !Number.isSafeInteger(nextInitialBalance) ||
+        !Number.isSafeInteger(nextRemainingBalance) ||
+        nextInitialBalance > MAX_WALLET_CREDITS ||
+        nextRemainingBalance + existingWallet.reservedBalance >
+          nextInitialBalance
+      ) {
+        return domainError("ACCOUNT_GRANT_LIMIT_REACHED");
+      }
+      existingWallet.initialBalance = nextInitialBalance;
+      existingWallet.remainingBalance = nextRemainingBalance;
+      existingWallet.expiresAt = seed.expiresAt;
+      wallet = existingWallet;
+    } else {
+      wallet = {
+        id: this.nextId("wallet"),
+        userId: input.userId,
+        initialBalance: seed.initial,
+        remainingBalance: seed.remaining,
+        reservedBalance: 0,
+        providerCommittedMicroUsd: 0,
+        providerReservedMicroUsd: 0,
+        createdAt: seed.createdAt,
+        expiresAt: seed.expiresAt,
+      };
+      this.#wallets.set(input.userId, wallet);
+    }
     stored.state = "redeemed";
     stored.redeemedBy = input.userId;
     stored.redeemedAt = seed.createdAt;
-    this.#wallets.set(input.userId, wallet);
-
     const result: RedemptionResult = {
       codeId: stored.id,
       wallet: cloneWallet(wallet),
@@ -442,6 +462,30 @@ export class MemoryCampaignRepository implements CampaignRepository {
     return reward.state;
   }
 
+  private rewardForUser(userId: string) {
+    let selected: StoredPartnerReward | undefined;
+    for (const reward of this.#partnerRewards.values()) {
+      const code = [...this.#codes.values()].find(
+        (candidate) => candidate.id === reward.codeId,
+      );
+      if (
+        code?.state !== "redeemed" ||
+        code.redeemedBy !== userId
+      ) {
+        continue;
+      }
+      if (
+        !selected ||
+        reward.assignedAt > selected.assignedAt ||
+        (reward.assignedAt === selected.assignedAt &&
+          reward.id < selected.id)
+      ) {
+        selected = reward;
+      }
+    }
+    return selected;
+  }
+
   async assignPartnerReward(
     input: AssignMemoryPartnerRewardInput,
   ): Promise<PartnerRewardSummary> {
@@ -469,6 +513,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
     }
 
     const reward: StoredPartnerReward = {
+      assignedAt: this.currentTime().toISOString(),
       codeId: code.id,
       expiresAt: expiresAt.toISOString(),
       id: this.nextId("reward"),
@@ -506,15 +551,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
     userId,
   }: GetPartnerRewardInput): Promise<PartnerRewardSummary | null> {
     validateUserId(userId);
-    const code = [...this.#codes.values()].find(
-      (candidate) =>
-        candidate.state === "redeemed" &&
-        candidate.redeemedBy === userId,
-    );
-    if (!code) {
-      return null;
-    }
-    const reward = this.#partnerRewards.get(code.id);
+    const reward = this.rewardForUser(userId);
     if (!reward) {
       return null;
     }
@@ -526,15 +563,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
     userId,
   }: RevealPartnerRewardInput): Promise<PartnerRewardReveal> {
     validateUserId(userId);
-    const code = [...this.#codes.values()].find(
-      (candidate) =>
-        candidate.state === "redeemed" &&
-        candidate.redeemedBy === userId,
-    );
-    const reward =
-      code === undefined
-        ? undefined
-        : this.#partnerRewards.get(code.id);
+    const reward = this.rewardForUser(userId);
     if (!reward) {
       return domainError("PARTNER_REWARD_NOT_FOUND");
     }
@@ -813,7 +842,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
     const refund = refundCredits({
       remaining: wallet.remainingBalance,
       amount: reservation.credits,
-      maximum: BUILD_CREDIT_GRANT,
+      maximum: wallet.initialBalance,
     });
 
     wallet.remainingBalance = refund.remaining;
@@ -875,7 +904,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
     const refund = refundCredits({
       remaining: wallet.remainingBalance,
       amount: reservation.credits,
-      maximum: BUILD_CREDIT_GRANT,
+      maximum: wallet.initialBalance,
     });
     wallet.remainingBalance = refund.remaining;
     wallet.reservedBalance -= reservation.credits;

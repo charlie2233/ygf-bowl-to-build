@@ -47,6 +47,7 @@ times.
 | 5 | Redeem with no existing session | Anonymous sign-in completes behind the scan-first flow and returns safely to the pending claim without a Google/Apple/Magic Link screen |
 | 6a | Submit the same valid code again from its original account after spending credits | Current wallet and current remaining balance return; no second grant, reset to 3,000, expiry extension, or second wallet |
 | 6b | Submit that redeemed code from a different account | Already-used state; no wallet, ownership, or code-state information crosses accounts |
+| 6c | Redeem a second, distinct eligible card into the same Google/Apple account wallet | Exactly 3,000 Credits are added once; older remaining Credits stay in the same wallet and the whole wallet expiry becomes 14 days from this successful top-up |
 | 7 | Enter an invalid fixture | Clear invalid state, no credit, no code leakage, no automatic reissue |
 | 8 | Enter an expired fixture | Clear expired state; staff cannot extend it |
 | 9 | Enter a revoked fixture | Clear revoked state and manager escalation |
@@ -58,7 +59,9 @@ times.
 | 15 | Try a sensitive prompt and a food/allergen question | Warnings are visible; no claim of medical or allergen certainty |
 | 16 | Manager rehearses recovery/reissue | Original is reviewed/revoked, new row is audited, staff never records plaintext |
 | 17 | Engineering rehearses each paused server-side switch | A new redemption or web task receives a clear retry-later state with no wallet/provider mutation; the Agent gateway stays separately disabled |
-| 18 | After Google/Apple provider credentials are installed, link an anonymous wallet through `https://malatangai.com/auth/callback` | `linkIdentity` preserves the same user and wallet, the account becomes non-anonymous, and Agent access unlocks; this scenario is blocked until provider client IDs/secrets exist |
+| 18a | From an anonymous wallet, choose Google sign-in and use an existing Google identity that already has a YGF wallet | A 10-minute one-use merge intent is prepared, normal OAuth returns through `https://malatangai.com/auth/callback`, the remaining guest Credits/history combine atomically into the existing wallet once, and Agent access unlocks without exposing an identifier or merge bearer |
+| 18b | Repeat 18a with a human Apple account | The same merge behavior succeeds after Apple's account/2FA round trip; reaching Apple's outbound authorization page alone is not a pass |
+| 19 | Retry the completed merge callback and then retry each source code | No duplicate transfer or grant occurs, the retired guest identity cannot create another wallet, and destination recovery still returns the combined wallet |
 
 Include at least one iPhone/Safari participant, one Android/Chrome participant,
 one desktop participant, one participant using manual entry, and one
@@ -85,7 +88,8 @@ After each participant, ask:
 
 1. What did you think the public QR would do?
 2. Could you tell the public campaign QR from the private claim QR?
-3. Did you understand the $25+ requirement and 14-day expiry?
+3. Did you understand that each distinct card grants once and a successful
+   new-card top-up sets the whole wallet's expiry to 14 days from that top-up?
 4. At any point did you feel asked to share more information than necessary?
 5. What was the first confusing or slow moment?
 
@@ -94,7 +98,14 @@ After each participant, ask:
 - 100% of tested public QRs resolve to the correct `/offer?utm_source=...`.
 - 100% of tested private QRs decode to the paired text code with no crop or
   quiet-zone failure.
-- Valid redemption is exactly-once across retries and sign-in.
+- Each distinct valid code grants exactly once across retries and sign-in;
+  same-code retries never regrant or extend expiry.
+- A second distinct card adds 3,000 Credits to the same identity wallet and
+  rolls the entire wallet expiry to 14 days from that successful top-up.
+- Google and Apple each complete the anonymous-to-existing-account merge with
+  a 10-minute one-use digest-backed intent, buffered destination cookies, and
+  one service-only atomic transfer/tombstone. The $3 provider budget remains
+  per identity after the combine.
 - Invalid, already used, expired, and revoked states are distinct and do not
   leak sensitive data.
 - No critical keyboard, zoom, focus, contrast, or screen-reader blocker.

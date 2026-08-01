@@ -1,6 +1,7 @@
 import { domainError } from "@/lib/campaign/types";
 
 export const BUILD_CREDIT_GRANT = 3_000;
+export const MAX_WALLET_CREDITS = 3_000_000;
 export const BUILD_CREDIT_LIFETIME_DAYS = 14;
 export const TASK_CREDIT_COST = 120;
 export const PROVIDER_COST_CAP_MICRO_USD = 3_000_000;

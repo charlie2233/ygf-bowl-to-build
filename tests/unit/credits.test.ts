@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BUILD_CREDIT_GRANT,
   BUILD_CREDIT_LIFETIME_DAYS,
+  MAX_WALLET_CREDITS,
   PROVIDER_COST_CAP_MICRO_USD,
   TASK_CREDIT_COST,
   createCreditWallet,
@@ -17,6 +18,7 @@ describe("Build Credits", () => {
     const wallet = createCreditWallet(redeemedAt);
 
     expect(BUILD_CREDIT_GRANT).toBe(3_000);
+    expect(MAX_WALLET_CREDITS).toBe(3_000_000);
     expect(BUILD_CREDIT_LIFETIME_DAYS).toBe(14);
     expect(wallet).toEqual({
       initial: 3_000,

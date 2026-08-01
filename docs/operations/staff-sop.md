@@ -27,14 +27,16 @@ them.
 A guest qualifies only after spending **$25+ in one completed transaction**.
 Use the final transaction total and the current manager-approved menu and
 prices. Do not combine separate receipts, issue a code before payment
-finishes, or require a USC email. The offer allows one redemption per
-person/account.
+finishes, or require a USC email. Each distinct valid physical card grants
+once. The same code never grants again, but a guest may add cards from later
+qualifying purchases to the same account wallet.
 
 Use this handoff:
 
 > Your purchase qualifies for limited YGF Build Credits. This row has the
 > same private code in text and QR form. Scan it or enter the code at the
-> claim page. Credits expire 14 days after redemption.
+> claim page. This distinct card adds 3,000 Credits once. A successful new-card
+> top-up sets the whole wallet to expire 14 days later.
 
 Hand over exactly one complete row. The human-readable code is the fallback
 when a camera cannot scan; the private claim QR opens
@@ -59,7 +61,9 @@ printed row if a scan behaves unexpectedly.
 - **Already used:** This means the current account does not own that code.
   Direct the guest to the original account. Re-entering the same code from its
   original account safely returns the current wallet; it does not restore
-  spent credits or add another grant. Escalate any reissue request.
+  spent credits, add another grant, or extend expiry. A different eligible card
+  may add 3,000 Credits once and roll the aggregate wallet expiry to 14 days;
+  that normal top-up is not a reissue. Escalate any reissue request.
 - **Expired:** Explain that the promotional code or credits are outside the
   allowed period. Staff cannot extend an expiry.
 - **Revoked:** Stop. Do not issue another row. Refer the guest to the manager.

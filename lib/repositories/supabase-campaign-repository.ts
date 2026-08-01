@@ -1,5 +1,9 @@
 import { hashCode } from "@/lib/campaign/code";
-import { PROVIDER_COST_CAP_MICRO_USD } from "@/lib/campaign/credits";
+import {
+  BUILD_CREDIT_GRANT,
+  MAX_WALLET_CREDITS,
+  PROVIDER_COST_CAP_MICRO_USD,
+} from "@/lib/campaign/credits";
 import {
   type CreditWallet,
   domainError,
@@ -100,6 +104,7 @@ function repositoryUnavailable(): never {
 function mapDatabaseError(message: unknown): never {
   const codes = [
     "ACCOUNT_ALREADY_REDEEMED",
+    "ACCOUNT_GRANT_LIMIT_REACHED",
     "CODE_ALREADY_REDEEMED",
     "CODE_EXPIRED",
     "CODE_NOT_FOUND",
@@ -184,6 +189,9 @@ function hasValidWalletAccounting(
 ) {
   return (
     validLedgerInteger(initialBalance) &&
+    initialBalance >= BUILD_CREDIT_GRANT &&
+    initialBalance <= MAX_WALLET_CREDITS &&
+    initialBalance % BUILD_CREDIT_GRANT === 0 &&
     validLedgerInteger(remainingBalance) &&
     validLedgerInteger(reservedBalance) &&
     remainingBalance + reservedBalance <= initialBalance &&

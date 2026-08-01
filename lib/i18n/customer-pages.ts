@@ -119,7 +119,7 @@ export const customerPagesCopy = {
       alreadyUsed: {
         title: "This code was already used",
         description:
-          "If you claimed it earlier, reopen the same browser wallet. If you linked an account, sign in with that same account. An unlinked guest wallet cannot be recovered after browser data is cleared. Staff never need your full code.",
+          "If you claimed it earlier, reopen the same browser wallet. If you signed in and combined it with an account, sign in with that same account. A guest wallet that was never combined cannot be recovered after browser data is cleared. Staff never need your full code.",
         actionLabel: "Open my wallet",
       },
       expired: {
@@ -147,7 +147,7 @@ export const customerPagesCopy = {
         anonymousError:
           "Quick guest access is temporarily unavailable. Your secured claim is still waiting.",
         identityAlreadyExists:
-          "That Google or Apple identity already belongs to another YGF account. Your current guest Credits were not moved. To keep this guest wallet, choose a different identity. Only sign out if you intend to use the existing account—the guest wallet will remain separate and may no longer be accessible from this browser.",
+          "We couldn’t complete this sign-in and wallet combine. No wallet was combined or changed, and your guest wallet remains safe. Try again, choose another sign-in option, or continue using YGF web AI as a guest.",
         providerError:
           "Sign-in could not start. Please try another option.",
         magicLinkError:
@@ -157,11 +157,11 @@ export const customerPagesCopy = {
       providerAvailability: {
         anonymous: {
           both:
-            "Google and Apple linking aren’t available yet. Your guest wallet remains safe and usable while setup is completed.",
+            "Google and Apple sign-in and combine aren’t available yet. Your guest wallet remains safe and usable while setup is completed.",
           google:
-            "Google linking isn’t available yet. You can link Apple instead, and your guest wallet remains safe and usable.",
+            "Google sign-in and combine aren’t available yet. You can continue with Apple instead, and your guest wallet remains safe and usable.",
           apple:
-            "Apple linking isn’t available yet. You can link Google instead, and your guest wallet remains safe and usable.",
+            "Apple sign-in and combine aren’t available yet. You can continue with Google instead, and your guest wallet remains safe and usable.",
         },
         recovery: {
           both:
@@ -181,11 +181,11 @@ export const customerPagesCopy = {
       anonymous: {
         title: "Upgrade to connect an Agent",
         description:
-          "Your guest wallet already works for YGF web AI. Link a verified identity only for personal Agent keys, recovery, and cross-device access.",
+          "Your guest wallet already works for YGF web AI. Sign in and combine it with a verified account only for personal Agent keys, recovery, and cross-device access.",
         warning:
-          "Until you link an account, clearing this browser’s site data can permanently remove access to this guest wallet.",
-        google: "Link Google",
-        apple: "Link Apple",
+          "Until sign-in and combine finish, clearing this browser’s site data can permanently remove access to this guest wallet.",
+        google: "Sign in with Google and combine",
+        apple: "Sign in with Apple and combine",
       },
       recovery: {
         title: "Sign in to recover your wallet",
@@ -266,7 +266,7 @@ export const customerPagesCopy = {
       alreadyUsed: {
         title: "此兑换码已使用",
         description:
-          "如果你之前已兑换，请在同一浏览器中重新打开钱包。若已绑定账户，请使用同一账户登录。未绑定的访客钱包在浏览器数据被清除后无法恢复。门店员工绝不需要你的完整兑换码。",
+          "如果你之前已兑换，请在同一浏览器中重新打开钱包。如果你已登录并将访客钱包合并到账户，请使用同一账户登录。从未合并的访客钱包在浏览器数据被清除后无法恢复。门店员工绝不需要你的完整兑换码。",
         actionLabel: "打开我的钱包",
       },
       expired: {
@@ -293,7 +293,7 @@ export const customerPagesCopy = {
         callbackError: "无法完成登录，请重试。",
         anonymousError: "访客模式暂时不可用。你已保存的兑换权益仍在等待确认。",
         identityAlreadyExists:
-          "该 Google 或 Apple 身份已属于另一个杨国福账户。当前访客 Credits 未转移。若要保留此访客钱包，请选择其他身份；只有在确定要使用原账户时才退出，访客钱包仍会保持独立，并可能无法再从此浏览器访问。",
+          "本次登录和钱包合并未能完成。没有钱包被合并或更改，你的访客钱包仍然安全。请重试、选择其他登录方式，或继续以访客身份使用杨国福网页 AI。",
         providerError: "无法开始登录，请尝试其他方式。",
         magicLinkError: "无法发送登录链接，请检查邮箱后重试。",
         magicLinkSent: "请查收邮箱中的安全登录链接。",
@@ -301,11 +301,11 @@ export const customerPagesCopy = {
       providerAvailability: {
         anonymous: {
           both:
-            "Google 和 Apple 账号关联暂未开放。配置完成前，你的访客钱包仍可安全正常使用。",
+            "Google 和 Apple 登录及钱包合并暂未开放。配置完成前，你的访客钱包仍可安全正常使用。",
           google:
-            "Google 账号关联暂未开放，你仍可关联 Apple，访客钱包也可安全正常使用。",
+            "Google 登录及钱包合并暂未开放，你仍可使用 Apple 继续，访客钱包也可安全正常使用。",
           apple:
-            "Apple 账号关联暂未开放，你仍可关联 Google，访客钱包也可安全正常使用。",
+            "Apple 登录及钱包合并暂未开放，你仍可使用 Google 继续，访客钱包也可安全正常使用。",
         },
         recovery: {
           both:
@@ -324,11 +324,11 @@ export const customerPagesCopy = {
       anonymous: {
         title: "升级账户以连接 Agent",
         description:
-          "你的访客钱包已可使用杨国福网页 AI。仅在需要个人 Agent Key、恢复或跨设备使用时绑定已验证身份。",
+          "你的访客钱包已可使用杨国福网页 AI。仅在需要个人 Agent Key、恢复或跨设备使用时，登录并将其合并到已验证账户。",
         warning:
-          "绑定账户前，清除此浏览器的网站数据可能会永久失去此访客钱包。",
-        google: "绑定 Google",
-        apple: "绑定 Apple",
+          "登录与合并完成前，清除此浏览器的网站数据可能会永久失去此访客钱包。",
+        google: "使用 Google 登录并合并",
+        apple: "使用 Apple 登录并合并",
       },
       recovery: {
         title: "登录以恢复钱包",
@@ -407,7 +407,7 @@ export const customerPagesCopy = {
       alreadyUsed: {
         title: "Este código ya se usó",
         description:
-          "Si lo canjeaste antes, abre la cartera en el mismo navegador. Si vinculaste una cuenta, inicia sesión con esa misma cuenta. Una cartera de invitado sin vincular no puede recuperarse después de borrar los datos del navegador. El personal nunca necesita tu código completo.",
+          "Si lo canjeaste antes, abre la cartera en el mismo navegador. Si iniciaste sesión y combinaste el saldo de invitado con una cuenta, accede con esa misma cuenta. Un saldo de invitado que nunca se combinó no puede recuperarse después de borrar los datos del navegador. El personal nunca necesita tu código completo.",
         actionLabel: "Abrir mi saldo",
       },
       expired: {
@@ -436,7 +436,7 @@ export const customerPagesCopy = {
         anonymousError:
           "El acceso rápido para invitados no está disponible temporalmente. Tu canje protegido sigue esperando.",
         identityAlreadyExists:
-          "Esa identidad de Google o Apple ya pertenece a otra cuenta de YGF. Tus Credits de invitado actuales no se movieron. Para conservar esta cartera de invitado, elige otra identidad. Cierra sesión solo si quieres usar la cuenta existente: la cartera de invitado seguirá separada y podría dejar de estar accesible en este navegador.",
+          "No pudimos completar el acceso ni la combinación del saldo. Ningún saldo se combinó ni cambió, y tu saldo de invitado sigue seguro. Inténtalo de nuevo, elige otra opción de acceso o continúa usando la IA web de YGF como invitado.",
         providerError:
           "No se pudo iniciar la sesión. Prueba con otra opción.",
         magicLinkError:
@@ -447,11 +447,11 @@ export const customerPagesCopy = {
       providerAvailability: {
         anonymous: {
           both:
-            "La vinculación con Google y Apple aún no está disponible. Tu saldo de invitado sigue seguro y listo para usar mientras finaliza la configuración.",
+            "El acceso y la combinación con Google y Apple aún no están disponibles. Tu saldo de invitado sigue seguro y listo para usar mientras finaliza la configuración.",
           google:
-            "La vinculación con Google aún no está disponible. Puedes vincular Apple y tu saldo de invitado sigue seguro y listo para usar.",
+            "El acceso y la combinación con Google aún no están disponibles. Puedes continuar con Apple y tu saldo de invitado sigue seguro y listo para usar.",
           apple:
-            "La vinculación con Apple aún no está disponible. Puedes vincular Google y tu saldo de invitado sigue seguro y listo para usar.",
+            "El acceso y la combinación con Apple aún no están disponibles. Puedes continuar con Google y tu saldo de invitado sigue seguro y listo para usar.",
         },
         recovery: {
           both:
@@ -471,11 +471,11 @@ export const customerPagesCopy = {
       anonymous: {
         title: "Actualiza tu cuenta para conectar un Agent",
         description:
-          "Tu saldo de invitado ya funciona con la IA web de YGF. Vincula una identidad verificada solo para claves personales de Agent, recuperación y acceso entre dispositivos.",
+          "Tu saldo de invitado ya funciona con la IA web de YGF. Inicia sesión y combínalo con una cuenta verificada solo para claves personales de Agent, recuperación y acceso entre dispositivos.",
         warning:
-          "Hasta que vincules una cuenta, borrar los datos de este sitio puede eliminar para siempre el acceso a este saldo de invitado.",
-        google: "Vincular Google",
-        apple: "Vincular Apple",
+          "Hasta que terminen el acceso y la combinación, borrar los datos de este sitio puede eliminar para siempre el acceso a este saldo de invitado.",
+        google: "Acceder con Google y combinar",
+        apple: "Acceder con Apple y combinar",
       },
       recovery: {
         title: "Inicia sesión para recuperar tu saldo",
@@ -556,7 +556,7 @@ export const customerPagesCopy = {
       alreadyUsed: {
         title: "Ce code a déjà été utilisé",
         description:
-          "Si vous l’avez déjà activé, rouvrez le solde dans le même navigateur. Si vous avez associé un compte, reconnectez-vous avec ce compte. Un solde invité non associé ne peut pas être récupéré après l’effacement des données du navigateur. Le personnel n’a jamais besoin de votre code complet.",
+          "Si vous l’avez déjà activé, rouvrez le solde dans le même navigateur. Si vous vous êtes connecté et avez fusionné le solde invité avec un compte, reconnectez-vous avec ce même compte. Un solde invité qui n’a jamais été fusionné ne peut pas être récupéré après l’effacement des données du navigateur. Le personnel n’a jamais besoin de votre code complet.",
         actionLabel: "Ouvrir mon solde",
       },
       expired: {
@@ -585,7 +585,7 @@ export const customerPagesCopy = {
         anonymousError:
           "L’accès invité rapide est temporairement indisponible. Votre activation sécurisée reste en attente.",
         identityAlreadyExists:
-          "Cette identité Google ou Apple appartient déjà à un autre compte YGF. Vos Credits invité actuels n’ont pas été déplacés. Pour conserver ce portefeuille invité, choisissez une autre identité. Déconnectez-vous uniquement si vous souhaitez utiliser le compte existant : le portefeuille invité restera séparé et pourrait ne plus être accessible depuis ce navigateur.",
+          "La connexion et la fusion du solde n’ont pas pu aboutir. Aucun solde n’a été fusionné ni modifié, et votre solde invité reste protégé. Réessayez, choisissez une autre option de connexion ou continuez à utiliser l’IA web YGF en tant qu’invité.",
         providerError:
           "La connexion n’a pas pu démarrer. Essayez une autre option.",
         magicLinkError:
@@ -596,11 +596,11 @@ export const customerPagesCopy = {
       providerAvailability: {
         anonymous: {
           both:
-            "L’association avec Google et Apple n’est pas encore disponible. Votre solde invité reste sécurisé et utilisable pendant la finalisation de la configuration.",
+            "La connexion et la fusion avec Google et Apple ne sont pas encore disponibles. Votre solde invité reste sécurisé et utilisable pendant la finalisation de la configuration.",
           google:
-            "L’association avec Google n’est pas encore disponible. Vous pouvez associer Apple et votre solde invité reste sécurisé et utilisable.",
+            "La connexion et la fusion avec Google ne sont pas encore disponibles. Vous pouvez continuer avec Apple et votre solde invité reste sécurisé et utilisable.",
           apple:
-            "L’association avec Apple n’est pas encore disponible. Vous pouvez associer Google et votre solde invité reste sécurisé et utilisable.",
+            "La connexion et la fusion avec Apple ne sont pas encore disponibles. Vous pouvez continuer avec Google et votre solde invité reste sécurisé et utilisable.",
         },
         recovery: {
           both:
@@ -618,13 +618,13 @@ export const customerPagesCopy = {
         continue: "Continuer en mode démo",
       },
       anonymous: {
-        title: "Associez un compte pour connecter un Agent",
+        title: "Fusionnez votre solde pour connecter un Agent",
         description:
-          "Votre solde invité fonctionne déjà avec l’IA web YGF. Associez une identité vérifiée uniquement pour les clés Agent personnelles, la récupération et l’accès multiappareil.",
+          "Votre solde invité fonctionne déjà avec l’IA web YGF. Connectez-vous et fusionnez-le avec un compte vérifié uniquement pour les clés Agent personnelles, la récupération et l’accès multiappareil.",
         warning:
-          "Tant que vous n’avez pas associé de compte, effacer les données du site peut supprimer définitivement l’accès à ce solde invité.",
-        google: "Associer Google",
-        apple: "Associer Apple",
+          "Tant que la connexion et la fusion ne sont pas terminées, effacer les données du site peut supprimer définitivement l’accès à ce solde invité.",
+        google: "Se connecter avec Google et fusionner",
+        apple: "Se connecter avec Apple et fusionner",
       },
       recovery: {
         title: "Connectez-vous pour récupérer votre solde",
@@ -705,7 +705,7 @@ export const customerPagesCopy = {
       alreadyUsed: {
         title: "Этот код уже использован",
         description:
-          "Если вы уже активировали его, откройте баланс в том же браузере. Если вы привязали аккаунт, войдите в тот же аккаунт. Гостевой баланс без привязки нельзя восстановить после очистки данных браузера. Сотрудникам никогда не нужен ваш полный код.",
+          "Если вы уже активировали его, откройте баланс в том же браузере. Если вы вошли и объединили гостевой баланс с аккаунтом, войдите в тот же аккаунт. Гостевой баланс, который так и не был объединён, нельзя восстановить после очистки данных браузера. Сотрудникам никогда не нужен ваш полный код.",
         actionLabel: "Открыть мой баланс",
       },
       expired: {
@@ -733,7 +733,7 @@ export const customerPagesCopy = {
         anonymousError:
           "Быстрый гостевой доступ временно недоступен. Сохранённая активация по-прежнему ожидает подтверждения.",
         identityAlreadyExists:
-          "Эта идентификация Google или Apple уже принадлежит другому аккаунту YGF. Текущие гостевые Credits не перемещались. Чтобы сохранить этот гостевой кошелёк, выберите другую учётную запись. Выходите только если хотите использовать существующий аккаунт: гостевой кошелёк останется отдельным и может стать недоступен в этом браузере.",
+          "Не удалось завершить вход и объединение баланса. Ни один баланс не был объединён или изменён, а гостевой баланс остаётся в безопасности. Повторите попытку, выберите другой способ входа или продолжайте использовать веб-ИИ YGF как гость.",
         providerError:
           "Не удалось начать вход. Попробуйте другой вариант.",
         magicLinkError:
@@ -743,11 +743,11 @@ export const customerPagesCopy = {
       providerAvailability: {
         anonymous: {
           both:
-            "Привязка Google и Apple пока недоступна. До завершения настройки гостевой баланс остаётся защищённым и доступным.",
+            "Вход и объединение через Google и Apple пока недоступны. До завершения настройки гостевой баланс остаётся защищённым и доступным.",
           google:
-            "Привязка Google пока недоступна. Можно привязать Apple, а гостевой баланс остаётся защищённым и доступным.",
+            "Вход и объединение через Google пока недоступны. Можно продолжить через Apple, а гостевой баланс остаётся защищённым и доступным.",
           apple:
-            "Привязка Apple пока недоступна. Можно привязать Google, а гостевой баланс остаётся защищённым и доступным.",
+            "Вход и объединение через Apple пока недоступны. Можно продолжить через Google, а гостевой баланс остаётся защищённым и доступным.",
         },
         recovery: {
           both:
@@ -765,13 +765,13 @@ export const customerPagesCopy = {
         continue: "Продолжить в демо",
       },
       anonymous: {
-        title: "Привяжите аккаунт для подключения Agent",
+        title: "Объедините баланс для подключения Agent",
         description:
-          "Гостевой баланс уже работает с веб-инструментами ИИ YGF. Привязывайте подтверждённый аккаунт только для личных ключей Agent, восстановления и доступа с разных устройств.",
+          "Гостевой баланс уже работает с веб-инструментами ИИ YGF. Войдите и объедините его с подтверждённым аккаунтом только для личных ключей Agent, восстановления и доступа с разных устройств.",
         warning:
-          "Пока аккаунт не привязан, очистка данных сайта может навсегда удалить доступ к гостевому балансу.",
-        google: "Привязать Google",
-        apple: "Привязать Apple",
+          "Пока вход и объединение не завершены, очистка данных сайта может навсегда удалить доступ к гостевому балансу.",
+        google: "Войти через Google и объединить",
+        apple: "Войти через Apple и объединить",
       },
       recovery: {
         title: "Войдите, чтобы восстановить баланс",

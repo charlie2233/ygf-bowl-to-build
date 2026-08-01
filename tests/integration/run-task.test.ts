@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { hashCode } from "@/lib/campaign/code";
 import { MemoryCampaignRepository } from "@/lib/repositories/memory-campaign-repository";
 import {
   MemoryTaskResultStore,
@@ -311,7 +312,7 @@ async function setup(
   };
   const dependencies: RunTaskDependencies = {
     fingerprintSecret:
-      "task-test-fingerprint-secret-at-least-32-bytes",
+      "task_fingerprint_secret_at_least_32_bytes",
     provider,
     rateLimiter: createTaskRateLimiter({
       limit: 20,
@@ -714,7 +715,7 @@ describe("runTask", () => {
     const secondProvider = vi.fn<TaskProvider["run"]>();
     const secondDependencies: RunTaskDependencies = {
       fingerprintSecret:
-        "task-test-fingerprint-secret-at-least-32-bytes",
+        "task_fingerprint_secret_at_least_32_bytes",
       provider: { name: "second-process", run: secondProvider },
       rateLimiter: createTaskRateLimiter(),
       repository: shared,
@@ -729,6 +730,50 @@ describe("runTask", () => {
     });
     expect(first.run).toHaveBeenCalledTimes(1);
     expect(secondProvider).not.toHaveBeenCalled();
+  });
+
+  it("accepts aggregate wallet balances in terminal results and replays", async () => {
+    const first = await setup();
+    await first.repository.createBatch({
+      codeHashes: [await hashCode("TOPUP99A")],
+      name: "aggregate task wallet",
+    });
+    await first.repository.redeemCode({
+      code: "TOPUP99A",
+      idempotencyKey: "aggregate-task-top-up",
+      userId: "demo-user",
+    });
+    const shared = new SharedExecutionRepository(first.repository);
+    first.dependencies.repository = shared;
+    const request = {
+      idempotencyKey: "aggregate-task-replay",
+      input: validInputs.study,
+      taskType: "study" as const,
+      userId: "demo-user",
+    };
+
+    const original = await runTask(request, first.dependencies);
+    expect(original).toMatchObject({
+      remainingCredits: 5_880,
+      status: "completed",
+    });
+
+    const replayProvider = vi.fn<TaskProvider["run"]>();
+    const replayed = await runTask(request, {
+      fingerprintSecret:
+        "task_fingerprint_secret_at_least_32_bytes",
+      provider: { name: "aggregate-replay", run: replayProvider },
+      rateLimiter: createTaskRateLimiter(),
+      repository: shared,
+      resultStore: new MemoryTaskResultStore(),
+    });
+
+    expect(replayed).toMatchObject({
+      remainingCredits: 5_880,
+      status: "completed",
+    });
+    expect(first.run).toHaveBeenCalledOnce();
+    expect(replayProvider).not.toHaveBeenCalled();
   });
 
   it("atomically refunds and records a production failure without legacy terminal writes", async () => {
@@ -821,7 +866,7 @@ describe("runTask", () => {
     const neverCall = vi.fn<TaskProvider["run"]>();
     const fresh: RunTaskDependencies = {
       fingerprintSecret:
-        "task-test-fingerprint-secret-at-least-32-bytes",
+        "task_fingerprint_secret_at_least_32_bytes",
       provider: { name: "fresh", run: neverCall },
       rateLimiter: createTaskRateLimiter(),
       repository: shared,

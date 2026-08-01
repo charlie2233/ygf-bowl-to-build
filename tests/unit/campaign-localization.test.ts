@@ -12,24 +12,44 @@ import { workspaceCopy } from "@/lib/i18n/workspace";
 
 const rewardContextExpectations = {
   en: {
-    credits: "Every valid code",
+    offerCredits: "Every valid code",
+    redeemCredits: "Each distinct eligible card",
+    sameCode: "The same code never grants again",
     selectedGift: "Selected special codes may also",
+    walletDestination: "to this wallet",
+    walletExpiry: "whole wallet",
   },
   zh: {
-    credits: "每个有效兑换码",
+    offerCredits: "每个有效兑换码",
+    redeemCredits: "每张不同且符合条件的卡片",
+    sameCode: "同一兑换码不会重复发放",
     selectedGift: "部分特别兑换码还可能",
+    walletDestination: "向此钱包",
+    walletExpiry: "整个钱包",
   },
   es: {
-    credits: "Cada código válido",
+    offerCredits: "Cada código válido",
+    redeemCredits: "Cada tarjeta distinta",
+    sameCode: "El mismo código nunca vuelve a conceder",
     selectedGift: "Algunos códigos especiales seleccionados también pueden",
+    walletDestination: "a esta cartera",
+    walletExpiry: "toda la cartera",
   },
   fr: {
-    credits: "Chaque code valide",
+    offerCredits: "Chaque code valide",
+    redeemCredits: "Chaque carte distincte",
+    sameCode: "Le même code n’en accorde jamais à nouveau",
     selectedGift: "Certains codes spéciaux sélectionnés peuvent aussi",
+    walletDestination: "à ce portefeuille",
+    walletExpiry: "l’ensemble du portefeuille",
   },
   ru: {
-    credits: "Каждый действительный код",
+    offerCredits: "Каждый действительный код",
+    redeemCredits: "Каждая отдельная подходящая карта",
+    sameCode: "Тот же код никогда не начисляет",
     selectedGift: "Некоторые специальные коды также могут",
+    walletDestination: "в этот кошелёк",
+    walletExpiry: "всего кошелька",
   },
 } as const;
 
@@ -204,12 +224,17 @@ describe("campaign localization contract", () => {
       );
 
       for (const context of [offerContext, redeemContext]) {
-        expect(context).toContain(expectation.credits);
         expect(context).toContain(expectation.selectedGift);
         expect(context).toMatch(/3[ ,]000/);
         expect(context).toMatch(/Claude Pro/i);
         expect(context).not.toMatch(/or\s+(?:a\s+)?Claude Pro/i);
       }
+      expect(offerContext).toContain(expectation.offerCredits);
+      expect(redeemContext).toContain(expectation.redeemCredits);
+      expect(redeemContext).toContain(expectation.sameCode);
+      expect(redeemContext).toContain(expectation.walletDestination);
+      expect(redeemContext).toContain(expectation.walletExpiry);
+      expect(redeemContext).toMatch(/14/);
     },
   );
 

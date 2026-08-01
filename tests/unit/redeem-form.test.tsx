@@ -834,26 +834,71 @@ describe("RedeemForm", () => {
     expect(confirmPendingClaim).toHaveBeenCalledTimes(1);
   });
 
+  it.each(campaignLocales)(
+    "shows the localized account card-limit error for a pending claim in %s",
+    async (locale) => {
+      const fetchMock = vi.fn<typeof fetch>(async () =>
+        Response.json(
+          { error: "ACCOUNT_GRANT_LIMIT_REACHED" },
+          { status: 409 },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+
+      await act(async () => {
+        root.render(
+          <CampaignLanguageProvider initialLocale={locale}>
+            <RedeemForm pendingClaimReady />
+          </CampaignLanguageProvider>,
+        );
+      });
+      await act(async () => {
+        container.querySelector("form")?.dispatchEvent(
+          new SubmitEvent("submit", {
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+        redeemCopy[locale].form.errors.accountGrantLimitReached,
+      );
+    },
+  );
+
   it("updates the complete redeem experience in all five campaign languages", async () => {
     const localizedExpectations = {
       en: {
         codeLabel: "8-character card code",
+        destination: "to this wallet",
+        rule: "The same code never regrants",
         title: "Unlock 3,000 AI Credits",
       },
       zh: {
         codeLabel: "卡片上的 8 位兑换码",
+        destination: "向此钱包",
+        rule: "同一兑换码不会重复发放",
         title: "解锁 3,000 AI Credits",
       },
       es: {
         codeLabel: "Código de 8 caracteres",
+        destination: "a esta cartera",
+        rule: "El mismo código nunca vuelve a añadir créditos",
         title: "Desbloquea 3,000 créditos de IA",
       },
       fr: {
         codeLabel: "Code de carte à 8 caractères",
+        destination: "à ce portefeuille",
+        rule: "Le même code n’ajoute jamais de nouveaux crédits",
         title: "Débloquez 3 000 crédits IA",
       },
       ru: {
         codeLabel: "8-значный код карты",
+        destination: "в этот кошелёк",
+        rule: "Тот же код не начисляет их повторно",
         title: "Получите 3 000 AI Credits",
       },
     } as const;
@@ -892,6 +937,8 @@ describe("RedeemForm", () => {
           `input[aria-label="${expectation.codeLabel}"]`,
         ),
       ).not.toBeNull();
+      expect(container.textContent).toContain(expectation.destination);
+      expect(container.textContent).toContain(expectation.rule);
     }
   });
 
@@ -904,6 +951,9 @@ describe("RedeemForm", () => {
     expect(redemptionErrorDestination("REDEMPTION_THROTTLED")).toBe(
       "/blocked",
     );
+    expect(
+      redemptionErrorDestination("ACCOUNT_GRANT_LIMIT_REACHED"),
+    ).toBeNull();
     expect(redemptionErrorDestination("database row 42")).toBeNull();
   });
 

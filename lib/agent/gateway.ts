@@ -1,5 +1,6 @@
 import { createHmac, randomUUID } from "node:crypto";
 
+import { MAX_WALLET_CREDITS } from "@/lib/campaign/credits";
 import type { CampaignEventMetadata } from "@/lib/campaign/types";
 import type {
   ParsedAgentChatRequest,
@@ -131,7 +132,7 @@ function replayPayload(value: unknown): Readonly<Record<string, unknown>> {
     !nonnegativeSafeInteger(ygf.credits_used) ||
     ygf.credits_used > 3_000 ||
     !nonnegativeSafeInteger(ygf.remaining_credits) ||
-    ygf.remaining_credits > 3_000
+    ygf.remaining_credits > MAX_WALLET_CREDITS
   ) {
     throw new AgentGatewayError("UNAVAILABLE");
   }
@@ -428,7 +429,7 @@ export async function runAgentChat(
       terminal.errorCode !== undefined ||
       !Number.isSafeInteger(terminal.remainingCredits) ||
       terminal.remainingCredits < 0 ||
-      terminal.remainingCredits > 3_000 ||
+      terminal.remainingCredits > MAX_WALLET_CREDITS ||
       !Number.isFinite(new Date(terminal.resultExpiresAt).getTime()) ||
       canonicalJson(persistedResponse) !==
         canonicalJson(expectedResponse)

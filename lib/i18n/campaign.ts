@@ -98,10 +98,10 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Buy a bowl.",
       titleLineTwo: "Build with AI.",
       subhead:
-        "Spend $25+ at YGF, get an AI card at checkout, then scan or enter its private code to unlock 3,000 AI Credits for 14 days.",
+        "Spend $25+ at YGF and get an AI card at checkout. Each distinct card adds 3,000 AI Credits once; a successful new-card top-up sets the whole wallet to expire 14 days later.",
       guidance: "Start with Step 1. Agent setup is optional.",
       rewardContext:
-        "Every valid code adds 3,000 AI Credits. Selected special codes may also include a Claude Pro gift.",
+        "Every valid code adds 3,000 AI Credits once; each distinct code can grant only once. Selected special codes may also include a Claude Pro gift.",
       stepOne: "Step 1",
       stepTwo: "Step 2",
       claimCredits: "Scan or enter my code",
@@ -120,7 +120,7 @@ export const campaignHomeCopy: Record<
         illustrativeCode: "DEMO — use your own card",
         scanOrEnter: "Private QR or 8-character code",
         exampleOnly: "Example only. This code cannot be redeemed.",
-        expires: "Credits last 14 days",
+        expires: "Wallet: 14 days from latest new card",
       },
     },
     useCases: {
@@ -147,7 +147,7 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Three simple steps.",
       description:
-        "Spend $25+ in one transaction. Receive an AI card at checkout. Redeem it for 3,000 AI Credits that last 14 days.",
+        "Spend $25+ in one transaction and receive an AI card at checkout. Each distinct card grants 3,000 AI Credits once; a new-card top-up rolls the whole wallet expiry to 14 days.",
       photoAlt: "Assorted YGF ingredients ready to choose at the counter",
       steps: [
         {
@@ -174,7 +174,7 @@ export const campaignHomeCopy: Record<
         {
           question: "Who’s eligible?",
           answer:
-            "Guests who spend $25+ in one transaction and receive a code at checkout. One redemption per person/account.",
+            "Guests who spend $25+ in one transaction and receive a distinct code at checkout. Each eligible physical card grants once, and one account may add multiple distinct cards.",
         },
         {
           question: "Is this official USC?",
@@ -183,12 +183,13 @@ export const campaignHomeCopy: Record<
         },
         {
           question: "When do credits expire?",
-          answer: "Credits expire 14 days after redemption.",
+          answer:
+            "A successful new-card top-up sets the whole wallet to expire 14 days later, including older remaining Credits. Retrying the same code does not extend expiry.",
         },
         {
           question: "Do I need a school email?",
           answer:
-            "No. Scan first to use a private guest wallet. Link Google or Apple only for recovery, cross-device access, or an Agent API key.",
+            "No. Scan first to use a private guest wallet. Sign in with Google or Apple and combine the wallet only for recovery, cross-device access, or an Agent API key.",
         },
       ],
     },
@@ -215,10 +216,10 @@ export const campaignHomeCopy: Record<
       titleLineOne: "吃一碗。",
       titleLineTwo: "用 AI 开始创造。",
       subhead:
-        "在杨国福单笔消费满 $25，结账时领取 AI 算力卡；扫描私人二维码或输入兑换码，即可解锁 3,000 杨国福 AI Credits，有效 14 天。",
+        "在杨国福单笔消费满 $25，结账时领取 AI 算力卡。每张不同的有效卡仅增加一次 3,000 AI Credits；成功兑换新卡后，整个钱包的有效期更新为 14 天。",
       guidance: "请从步骤 1 开始；Agent 连接为可选功能。",
       rewardContext:
-        "每个有效兑换码均可获得 3,000 杨国福 AI Credits；部分特别兑换码还可能附带一份 Claude Pro 礼赠。",
+        "每个有效兑换码仅在首次兑换时增加 3,000 杨国福 AI Credits；每张不同的卡只能入账一次。部分特别兑换码还可能附带一份 Claude Pro 礼赠。",
       stepOne: "步骤 1",
       stepTwo: "步骤 2",
       claimCredits: "扫码或输入兑换码",
@@ -236,7 +237,7 @@ export const campaignHomeCopy: Record<
         illustrativeCode: "演示码 — 请使用自己的卡",
         scanOrEnter: "私人二维码或 8 位兑换码",
         exampleOnly: "仅作示例，无法兑换。",
-        expires: "Credits 有效 14 天",
+        expires: "钱包：从最新新卡充值起有效 14 天",
       },
     },
     useCases: {
@@ -263,7 +264,7 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "简单三步即可开始。",
       description:
-        "单笔消费满 $25，结账时领取 AI 算力卡。兑换后获得 3,000 AI Credits，有效 14 天。",
+        "单笔消费满 $25，结账时领取 AI 算力卡。每张不同的卡仅增加一次 3,000 AI Credits；新卡充值会把整个钱包的有效期更新为 14 天。",
       photoAlt: "杨国福柜台中可自由选择的丰富食材",
       steps: [
         {
@@ -290,7 +291,7 @@ export const campaignHomeCopy: Record<
         {
           question: "谁可以参加？",
           answer:
-            "单笔消费满 $25，并在结账时领取兑换码的顾客。每人或每个账户限兑换一次。",
+            "单笔消费满 $25，并在结账时领取独立兑换码的顾客。每张符合条件的实体卡仅入账一次，同一账户可添加多张不同的卡。",
         },
         {
           question: "这是 USC 官方活动吗？",
@@ -299,12 +300,13 @@ export const campaignHomeCopy: Record<
         },
         {
           question: "Credits 什么时候到期？",
-          answer: "Credits 在兑换后 14 天到期。",
+          answer:
+            "每次成功兑换新卡，整个钱包都会从该次充值起 14 天后到期，之前剩余的 Credits 也使用同一到期时间。重复提交同一兑换码不会延长有效期。",
         },
         {
           question: "需要学校邮箱吗？",
           answer:
-            "不需要。扫码即可使用当前浏览器中的私密访客钱包。只有在需要找回、跨设备使用或 Agent API Key 时才需要连接 Google 或 Apple。",
+            "不需要。扫码即可使用当前浏览器中的私密访客钱包。只有在需要找回、跨设备使用或 Agent API Key 时，才需使用 Google 或 Apple 登录并合并钱包。",
         },
       ],
     },
@@ -330,11 +332,11 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Compra un bowl.",
       titleLineTwo: "Crea con IA.",
       subhead:
-        "Gasta $25+ en YGF, recibe una tarjeta de IA en caja y escanea o escribe su código privado para desbloquear 3,000 AI Credits durante 14 días.",
+        "Gasta $25+ en YGF y recibe una tarjeta de IA en caja. Cada tarjeta válida y distinta añade 3,000 AI Credits una sola vez; una nueva recarga fija el vencimiento de toda la cartera a 14 días.",
       guidance:
         "Empieza por el Paso 1. Conectar un Agent es opcional.",
       rewardContext:
-        "Cada código válido añade 3,000 créditos de IA. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro.",
+        "Cada código válido y distinto añade 3,000 créditos de IA una sola vez. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro.",
       stepOne: "Paso 1",
       stepTwo: "Paso 2",
       claimCredits: "Escanear o escribir código",
@@ -353,7 +355,7 @@ export const campaignHomeCopy: Record<
         illustrativeCode: "DEMO — usa tu propia tarjeta",
         scanOrEnter: "QR privado o código de 8 caracteres",
         exampleOnly: "Solo un ejemplo. Este código no se puede canjear.",
-        expires: "Credits válidos por 14 días",
+        expires: "Cartera: 14 días desde la última tarjeta nueva",
       },
     },
     useCases: {
@@ -380,7 +382,7 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Tres pasos sencillos.",
       description:
-        "Gasta $25+ en una transacción y recibe una tarjeta de IA en caja. Canjéala por 3,000 AI Credits válidos durante 14 días.",
+        "Gasta $25+ en una transacción y recibe una tarjeta de IA en caja. Cada tarjeta distinta añade 3,000 AI Credits una vez; una nueva recarga renueva a 14 días el vencimiento de toda la cartera.",
       photoAlt: "Ingredientes variados de YGF listos para elegir en el mostrador",
       steps: [
         {
@@ -407,7 +409,7 @@ export const campaignHomeCopy: Record<
         {
           question: "¿Quién puede participar?",
           answer:
-            "Quienes gasten $25+ en una transacción y reciban un código en caja. Un canje por persona o cuenta.",
+            "Quienes gasten $25+ en una transacción y reciban un código distinto en caja. Cada tarjeta física válida se acredita una vez y una cuenta puede añadir varias tarjetas distintas.",
         },
         {
           question: "¿Es una actividad oficial de USC?",
@@ -416,12 +418,13 @@ export const campaignHomeCopy: Record<
         },
         {
           question: "¿Cuándo vencen los Credits?",
-          answer: "Los Credits vencen 14 días después del canje.",
+          answer:
+            "Una nueva recarga válida fija el vencimiento de toda la cartera a 14 días, incluidos los Credits anteriores. Repetir el mismo código no prolonga el plazo.",
         },
         {
           question: "¿Necesito un correo universitario?",
           answer:
-            "No. Escanea primero para usar una billetera privada de invitado. Vincula Google o Apple solo para recuperación, uso en varios dispositivos o una API key de Agent.",
+            "No. Escanea primero para usar una cartera privada de invitado. Inicia sesión con Google o Apple y combina la cartera solo para recuperación, varios dispositivos o una API key de Agent.",
         },
       ],
     },
@@ -448,11 +451,11 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Prenez un bowl.",
       titleLineTwo: "Créez avec l’IA.",
       subhead:
-        "Dépensez 25 $ ou plus chez YGF, recevez une carte IA en caisse, puis scannez ou saisissez son code privé pour débloquer 3,000 AI Credits pendant 14 jours.",
+        "Dépensez 25 $+ chez YGF et recevez une carte IA. Chaque carte différente ajoute une fois 3,000 Credits ; le solde expire 14 jours après la dernière recharge.",
       guidance:
         "Commencez par l’Étape 1. La connexion Agent est facultative.",
       rewardContext:
-        "Chaque code valide ajoute 3 000 crédits IA. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro.",
+        "Chaque code valide et distinct ajoute une seule fois 3 000 crédits IA. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro.",
       stepOne: "Étape 1",
       stepTwo: "Étape 2",
       claimCredits: "Scanner ou saisir le code",
@@ -471,7 +474,7 @@ export const campaignHomeCopy: Record<
         illustrativeCode: "DÉMO — utilisez votre carte",
         scanOrEnter: "QR privé ou code à 8 caractères",
         exampleOnly: "Exemple uniquement. Ce code ne peut pas être activé.",
-        expires: "Credits valables 14 jours",
+        expires: "Solde : 14 jours depuis la dernière nouvelle carte",
       },
     },
     useCases: {
@@ -498,7 +501,7 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Trois étapes simples.",
       description:
-        "Dépensez 25 $ ou plus en une transaction et recevez une carte IA en caisse. Activez 3,000 AI Credits valables 14 jours.",
+        "Dépensez 25 $ ou plus en une transaction et recevez une carte IA en caisse. Chaque carte distincte ajoute une fois 3,000 AI Credits ; une nouvelle recharge renouvelle à 14 jours l’expiration de tout le solde.",
       photoAlt: "Ingrédients YGF variés à choisir au comptoir",
       steps: [
         {
@@ -525,7 +528,7 @@ export const campaignHomeCopy: Record<
         {
           question: "Qui peut participer ?",
           answer:
-            "Les clients dépensant 25 $ ou plus en une transaction et recevant un code en caisse. Une activation par personne ou compte.",
+            "Les clients dépensant 25 $ ou plus en une transaction et recevant un code distinct en caisse. Chaque carte physique éligible est créditée une fois et un compte peut ajouter plusieurs cartes distinctes.",
         },
         {
           question: "Est-ce une activité officielle de l’USC ?",
@@ -534,12 +537,13 @@ export const campaignHomeCopy: Record<
         },
         {
           question: "Quand les Credits expirent-ils ?",
-          answer: "Les Credits expirent 14 jours après l’activation.",
+          answer:
+            "Une nouvelle recharge valide fixe l’expiration de tout le solde à 14 jours, y compris les Credits antérieurs. Réutiliser le même code ne prolonge pas ce délai.",
         },
         {
           question: "Faut-il une adresse e-mail universitaire ?",
           answer:
-            "Non. Scannez d’abord pour utiliser un portefeuille invité privé. Liez Google ou Apple uniquement pour la récupération, l’accès multi-appareil ou une clé API Agent.",
+            "Non. Scannez d’abord pour utiliser un solde invité privé. Connectez-vous avec Google ou Apple et fusionnez le solde uniquement pour la récupération, l’accès multi-appareil ou une clé API Agent.",
         },
       ],
     },
@@ -566,11 +570,11 @@ export const campaignHomeCopy: Record<
       titleLineOne: "Купите боул.",
       titleLineTwo: "Создавайте с ИИ.",
       subhead:
-        "Потратьте в YGF от $25, получите AI-карту на кассе и отсканируйте или введите её личный код, чтобы открыть 3,000 AI Credits на 14 дней.",
+        "Потратьте в YGF от $25 и получите AI-карту. Каждая новая карта один раз добавляет 3,000 Credits; баланс действует 14 дней после последней карты.",
       guidance:
         "Начните с шага 1. Подключение Agent необязательно.",
       rewardContext:
-        "Каждый действительный код добавляет 3 000 AI Credits. Некоторые специальные коды также могут включать подарок Claude Pro.",
+        "Каждый действительный код при первой активации добавляет 3 000 AI Credits; каждая отдельная карта зачисляется только один раз. Некоторые специальные коды также могут включать подарок Claude Pro.",
       stepOne: "Шаг 1",
       stepTwo: "Шаг 2",
       claimCredits: "Сканировать или ввести код",
@@ -589,7 +593,7 @@ export const campaignHomeCopy: Record<
         illustrativeCode: "ДЕМО — используйте свою карту",
         scanOrEnter: "Личный QR или 8-значный код",
         exampleOnly: "Только пример. Этот код нельзя активировать.",
-        expires: "Credits действуют 14 дней",
+        expires: "Баланс: 14 дней с последней новой карты",
       },
     },
     useCases: {
@@ -616,7 +620,7 @@ export const campaignHomeCopy: Record<
     howItWorks: {
       heading: "Три простых шага.",
       description:
-        "Потратьте от $25 за одну покупку и получите AI-карту на кассе. Активируйте 3,000 AI Credits на 14 дней.",
+        "Потратьте от $25 за одну покупку и получите AI-карту на кассе. Каждая отдельная карта один раз добавляет 3,000 AI Credits; новая карта продлевает срок всего баланса до 14 дней.",
       photoAlt: "Разнообразные ингредиенты YGF для выбора у стойки",
       steps: [
         {
@@ -643,7 +647,7 @@ export const campaignHomeCopy: Record<
         {
           question: "Кто может участвовать?",
           answer:
-            "Гости, потратившие от $25 за одну покупку и получившие код на кассе. Одна активация на человека или аккаунт.",
+            "Гости, потратившие от $25 за одну покупку и получившие отдельный код на кассе. Каждая подходящая физическая карта зачисляется один раз, а один аккаунт может добавить несколько разных карт.",
         },
         {
           question: "Это официальная акция USC?",
@@ -652,12 +656,13 @@ export const campaignHomeCopy: Record<
         },
         {
           question: "Когда истекают Credits?",
-          answer: "Credits истекают через 14 дней после активации.",
+          answer:
+            "Новая действительная карта устанавливает срок всего баланса на 14 дней, включая ранее оставшиеся Credits. Повтор того же кода не продлевает срок.",
         },
         {
           question: "Нужна университетская почта?",
           answer:
-            "Нет. Сначала отсканируйте код и используйте приватный гостевой кошелёк. Google или Apple нужны только для восстановления, нескольких устройств или Agent API key.",
+            "Нет. Сначала отсканируйте код и используйте приватный гостевой баланс. Вход через Google или Apple и объединение нужны только для восстановления, нескольких устройств или Agent API key.",
         },
       ],
     },

@@ -70,6 +70,9 @@ async function defaultConfirmPendingClaim() {
     if (body.error === "REDEMPTION_PAUSED") {
       throw new Error("REDEMPTION_PAUSED");
     }
+    if (body.error === "ACCOUNT_GRANT_LIMIT_REACHED") {
+      throw new Error("ACCOUNT_GRANT_LIMIT_REACHED");
+    }
     throw new Error("REDEMPTION_UNAVAILABLE");
   }
   window.location.assign("/redeem/success");
@@ -175,6 +178,9 @@ function userFacingErrorKey(error: unknown): RedeemErrorKey {
     }
     if (error.message === "REDEMPTION_PAUSED") {
       return "redemptionPaused";
+    }
+    if (error.message === "ACCOUNT_GRANT_LIMIT_REACHED") {
+      return "accountGrantLimitReached";
     }
     if (error.message === "ANONYMOUS_AUTH_UNAVAILABLE") {
       return "anonymousUnavailable";

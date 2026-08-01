@@ -27,6 +27,7 @@ const migrationNames = [
   "202607310002_agent_terminalize_definition_guard.sql",
   "202607310003_agent_terminalize_exact_acl_guard.sql",
   "202607310004_agent_model_event_allowlist.sql",
+  "202607310005_multi_grant_account_merge.sql",
 ] as const;
 
 const userId = "11111111-1111-4111-8111-111111111111";
@@ -1667,13 +1668,26 @@ describe("disposable Postgres campaign migrations", () => {
           `
             select pg_catalog.pg_get_constraintdef(c.oid) as definition
             from pg_catalog.pg_constraint as c
-            where c.conname = 'ledger_entries_shape_v2';
+            where c.conname = 'ledger_entries_shape_v3';
           `,
         );
         expect(shapeConstraint.definition).toContain(
           "entry_kind = 'refund'::text",
         );
-        expect(shapeConstraint.definition).not.toContain(
+        expect(shapeConstraint.definition).toContain(
+          "entry_kind = 'expire'::text",
+        );
+        const refundStart = shapeConstraint.definition.lastIndexOf(
+          "entry_kind = 'refund'::text",
+        );
+        const expireStart = shapeConstraint.definition.lastIndexOf(
+          "entry_kind = 'expire'::text",
+        );
+        expect(refundStart).toBeGreaterThan(-1);
+        expect(expireStart).toBeGreaterThan(refundStart);
+        expect(
+          shapeConstraint.definition.slice(refundStart, expireStart),
+        ).not.toContain(
           "provider_cost_micro_usd = 0",
         );
 

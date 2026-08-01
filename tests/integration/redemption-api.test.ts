@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { hashCode } from "@/lib/campaign/code";
+import { CampaignDomainError } from "@/lib/campaign/types";
 import type {
   RedemptionAdmission,
   RedemptionAttemptOutcome,
@@ -365,6 +366,25 @@ describe("redemption API boundary", () => {
       attemptId: "attempt-1",
       outcome: "accepted",
     });
+  });
+
+  it("returns a stable conflict when the account grant cap is reached", async () => {
+    const harness = createHarness();
+    vi.spyOn(harness.repository, "redeemCode").mockRejectedValueOnce(
+      new CampaignDomainError("ACCOUNT_GRANT_LIMIT_REACHED"),
+    );
+
+    const response = await harness.redeem();
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "ACCOUNT_GRANT_LIMIT_REACHED",
+    });
+    expect(harness.finish).toHaveBeenCalledWith({
+      attemptId: "attempt-1",
+      outcome: "unavailable",
+    });
+    expect(harness.clearPendingClaim).toHaveBeenCalledOnce();
   });
 
   it("recovers a committed redemption under a fresh production-shaped attempt ID without a second grant", async () => {

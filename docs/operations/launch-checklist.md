@@ -95,9 +95,11 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   before enabling traffic.
 - [x] Production Supabase Manual Linking is enabled and its redirect allowlist
   contains the exact `https://malatangai.com/auth/callback` entry, without a
-  wildcard or `www` callback.
+  wildcard or `www` callback. This is retained configuration from the prior
+  flow; the new merge path uses normal OAuth and does not depend on
+  `linkIdentity`.
 - [ ] Application callback behavior returns only to approved same-origin
-  destinations in a live OAuth/linking round trip.
+  destinations in a live OAuth/account-merge round trip.
 - [ ] Public validation and redemption limits work behind the production
   proxy with the reviewed five-minute ceilings (validation:
   network/session/code/account `300/12/20/10`; redemption:
@@ -115,7 +117,16 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   rejected. A competing wallet update blocked while the retry transaction
   held its lock and succeeded after rollback. The RPC is `SECURITY DEFINER`,
   owned by `postgres`, fixes `search_path=pg_catalog`, and is executable only
-  by `service_role`.
+  by `service_role`. This dated evidence predates and does not verify the new
+  multi-card top-up migration.
+- [ ] Pause and drain redemption, apply
+  `202607310005_multi_grant_account_merge.sql` to production, refresh the
+  schema cache, and verify the new/changed functions are owned by `postgres`,
+  use a fixed `search_path`, and are executable only by `service_role`. Prove
+  one identity can accumulate distinct 3,000-Credit cards in one wallet, every
+  code grants once, a same-code retry neither regrants nor extends expiry, and
+  a successful new-card top-up rolls the whole wallet expiry to 14 days later.
+  This remains pending until deployment and live verification are recorded.
 - [ ] Apply
   `202607300003_multidimensional_redemption_admission.sql` before deploying
   the corresponding route code. Before applying, set
@@ -162,7 +173,9 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   envelope. Record that revocation prevents future YGF opens but cannot recall
   a bearer URL already opened or provider-redeemed.
 - [ ] Wallet expiry, credit ledger, first task, provider failure, and balance
-  behavior are tested with production-like configuration.
+  behavior are tested with production-like configuration, including older
+  remaining Credits sharing the 14-day expiry rolled by a successful new-card
+  top-up.
 - [ ] Independent Agent key-digest and request-fingerprint secrets are
   installed; no value is reused for claims, task fingerprints, or abuse
   signals.
@@ -177,8 +190,10 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Dashboard issued/redemption/first-use/key/Agent/7-day/share rates, model
   distribution, provider cost per redeemed card, errors, and anomalies are
   reviewed without raw prompts, claims, keys, or IPs.
-- [ ] Provider budgets, per-user limits, global kill switch, error alerts, and
-  cost dashboard are set.
+- [ ] The $3 provider budget remains enforced per Google or Apple identity
+  across its combined wallet and all keys; distinct cards and account merges
+  do not reset it. Per-user limits, global kill switch, error alerts, and cost
+  dashboard are set.
 - [ ] Install and rehearse the three distinct server-only operational states:
   `YGF_REDEMPTION_ENABLED=true` only after private inventory is ready,
   `YGF_WEB_TASKS_ENABLED=false` until a real web-provider staging smoke, and
@@ -193,22 +208,31 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Enable Supabase anonymous sign-ins and verify a valid receipt can reach
   a first web AI result without a Google/Apple/Magic Link screen.
 - [x] Enable Supabase Manual Linking and register the exact production callback
-  `https://malatangai.com/auth/callback`.
+  `https://malatangai.com/auth/callback`. The setting is historical and is not
+  evidence that the new account-merge path works.
 - [x] Install and enable the production Google provider, publish the external
   Google Auth Platform app, and verify both normal OAuth and anonymous
   `linkIdentity`. The July 31, 2026 live round trips preserved and restored the
-  same 3,000-Credit wallet.
+  same 3,000-Credit wallet. Preserve this as historical evidence for the
+  superseded linking path; it does not pass the new merge gate.
 - [x] Install and enable Apple using Services ID
   `com.malatangai.web.login`, the exact Supabase Apple callback, and a
   mode-`0600` ignored signing key. Verify the production UI reaches Apple's
   authorization endpoint without exposing the client secret.
-- [ ] Complete Apple's normal sign-in and anonymous `linkIdentity` wallet
-  preservation round trips with a human Apple account. The enabled provider
-  and successful outbound redirect are not end-to-end acceptance.
+- [ ] After the migration deploy, complete a live Google
+  anonymous-to-existing-account merge. Verify the 10-minute one-use
+  digest-backed intent, buffered destination cookies, service-only atomic
+  merge/tombstone, partial-balance preservation, distinct-card top-up, rolling
+  expiry, same-code no-regrant, account recovery, and unchanged $3 identity
+  budget. The historical `linkIdentity` receipt is insufficient.
+- [ ] Complete the same live merge matrix with a human Apple account. The
+  enabled provider and successful outbound redirect are not end-to-end
+  acceptance.
 - [x] Verify Google `linkIdentity` keeps the same anonymous user and wallet and
-  returns to the authenticated Agent page; do not substitute a second-account
-  OAuth sign-in. Agent key creation remains separately disabled until the
-  gateway production gate is opened.
+  returns to the authenticated Agent page. This is a dated receipt for the
+  superseded flow, not a substitute for the pending normal-OAuth merge test.
+  Agent key creation remains separately governed by the gateway production
+  gate.
 - [x] Create a managed Cloudflare Turnstile widget restricted to
   `malatangai.com`, install its public site key and server-only secret in
   Vercel Production, set `YGF_TURNSTILE_ENABLED=true`, and redeploy. Production

@@ -9,6 +9,7 @@ import {
   isTaskType,
   validateTaskInput,
 } from "@/lib/content/tasks";
+import { MAX_WALLET_CREDITS } from "@/lib/campaign/credits";
 import type { TaskType } from "@/lib/campaign/types";
 import {
   friendlyModelName,
@@ -291,7 +292,7 @@ function replayResult(
     typeof execution.remainingCredits !== "number" ||
     !Number.isSafeInteger(execution.remainingCredits) ||
     Number(execution.remainingCredits) < 0 ||
-    Number(execution.remainingCredits) > 3_000
+    Number(execution.remainingCredits) > MAX_WALLET_CREDITS
   ) {
     throw new Error("TASK_UNAVAILABLE");
   }
@@ -448,7 +449,7 @@ export async function runTask(
       typeof terminal.remainingCredits !== "number" ||
       !Number.isSafeInteger(terminal.remainingCredits) ||
       terminal.remainingCredits < 0 ||
-      terminal.remainingCredits > 3_000
+      terminal.remainingCredits > MAX_WALLET_CREDITS
     ) {
       throw new Error("TASK_UNAVAILABLE");
     }

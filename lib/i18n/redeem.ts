@@ -1,6 +1,7 @@
 import type { CampaignLocale } from "@/lib/i18n/campaign";
 
 export type RedeemErrorKey =
+  | "accountGrantLimitReached"
   | "anonymousUnavailable"
   | "codeInvalid"
   | "codeUnavailable"
@@ -70,7 +71,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "What happens next",
       description:
-        "Every valid code adds 3,000 credits in this browser. Selected special codes may also include a Claude Pro gift. Then choose Study, Coding, Career, or Pick My Bowl—no login screen.",
+        "Each distinct eligible card adds 3,000 Credits once to this wallet. The same code never grants again. A successful new-card top-up sets the whole wallet, including earlier remaining Credits, to expire 14 days later. Selected special codes may also include a Claude Pro gift. Then choose Study, Coding, Career, or Pick My Bowl—no login screen.",
     },
     form: {
       codeLabel: "8-character card code",
@@ -85,7 +86,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       opensInNewTab: "opens in a new tab",
       submit: "Unlock 3,000 credits",
       submitting: "Checking card…",
-      rule: "One code per person · Credits expire 14 days after redemption.",
+      rule:
+        "Each distinct eligible card grants once · The same code never regrants · A successful new-card top-up sets the whole wallet to expire 14 days later.",
       fallbackSignIn: "Use account sign-in instead",
       pendingEyebrow: "Card claim secured",
       pendingTitle: "Ready to unlock 3,000 AI Credits",
@@ -95,6 +97,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       pendingSubmitting: "Adding credits…",
       pendingHint: "One confirmation finishes your claim.",
       errors: {
+        accountGrantLimitReached:
+          "This account has reached the campaign card limit. The code was not redeemed and no Credits were added.",
         codeInvalid: "Enter the 8-character card code.",
         codeUnavailable:
           "That code is invalid or unavailable. Check the card and try again.",
@@ -133,7 +137,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "接下来会发生什么",
       description:
-        "每个有效兑换码都会在此浏览器中加入 3,000 杨国福 AI Credits；部分特别兑换码还可能附带一份 Claude Pro 礼赠。然后直接选择学习、编程、求职或下一碗，无需登录。",
+        "每张不同且符合条件的卡片，只会向此钱包加入一次 3,000 杨国福 AI Credits；同一兑换码不会重复发放。成功兑换一张新卡后，整个钱包（包括之前剩余的 Credits）的到期时间会统一更新为 14 天后。部分特别兑换码还可能附带一份 Claude Pro 礼赠。然后直接选择学习、编程、求职或下一碗，无需登录。",
     },
     form: {
       codeLabel: "卡片上的 8 位兑换码",
@@ -147,7 +151,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       opensInNewTab: "在新标签页打开",
       submit: "解锁 3,000 Credits",
       submitting: "正在检查卡片…",
-      rule: "每人限兑换一次 · Credits 在兑换后 14 天到期。",
+      rule:
+        "每张不同且符合条件的卡片仅发放一次 · 同一兑换码不会重复发放 · 成功兑换新卡后，整个钱包的到期时间统一更新为 14 天后。",
       fallbackSignIn: "改用账户登录",
       pendingEyebrow: "卡片权益已安全保存",
       pendingTitle: "可以解锁 3,000 AI Credits",
@@ -156,6 +161,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       pendingSubmitting: "正在加入 Credits…",
       pendingHint: "再确认一次即可完成兑换。",
       errors: {
+        accountGrantLimitReached:
+          "此账户已达到活动卡片上限。该兑换码未被使用，也没有增加 Credits。",
         codeInvalid: "请输入卡片上的 8 位兑换码。",
         codeUnavailable: "此兑换码无效或不可用。请检查卡片后重试。",
         termsRequired: "请同意活动条款和隐私声明后继续。",
@@ -187,7 +194,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "Qué sucede después",
       description:
-        "Cada código válido añade 3,000 créditos en este navegador. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro. Después elige Estudio, Programación, Carrera o Elige mi bowl, sin iniciar sesión.",
+        "Cada tarjeta distinta que cumpla los requisitos añade 3,000 créditos una sola vez a esta cartera. El mismo código nunca vuelve a conceder créditos. Al canjear correctamente una tarjeta nueva, toda la cartera, incluidos los créditos anteriores restantes, pasa a vencer 14 días después. Algunos códigos especiales seleccionados también pueden incluir un regalo de Claude Pro. Después elige Estudio, Programación, Carrera o Elige mi bowl, sin iniciar sesión.",
     },
     form: {
       codeLabel: "Código de 8 caracteres",
@@ -203,7 +210,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       submit: "Desbloquear 3,000 créditos",
       submitting: "Comprobando la tarjeta…",
       rule:
-        "Un código por persona · Los créditos vencen 14 días después del canje.",
+        "Cada tarjeta distinta elegible añade 3,000 créditos una sola vez · El mismo código nunca vuelve a añadir créditos · Tras canjear correctamente una tarjeta nueva, toda la cartera vence 14 días después.",
       fallbackSignIn: "Usar inicio de sesión",
       pendingEyebrow: "Canje protegido",
       pendingTitle: "Todo listo para desbloquear 3,000 créditos de IA",
@@ -213,6 +220,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       pendingSubmitting: "Añadiendo créditos…",
       pendingHint: "Una confirmación completa el canje.",
       errors: {
+        accountGrantLimitReached:
+          "Esta cuenta alcanzó el límite de tarjetas de la campaña. El código no se canjeó y no se añadieron créditos.",
         codeInvalid: "Escribe el código de 8 caracteres de la tarjeta.",
         codeUnavailable:
           "Ese código no es válido o no está disponible. Revisa la tarjeta e inténtalo de nuevo.",
@@ -253,7 +262,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "Et ensuite ?",
       description:
-        "Chaque code valide ajoute 3 000 crédits dans ce navigateur. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro. Choisissez ensuite Études, Code, Carrière ou Choisir mon bowl, sans connexion.",
+        "Chaque carte distincte et admissible ajoute une seule fois 3 000 crédits à ce portefeuille. Le même code n’en accorde jamais à nouveau. Après l’activation réussie d’une nouvelle carte, l’ensemble du portefeuille, y compris les crédits antérieurs restants, expire 14 jours plus tard. Certains codes spéciaux sélectionnés peuvent aussi inclure un cadeau Claude Pro. Choisissez ensuite Études, Code, Carrière ou Choisir mon bowl, sans connexion.",
     },
     form: {
       codeLabel: "Code de carte à 8 caractères",
@@ -269,7 +278,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       submit: "Débloquer 3 000 crédits",
       submitting: "Vérification de la carte…",
       rule:
-        "Un code par personne · Les crédits expirent 14 jours après l’activation.",
+        "Chaque carte distincte admissible ajoute une seule fois 3 000 crédits · Le même code n’ajoute jamais de nouveaux crédits · Après l’activation réussie d’une nouvelle carte, tout le portefeuille expire 14 jours plus tard.",
       fallbackSignIn: "Utiliser la connexion au compte",
       pendingEyebrow: "Activation sécurisée",
       pendingTitle: "Prêt à débloquer 3 000 crédits IA",
@@ -279,6 +288,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       pendingSubmitting: "Ajout des crédits…",
       pendingHint: "Une confirmation termine l’activation.",
       errors: {
+        accountGrantLimitReached:
+          "Ce compte a atteint la limite de cartes de la campagne. Le code n’a pas été activé et aucun crédit n’a été ajouté.",
         codeInvalid: "Saisissez le code à 8 caractères de la carte.",
         codeUnavailable:
           "Ce code est invalide ou indisponible. Vérifiez la carte et réessayez.",
@@ -318,7 +329,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
     next: {
       title: "Что будет дальше",
       description:
-        "Каждый действительный код добавляет 3 000 Credits в этом браузере. Некоторые специальные коды также могут включать подарок Claude Pro. Затем выберите Учёбу, Программирование, Карьеру или Мой боул — вход не нужен.",
+        "Каждая отдельная подходящая карта один раз добавляет 3 000 Credits в этот кошелёк. Тот же код никогда не начисляет Credits повторно. После успешной активации новой карты срок действия всего кошелька, включая ранее оставшиеся Credits, устанавливается на 14 дней. Некоторые специальные коды также могут включать подарок Claude Pro. Затем выберите Учёбу, Программирование, Карьеру или Мой боул — вход не нужен.",
     },
     form: {
       codeLabel: "8-значный код карты",
@@ -334,7 +345,7 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       submit: "Получить 3 000 Credits",
       submitting: "Проверяем карту…",
       rule:
-        "Один код на человека · Credits действуют 14 дней после активации.",
+        "Каждая отдельная подходящая карта начисляет Credits один раз · Тот же код не начисляет их повторно · Новая карта устанавливает срок действия всего кошелька на 14 дней.",
       fallbackSignIn: "Войти в аккаунт",
       pendingEyebrow: "Активация защищена",
       pendingTitle: "Можно получить 3 000 AI Credits",
@@ -344,6 +355,8 @@ export const redeemCopy: Record<CampaignLocale, RedeemCopy> = {
       pendingSubmitting: "Добавляем Credits…",
       pendingHint: "Одно подтверждение завершит активацию.",
       errors: {
+        accountGrantLimitReached:
+          "Этот аккаунт достиг лимита карт акции. Код не был активирован, Credits не начислены.",
         codeInvalid: "Введите 8-значный код с карты.",
         codeUnavailable:
           "Этот код недействителен или недоступен. Проверьте карту и повторите попытку.",

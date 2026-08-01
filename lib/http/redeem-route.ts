@@ -108,6 +108,7 @@ function mapCampaignError(code: CampaignErrorCode): MappedCampaignError {
       };
     case "CODE_ALREADY_REDEEMED":
     case "ACCOUNT_ALREADY_REDEEMED":
+    case "ACCOUNT_GRANT_LIMIT_REACHED":
       return {
         error: code,
         outcome: "unavailable",

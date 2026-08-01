@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createClaudeGiftOpenHandler } from "@/app/api/rewards/claude-pro/open/route";
+import { hashCode } from "@/lib/campaign/code";
 import { CampaignDomainError } from "@/lib/campaign/types";
 import { isWalletExpired } from "@/lib/campaign/credits";
 import {
@@ -110,6 +111,59 @@ describe("Claude gift owner-only open boundary", () => {
 
     expect(response.status).toBe(404);
     expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("finds the newest owned gift after the same account redeems multiple cards", async () => {
+    const repository = repositoryWithGift();
+    await repository.redeemCode({
+      code: "BOWL7K2A",
+      idempotencyKey: "multi-card-normal",
+      userId: "multi-card-user",
+    });
+    await repository.redeemCode({
+      code: "CLAUDE26",
+      idempotencyKey: "multi-card-gift",
+      userId: "multi-card-user",
+    });
+
+    await expect(
+      repository.getPartnerReward({ userId: "multi-card-user" }),
+    ).resolves.toMatchObject({
+      id: "reward-demo-claude",
+      kind: "claude-pro-gift",
+      state: "assigned",
+    });
+    await expect(
+      repository.revealPartnerReward({ userId: "multi-card-user" }),
+    ).resolves.toMatchObject({
+      reward: { id: "reward-demo-claude", state: "revealed" },
+    });
+  });
+
+  it("matches the database ID tie-break when owned gifts share an assignment time", async () => {
+    const repository = repositoryWithGift();
+    await repository.assignPartnerReward({
+      codeHash: await hashCode("BOWL7K2A"),
+      expiresAt: EXPIRES,
+      secret: encryptClaudeGiftUrl(
+        "https://claude.ai/gift/redeem?gift=second-private-token",
+        Buffer.alloc(32, 12),
+      ),
+    });
+    await repository.redeemCode({
+      code: "BOWL7K2A",
+      idempotencyKey: "equal-time-first",
+      userId: "equal-time-user",
+    });
+    await repository.redeemCode({
+      code: "CLAUDE26",
+      idempotencyKey: "equal-time-second",
+      userId: "equal-time-user",
+    });
+
+    await expect(
+      repository.getPartnerReward({ userId: "equal-time-user" }),
+    ).resolves.toMatchObject({ id: "reward-1" });
   });
 
   it("reveals a valid gift after its 3,000-credit wallet expires", async () => {

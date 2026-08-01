@@ -24,33 +24,41 @@ A checked local row never implies the later rows are complete.
 ## Local source and automated evidence
 
 The final release operator records the exact date, command, result, and commit
-for each row. The July 29 rows below are the current pre-commit release
-candidate evidence; the immutable GitHub SHA is reported in the final handoff
-after this document is committed.
+for each row. Current-candidate results below were rerun on August 1, 2026; any
+row explicitly labeled historical or pending does not pass the current
+multi-card/account-merge candidate. The immutable GitHub SHA is reported in the
+final handoff after this document is committed.
 
 | Gate | Required command or evidence | Status |
 | --- | --- | --- |
-| Lint | `pnpm lint` | Pass on July 31, 2026 |
-| TypeScript | `pnpm typecheck` | Pass on July 31, 2026 |
-| Unit/integration/security contracts | complete single-worker `pnpm vitest run --maxWorkers=1 --fileParallelism=false` plus focused privileged-settlement rerun | Pass on July 31, 2026: 82/82 files and 643/643 tests with a normal process exit; focused settlement/full-chain checks passed 14/14 |
-| Production compilation | `pnpm build` | Pass on July 31, 2026: optimized build, page generation, and dynamic route manifest |
-| Production dependency audit | `pnpm audit --prod` | Pass on July 29, 2026: 0 known vulnerabilities |
-| Browser test discovery | final `pnpm test:e2e` runner manifest | Pass on July 31, 2026: 83 tests across setup, desktop Chromium, and iPhone WebKit projects |
-| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on July 31, 2026: 41 desktop checks; the shared setup passed once |
-| Full Playwright matrix | `pnpm test:e2e` | Pass on July 31, 2026: 83/83 across the single setup, desktop Chromium, and iPhone 13/WebKit projects |
-| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on July 31, 2026: 41 WebKit checks after the shared setup |
-| Plaintext/secret scan | reviewed tracked files and built client output | Pass on July 29, 2026; no OpenAI, personal Agent, or JWT-shaped secret values found in built client output. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI |
-| Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on July 31, 2026; the runtime repair, exact definition/security guard, exact two-row ACL guard, tests, and receipt were independently rechecked with no remaining actionable finding |
+| Lint | `pnpm lint` | Pass on August 1, 2026 with no errors or warnings. |
+| TypeScript | `pnpm typecheck` | Pass on August 1, 2026. |
+| Unit/integration/security contracts | complete single-worker `pnpm exec vitest run --maxWorkers=1 --fileParallelism=false` | Pass on August 1, 2026: 86/86 files and 693/693 tests in 331.81 seconds with a normal process exit. |
+| Production compilation | `pnpm build` | Pass on August 1, 2026: optimized Next.js 16.2.12 build, TypeScript, 17 static pages, and the complete dynamic route manifest. |
+| Production dependency audit | `pnpm audit --prod` | Pass on August 1, 2026: no known production dependency vulnerabilities. |
+| Browser test discovery | `pnpm exec playwright test --list` | Pass for this candidate: 83 tests across setup, desktop Chromium, and iPhone WebKit projects. |
+| Desktop Chromium and axe | final `pnpm test:e2e` matrix | Pass on August 1, 2026, including redemption, wallet, all four tasks, Agent setup, localization, axe, image decoding, and overflow checks. |
+| Full Playwright matrix | `pnpm test:e2e` | Pass on August 1, 2026: 83/83 in 4.8 minutes with a normal process exit. The setup project redeemed the single demo claim and produced the first useful result. |
+| iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on August 1, 2026 at the configured iPhone 13 viewport, including the mobile Agent and long-translation checks. |
+| Plaintext/secret scan | reviewed added source lines and built client output | Pass on August 1, 2026: zero added OpenAI, Supabase, Agent-key, or JWT-shaped values and zero such values in `.next/static`. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI. |
+| Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on August 1, 2026: independent final security review found no reportable High, Medium, or Low finding; the mobile visual/interaction review found no overflow or console error. Live OAuth and true multi-session Postgres checks remain external gates below. |
 | Remote identity | local SHA equals GitHub branch SHA after push | Pending for this pre-commit candidate; the final handoff records the exact local/upstream/`ls-remote`/Vercel SHA comparison without embedding a commit's own identity here |
 
 Required behavioral evidence:
 
 - typed claim and receipt-fragment claim resolve to the same normalized code;
 - the fragment disappears from the visible URL before any claim request;
-- one confirmed redemption grants exactly 3,000 credits with 14-day expiry;
-- the same account retrying that same code receives its current wallet without
-  another grant, balance reset, or expiry extension, while a different account
-  remains rejected;
+- one first redemption grants exactly 3,000 credits and sets the wallet to
+  expire 14 days later;
+- every distinct eligible code adds exactly 3,000 credits once to the same
+  account wallet and rolls that whole wallet's expiry to 14 days from the
+  successful top-up, including older remaining credits;
+- retrying that same code receives the current wallet without another grant,
+  balance reset, or expiry extension, while a different account remains
+  rejected;
+- one Google or Apple identity can receive an anonymous wallet through the
+  10-minute one-use merge flow and later accumulate additional distinct cards
+  without resetting its $3 provider budget;
 - a successful task deducts exactly 120 credits;
 - a failed provider call refunds the reservation;
 - exact task retries do not run the provider or spend twice;
@@ -58,15 +66,17 @@ Required behavioral evidence:
   keyed digest and safe descriptor;
 - valid/revoked/rotated/expired key behavior and the OpenAI-compatible demo
   request are covered;
-- multiple keys share the wallet-wide cost/idempotency ceiling, provider
-  failure refunds, and expired replay content cannot re-execute;
+- multiple keys and cards share the identity-wide cost/idempotency ceiling on
+  the combined wallet, provider failure refunds, and expired replay content
+  cannot re-execute;
 - ordinary redemption reaches a useful AI task without exposing API concepts,
   while the optional Agent page copies config and tests a bounded request;
 - the Agent page defaults to GPT-5.6 Terra, offers only Luna, Terra, and Sol,
   updates the selected request model, and exposes neither reasoning effort nor
   internal provider-spend estimates;
 - customer key and completion responses omit internal provider-cost fields,
-  while wallet-wide settlement and the provider-cost ceiling remain enforced;
+  while combined-wallet settlement and the identity-wide provider-cost ceiling
+  remain enforced;
 - the user-triggered check-in card contains no claim, private QR, key, email,
   user ID, or exact remaining balance;
 - all four task presets use a small server allowlist of models;
@@ -83,9 +93,9 @@ code and produces the first useful result. The dependent viewport projects
 contain only reusable reads plus a cross-origin admin request that is rejected
 before mutation. Core wallet, all four task routes, history, Agent setup,
 terminal-error, and admin states receive axe and horizontal-overflow checks.
-The desktop and configured iPhone 13/WebKit evidence are complete for this
-local source state. Physical-device camera scanning, platform assistive
-technology, and production-origin behavior remain external gates.
+The desktop and configured iPhone 13/WebKit evidence above belongs to the
+August 1 current candidate. Physical-device camera scanning, platform
+assistive technology, and production-origin behavior remain external gates.
 
 ### Dependency security override record
 
@@ -124,7 +134,7 @@ against the candidate release SHA before deployment.
 | Food media | 203,071-byte desktop and 169,063-byte mobile static hero JPEGs derived from the real YGF ingredient-wall source, plus the sanitized supporting photo; exact provenance and the generated-bowl disclosure are recorded in the media ledger, and the old cinematic WebM/MP4/poster set is unused | brand-rights approval for the user-supplied source, creative approval of the AI-generated bowl and final composites, and deployed responsive-selection/visual review |
 | Agent Pass fronts/backs | four 85.6×54 mm themes, credential-free shared back, Letter/A4 SVG plus full-page 300-DPI raster-only PDF review | physical registration, scratch layer, or store scan |
 | Private Agent Pass fixture | matching text/QR decoded from final PDF raster, ignored 0700/0600 no-overwrite renderer, reflected long-edge duplex sheets | real batch custody or physical fulfillment |
-| Production claim batch `c0313939-a965-41a6-8e61-67ba37db0c2c` | 500 active eligible rows; exact database hash parity; 500/500 HTML and final 63-page Letter-PDF raster QR decode; mode-0700/0600 ignored custody; idempotent create/activate replay; zero admin profiles at rest | commercial-printer approval, credential-concealing finish, brand rights, CMYK/bleed/duplex proof, physical scans, staff training, soft test, or distribution authorization |
+| Existing private 500-card batch | 500 active eligible rows; exact database hash parity; 500/500 HTML and final 63-page Letter-PDF raster QR decode; mode-0700/0600 ignored custody; idempotent create/activate replay; zero admin profiles at rest | the rendered batch predates the current $25+/multi-card terms and must be regenerated and reverified before printing; it is not a publish-ready physical batch |
 | Safe check-in card | explicit SVG download with fixed public fields only | automatic social-platform upload or account identity |
 
 Any change to public origin, image, copy, font metrics, QR modules, quiet zone,
@@ -150,11 +160,12 @@ satisfied by this checkout.
   and returned a successful 1280 × 720 optimized image response.
 - [ ] Apply all migrations, including
   `202607300001_same_account_redemption_retry.sql` followed by
-  `202607300002_same_account_redemption_retry_wallet_lock.sql`, to a
-  disposable/staging Supabase project. Prove the second migration serializes
-  the retry with wallet spend/settlement and returns the authoritative current
-  wallet without adding or resetting credits, different accounts remain
-  rejected, then run concurrent task lease, spend, refund, and replay smokes.
+  `202607300002_same_account_redemption_retry_wallet_lock.sql`, and
+  `202607310005_multi_grant_account_merge.sql` to a disposable/staging
+  Supabase project. Prove retries serialize with wallet spend/settlement,
+  distinct cards top up exactly once with rolling expiry, account merges are
+  atomic, and different owners remain rejected; then run concurrent task
+  lease, spend, refund, and replay smokes.
 - [x] Production has
   `202607300001_same_account_redemption_retry.sql` and
   `202607300002_same_account_redemption_retry_wallet_lock.sql`. A live
@@ -169,20 +180,33 @@ satisfied by this checkout.
   browser evidence.
 - [x] Production Supabase Manual Linking is enabled and the redirect allowlist
   contains the exact `https://malatangai.com/auth/callback` entry. It contains
-  no required wildcard or `www` callback.
+  no required wildcard or `www` callback. Manual Linking is retained historical
+  configuration; the new flow uses normal OAuth plus the service-only merge
+  intent and does not treat this setting as acceptance evidence.
 - [x] Install and enable the Google provider in Supabase, publish its external
   Google Auth Platform app, and test both a normal OAuth and anonymous
   `linkIdentity` round trip. The July 31, 2026 live proof returned the linked
   guest to `/connect/agent`, preserved the 3,000-Credit wallet, then restored
-  that same wallet at `/wallet` after sign-out and normal Google sign-in.
+  that same wallet at `/wallet` after sign-out and normal Google sign-in. This
+  dated receipt is historical evidence for the superseded linking path, not
+  acceptance of the new merge flow.
 - [x] Install and enable the Apple provider with Services ID
   `com.malatangai.web.login`, register the exact Supabase callback, and verify
   the production button reaches Apple's authorization endpoint. The signing
   key stays in ignored, mode-`0600` local storage and only the generated client
   secret is installed in Supabase.
-- [ ] Complete Apple's normal OAuth and anonymous `linkIdentity` round trips.
-  Provider activation and a valid authorization redirect do not prove that the
-  human account/2FA exchange returns or preserves a wallet.
+- [ ] Apply `202607310005_multi_grant_account_merge.sql` to production with
+  redemption paused/drained, verify its service-role-only RPC grants and ACLs,
+  refresh the schema cache, and record rollback-safe migration evidence. Local
+  source and migration tests do not satisfy this gate.
+- [ ] Complete the live Google anonymous-to-existing-account merge: verify the
+  10-minute one-use digest-backed intent, buffered destination cookies,
+  service-only atomic transfer/tombstone, partial-balance preservation,
+  account recovery, a distinct-card 3,000-Credit top-up with rolling 14-day
+  expiry, same-code no-regrant, and the unchanged $3 identity budget.
+- [ ] Complete the same live merge matrix with a human Apple account. Provider
+  activation and a valid authorization redirect do not prove the account/2FA
+  exchange, destination session, or wallet merge.
 - [ ] Test the approved magic-link recovery callback for a non-anonymous
   account.
 - [ ] Enable Supabase anonymous sign-in and prove scan → anonymous wallet →
@@ -190,9 +214,11 @@ satisfied by this checkout.
   `authenticated` role and remains inside user-bound RLS.
 - [x] Prove Google linking preserves the same anonymous user and wallet,
   changes the account to non-anonymous, and reaches the authenticated Agent
-  page. Production Agent key creation remains intentionally disabled by the
-  separate gateway kill switch.
-- [ ] Repeat the same preservation proof for Apple now that its provider is
+  page. This is the historical July 31 `linkIdentity` receipt only; the new
+  merge-capable OAuth flow remains pending in the unchecked Google gate above.
+  Production Agent key creation remains governed by the separate gateway kill
+  switch.
+- [ ] Repeat the new merge proof for Apple after the production migration is
   installed. Maintain the existing CAPTCHA/Turnstile, edge-limit, and approved
   anonymous-user cleanup gates independently.
 - [x] Install the managed, `malatangai.com`-restricted Turnstile widget and all
@@ -221,18 +247,19 @@ satisfied by this checkout.
 - [ ] Independent Agent key-digest and request-fingerprint secrets are
   installed and live key creation passed on 2026-07-31. Rotation/revocation
   incident rehearsal remains open.
-- [ ] The server-only `OPENAI_API_KEY`, historical pinned-fast snapshot,
-  fixed OpenAI endpoint, safe error mapping, variable-cost accounting, and
-  one live legacy completion passed on 2026-07-31. The current Luna, Terra,
-  and Sol selector has local contract coverage; live completion proof for
-  each canonical model and project billing alerts remain external gates.
+- [ ] The server-only `OPENAI_API_KEY`, fixed OpenAI endpoint, safe error
+  mapping, and variable-cost accounting remain in place. On August 1, 2026,
+  a local server-only `store:false` provider preflight returned HTTP 200 for
+  each canonical Luna, Terra, and Sol model without logging prompts, response
+  bodies, request identifiers, or credentials. A production-gateway receipt
+  for each model and project billing alerts remain external gates.
 - [x] Enable `YGF_AGENT_GATEWAY_ENABLED` only after provider preflight and a
   controlled production acceptance. The 2026-07-31 flow passed fresh
   redemption, Google upgrade, one-time key creation, a real completion,
   wallet-scoped replay, and failure Credit recovery. See
   `docs/operations/production-agent-acceptance-2026-07-31.md`. Deliberate
   rate/concurrency, expired/rotated/revoked key, provider-outage, and
-  wallet-wide $3.00 exhaustion drills remain staging-only gates.
+  identity-wide $3.00 exhaustion drills remain staging-only gates.
 - [ ] Confirm production logs contain no plaintext claim, raw IP, submitted
   prompt, provider credential, service-role value, or full provider payload.
 - [ ] Verify alerting and the server-side stop paths: production requires

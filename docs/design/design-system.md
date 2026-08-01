@@ -49,9 +49,11 @@ CTA, then complete fine print. Avoid extra stacked microcopy.
 - Checkout cue: **Get your code at checkout.**
 - Use cases: Study, Coding, Career, Pick My Bowl.
 - Promotional fine print: **Limited-time YGF promotional Build Credits.
-  Qualifying purchase required. One redemption per person/account.
-  Non-transferable. No cash value. Expires 14 days after redemption. Eligible
-  AI tasks only. Terms and privacy apply.**
+  Qualifying purchase required. Each distinct eligible code grants 3,000
+  Credits once; multiple distinct cards may top up one wallet. A successful
+  new-card top-up sets the entire wallet to expire 14 days later.
+  Non-transferable. No cash value. Eligible AI tasks only. Terms and privacy
+  apply.**
 - University disclaimer: **This promotion is offered by YGF for the USC
   community and is not sponsored, endorsed by, or administered by the
   University of Southern California.**

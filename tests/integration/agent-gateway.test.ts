@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
 import { generateAgentApiKey } from "@/lib/agent/api-key";
+import { hashCode } from "@/lib/campaign/code";
 import {
   fingerprintAgentIdempotencyKey,
   runAgentChat,
@@ -285,6 +286,52 @@ describe("OpenAI-compatible Agent gateway", () => {
         reservedAfter: 0,
       }),
     ]);
+  });
+
+  it("accepts and replays an Agent result with aggregate wallet Credits", async () => {
+    const context = await setup();
+    await context.campaign.createBatch({
+      codeHashes: [await hashCode("TOPUP99A")],
+      name: "aggregate Agent wallet",
+    });
+    await context.campaign.redeemCode({
+      code: "TOPUP99A",
+      idempotencyKey: "aggregate-agent-top-up",
+      userId: "demo-user",
+    });
+    const { generated } = await context.createKey();
+    const principal = await context.repository.authenticateKey(
+      generated.persistence.digest,
+    );
+    const provider = successfulProvider();
+    const input = {
+      idempotencyKey: idem("aggregate-agent-replay"),
+      keyDigest: generated.persistence.digest,
+      principal,
+      request: chatRequest(),
+    };
+
+    const first = await runAgentChat(input, {
+      environment: ENVIRONMENT,
+      now: context.now,
+      provider,
+      repository: context.repository,
+    });
+    const replay = await runAgentChat(input, {
+      environment: ENVIRONMENT,
+      now: context.now,
+      provider,
+      repository: context.repository,
+    });
+
+    expect(first).toEqual(replay);
+    expect(first).toMatchObject({
+      ygf: {
+        credits_used: 1,
+        remaining_credits: 5_999,
+      },
+    });
+    expect(provider.run).toHaveBeenCalledOnce();
   });
 
   it("strips legacy provider spend from a completed replay payload", async () => {

@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 
 import {
   resolveAuthRuntime,
@@ -17,7 +17,8 @@ const HEADERS = {
   "x-content-type-options": "nosniff",
 };
 const MAX_BATCH = 100;
-const COUNT_KEYS = [
+const AUTH_CLEANUP_BATCH = 25;
+const DATABASE_COUNT_KEYS = [
   "agent_replays",
   "agent_requests",
   "events",
@@ -26,10 +27,23 @@ const COUNT_KEYS = [
   "task_executions",
 ] as const;
 
-type MaintenanceCounts = Record<(typeof COUNT_KEYS)[number], number>;
+type DatabaseMaintenanceCounts = Record<
+  (typeof DATABASE_COUNT_KEYS)[number],
+  number
+>;
+type MaintenanceCounts = DatabaseMaintenanceCounts & {
+  auth_users: number;
+};
+
+interface AuthCleanupRow {
+  source_user_id: string;
+}
+
+type ServiceClient = ReturnType<typeof createServiceRoleClient>;
 
 interface MaintenanceDependencies {
   createServiceClient?: typeof createServiceRoleClient;
+  cleanupAuthUsers?: (client: ServiceClient) => Promise<number>;
   environment?: RuntimeEnvironment;
   resolveRuntime?: (environment: RuntimeEnvironment) => AuthRuntime;
 }
@@ -51,14 +65,14 @@ function authorized(request: Request, secret: string | undefined) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-function isCounts(value: unknown): value is MaintenanceCounts {
+function isCounts(value: unknown): value is DatabaseMaintenanceCounts {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
   const record = value as Record<string, unknown>;
   return (
-    Object.keys(record).length === COUNT_KEYS.length &&
-    COUNT_KEYS.every(
+    Object.keys(record).length === DATABASE_COUNT_KEYS.length &&
+    DATABASE_COUNT_KEYS.every(
       (key) =>
         typeof record[key] === "number" &&
         Number.isSafeInteger(record[key]) &&
@@ -68,6 +82,79 @@ function isCounts(value: unknown): value is MaintenanceCounts {
   );
 }
 
+function isUuid(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+      value,
+    )
+  );
+}
+
+function isMissingAuthUser(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "user_not_found"
+  );
+}
+
+export async function cleanupRetiredAuthUsers(
+  client: ServiceClient,
+): Promise<number> {
+  const workerToken = randomUUID();
+  const { data, error } = await client.rpc(
+    "claim_auth_cleanup_outbox",
+    {
+      p_limit: AUTH_CLEANUP_BATCH,
+      p_worker_token: workerToken,
+    },
+  );
+  if (
+    error ||
+    !Array.isArray(data) ||
+    data.length > AUTH_CLEANUP_BATCH ||
+    !data.every(
+      (row): row is AuthCleanupRow =>
+        typeof row === "object" &&
+        row !== null &&
+        isUuid((row as Record<string, unknown>).source_user_id),
+    )
+  ) {
+    throw new Error("AUTH_CLEANUP_UNAVAILABLE");
+  }
+
+  let completed = 0;
+  let failed = false;
+  for (const { source_user_id: sourceUserId } of data) {
+    try {
+      const { error: deleteError } =
+        await client.auth.admin.deleteUser(sourceUserId);
+      if (deleteError && !isMissingAuthUser(deleteError)) {
+        failed = true;
+        continue;
+      }
+      const { data: completion, error: completionError } =
+        await client.rpc("complete_auth_cleanup_outbox", {
+          p_source_user_id: sourceUserId,
+          p_worker_token: workerToken,
+        });
+      if (completionError || completion !== true) {
+        failed = true;
+        continue;
+      }
+      completed += 1;
+    } catch {
+      failed = true;
+    }
+  }
+  if (failed) {
+    throw new Error("AUTH_CLEANUP_UNAVAILABLE");
+  }
+  return completed;
+}
+
 export function createMaintenanceHandler(
   dependencies: MaintenanceDependencies = {},
 ) {
@@ -75,6 +162,8 @@ export function createMaintenanceHandler(
   const resolveRuntime = dependencies.resolveRuntime ?? resolveAuthRuntime;
   const createServiceClient =
     dependencies.createServiceClient ?? createServiceRoleClient;
+  const cleanupAuthUsers =
+    dependencies.cleanupAuthUsers ?? cleanupRetiredAuthUsers;
 
   return async function handle(request: Request): Promise<Response> {
     if (!authorized(request, environment.CRON_SECRET)) {
@@ -90,14 +179,20 @@ export function createMaintenanceHandler(
     }
 
     try {
-      const { data, error } = await createServiceClient().rpc(
+      const serviceClient = createServiceClient();
+      const { data, error } = await serviceClient.rpc(
         "run_bounded_global_maintenance",
         { p_limit: MAX_BATCH },
       );
       if (error || !isCounts(data)) {
         return response({ error: "MAINTENANCE_UNAVAILABLE" }, 503);
       }
-      return response({ counts: data, ok: true }, 200);
+      const authUsers = await cleanupAuthUsers(serviceClient);
+      const counts: MaintenanceCounts = {
+        ...data,
+        auth_users: authUsers,
+      };
+      return response({ counts, ok: true }, 200);
     } catch {
       return response({ error: "MAINTENANCE_UNAVAILABLE" }, 503);
     }

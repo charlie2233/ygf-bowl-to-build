@@ -789,7 +789,8 @@ are installed.
 - [x] Run unit/integration, lint, typecheck, production build, desktop/mobile
   E2E, axe, deterministic asset verification, decoder checks, secret scan,
   horizontal-access review, and independent code/visual/release QA.
-- [ ] Commit, push, and verify the final GitHub branch SHA.
+- [x] Commit, push, and verify the final GitHub branch SHA; the final handoff
+  records the evidence-only documentation commit that follows deployment.
 
 ### Phase 2 acceptance
 
@@ -1021,7 +1022,7 @@ without weakening the code-first ordinary-user flow.
 
 ### Deployment and human acceptance gates
 
-- [ ] Apply `202607310005_multi_grant_account_merge.sql` to production during
+- [x] Apply `202607310005_multi_grant_account_merge.sql` to production during
   a drained window, refresh the API schema cache, verify ACL/RLS/constraints,
   run advisors, deploy the matching Git SHA, and smoke the public endpoints.
 - [ ] Complete a real anonymous-to-existing-account merge separately with

@@ -42,7 +42,7 @@ final handoff after this document is committed.
 | iPhone WebKit and axe | final `pnpm test:e2e` matrix | Pass on August 1, 2026 at the configured iPhone 13 viewport, including the mobile Agent and long-translation checks. |
 | Plaintext/secret scan | reviewed added source lines and built client output | Pass on August 1, 2026: zero added OpenAI, Supabase, Agent-key, or JWT-shaped values and zero such values in `.next/static`. The public `OPENAI_API_KEY` field label remains intentionally present in the Agent configuration UI. |
 | Complete working-tree release review | full scoped diff plus independent maintenance/security and product/QA review | Pass on August 1, 2026: independent final security review found no reportable High, Medium, or Low finding; the mobile visual/interaction review found no overflow or console error. Live OAuth and true multi-session Postgres checks remain external gates below. |
-| Remote identity | local SHA equals GitHub branch SHA after push | Pending for this pre-commit candidate; the final handoff records the exact local/upstream/`ls-remote`/Vercel SHA comparison without embedding a commit's own identity here |
+| Remote identity | local SHA equals GitHub branch SHA after push | The code-bearing candidate `318756d36ef04a37c2dc10e9420275c7544717f3` matched local HEAD, upstream, and `ls-remote` before the evidence-only documentation commit. The final handoff records the final documentation SHA without embedding a commit's own identity here. |
 
 Required behavioral evidence:
 
@@ -147,12 +147,15 @@ remaining items still require live account or operator state and are not
 satisfied by this checkout.
 
 - [x] Deploy code-bearing SHA
-  `a782560380579378e087f8d1b5f200e2c2d18909` over HTTPS at
+  `318756d36ef04a37c2dc10e9420275c7544717f3` over HTTPS at
   `https://malatangai.com` as Vercel production deployment
-  `dpl_9tLeXnwsDJF9uiMWMyXWWamojh8W`. The deployment reported `READY`;
+  `dpl_6BMjGK55zuoSawQ3khAQaY6Gmi5c`. The deployment reported `READY`;
   `www.malatangai.com` returned a permanent redirect to the apex with
-  path/query preserved; and the deployed HTML declared the apex canonical
-  URL.
+  path/query preserved; the apex and `/redeem` returned HTTP 200; unauthenticated
+  `/v1/models` and maintenance returned HTTP 401; merge-intent creation returned
+  401 without a session and 403 for a foreign origin. A real 390x844 browser
+  render had no horizontal overflow, framework overlay, or console error, and
+  the Chinese-to-Russian-to-Chinese selector round trip succeeded.
 - [x] Install the verified lockfile on the production build platform and
   recheck the scoped PostCSS/Sharp override record above. Confirm the platform
   build and a real optimized image request succeed. Vercel installed with
@@ -195,10 +198,16 @@ satisfied by this checkout.
   the production button reaches Apple's authorization endpoint. The signing
   key stays in ignored, mode-`0600` local storage and only the generated client
   secret is installed in Supabase.
-- [ ] Apply `202607310005_multi_grant_account_merge.sql` to production with
-  redemption paused/drained, verify its service-role-only RPC grants and ACLs,
-  refresh the schema cache, and record rollback-safe migration evidence. Local
-  source and migration tests do not satisfy this gate.
+- [x] Apply `202607310005_multi_grant_account_merge.sql` to production in a
+  drained window and refresh the schema cache. The August 1 preflight and
+  postflight both found zero reserved wallets, running web tasks, and running
+  Agent requests. All three merge/cleanup tables force RLS; all five changed
+  security-definer RPCs are postgres-owned and service-role-only; the wallet
+  and ledger checks both enforce committed-plus-reserved provider cost at or
+  below `3,000,000` micro-USD. Supabase recorded the named migration and its
+  advisors returned no ERROR. New service-only tables produce the intentional
+  INFO that forced-RLS tables have no public policy, while the pre-existing
+  anonymous-access and leaked-password WARNs remain reviewed external items.
 - [ ] Complete the live Google anonymous-to-existing-account merge: verify the
   10-minute one-use digest-backed intent, buffered destination cookies,
   service-only atomic transfer/tombstone, partial-balance preservation,
@@ -301,11 +310,14 @@ These require named human owners:
 
 ## Honest release statement
 
-When the local matrix and final push are recorded, the accurate claim is:
+After the local matrix, migration, deployment, and final push are recorded,
+the accurate claim is:
 
-> The scoped GitHub branch contains a locally verified beta implementation and
-> print-ready candidate artifacts.
+> The scoped GitHub branch contains a locally verified beta implementation;
+> its matching production web build and account-merge migration are deployed
+> with public and unauthenticated-boundary smoke evidence.
 
-It is not accurate to call the campaign deployed, live-provider verified,
-production-database verified, physically proofed, store trained, soft-tested,
-or approved for launch until the matching external rows above have evidence.
+It is not accurate to call the new Google/Apple merge flow human-verified,
+the physical batch current-term print-ready, the store trained, the campaign
+soft-tested, or the launch approved until the matching external rows above
+have evidence.

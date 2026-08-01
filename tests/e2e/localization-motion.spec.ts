@@ -509,6 +509,23 @@ test("long translations stay inside a narrow mobile viewport", async ({
     ).toBeVisible();
     await expectNoHorizontalOverflow(page, `home-narrow-${locale}`);
   }
+
+  await selector.selectOption("zh");
+  const chineseSecondLine = page.locator(
+    "#campaign-hero-title span:last-child",
+  );
+  await expect(chineseSecondLine).toHaveCount(1);
+  const chineseLineMetrics = await chineseSecondLine.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const lineHeight = Number.parseFloat(
+      window.getComputedStyle(element).lineHeight,
+    );
+    return { height: bounds.height, lineHeight };
+  });
+  expect(chineseLineMetrics.height).toBeLessThanOrEqual(
+    chineseLineMetrics.lineHeight * 1.1,
+  );
+  await expectNoHorizontalOverflow(page, "home-narrow-zh");
 });
 
 test("hero actions stay ahead of reward detail on narrow phones", async ({

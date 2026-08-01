@@ -4557,6 +4557,14 @@ textarea {
     line-height: 1;
   }
 
+  .campaign-home[data-language="zh"] .marketing-hero h1 {
+    font-size: clamp(2.25rem, 10.8vw, 2.65rem);
+  }
+
+  .campaign-home[data-language="zh"] .marketing-hero h1 span:last-child {
+    white-space: nowrap;
+  }
+
   .campaign-home[data-language="fr"] .marketing-hero h1,
   .campaign-home[data-language="ru"] .marketing-hero h1 {
     font-size: clamp(2.55rem, 12vw, 3.1rem);

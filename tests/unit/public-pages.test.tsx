@@ -96,7 +96,7 @@ describe("public campaign pages", () => {
     expect(
       decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
     ).toContain(
-      "/media/ygf-user-photo.png",
+      "/media/ygf-steps-supporting.jpg",
     );
     expect(realYgfImage?.hasAttribute("data-photo-source")).toBe(false);
     expect(realYgfImage?.getAttribute("loading")).toBe("lazy");
@@ -112,7 +112,7 @@ describe("public campaign pages", () => {
 
     expect(
       decodeURIComponent(realYgfImage?.getAttribute("src") ?? ""),
-    ).toContain("/media/ygf-user-photo.png");
+    ).toContain("/media/ygf-steps-supporting.jpg");
     expect(realYgfImage?.getAttribute("loading")).toBe("eager");
     expect(realYgfImage?.hasAttribute("data-photo-source")).toBe(false);
   });

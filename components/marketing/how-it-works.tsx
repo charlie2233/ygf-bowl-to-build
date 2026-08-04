@@ -68,7 +68,7 @@ export function HowItWorks({
               fill
               loading={eagerImage ? "eager" : "lazy"}
               sizes="(max-width: 760px) 100vw, 48vw"
-              src="/media/ygf-user-photo.png"
+              src="/media/ygf-steps-supporting.jpg"
             />
           </div>
         </div>

@@ -65,7 +65,8 @@ for (const path of REAL_PHOTO_ROUTES) {
     const failedMediaRequests: string[] = [];
     const failedMediaResponses: string[] = [];
     const isMediaRequest = (url: string) =>
-      url.includes("/_next/image") || url.includes("/media/ygf-user-photo");
+      url.includes("/_next/image") ||
+      url.includes("/media/ygf-steps-supporting");
 
     page.on("requestfailed", (request) => {
       if (isMediaRequest(request.url())) {

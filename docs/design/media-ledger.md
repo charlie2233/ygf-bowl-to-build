@@ -18,11 +18,10 @@ licenses or permissions that have not been supplied.
 - Visual inspection: the food display is legible at card scale and contains
   no embedded copy, QR code, API credential, university logo, or other
   visible brand mark.
-- Runtime use: this sanitized PNG is the supporting photo in the below-fold
-  “From checkout to build mode” section. The home page loads it lazily; the
-  standalone offer page may load it eagerly because that section appears
-  immediately after the offer introduction. The home-page hero uses the
-  separately sourced, responsive YGF-derived static assets documented below.
+- Runtime use: this sanitized PNG remains the source for Agent Pass artwork
+  and the superseded ingredient-tray supporting photo. The public web journey
+  now uses the broader fresh-bar frame documented below, while the home-page
+  hero uses the separately sourced, responsive YGF-derived static assets.
 - Rights status: **user-provided; pending brand-rights confirmation**. Receipt
   of the archive is not treated as a license or a representation that the
   photo is rights-cleared.
@@ -44,24 +43,31 @@ licenses or permissions that have not been supplied.
 - Rights status and launch gate: identical to the source photo above; a
   derived file does not create or imply usage permission.
 
-### `public/media/ygf-fresh-bar-hero.jpg`
+### `public/media/ygf-fresh-bar-hero.jpg` and
+`public/media/ygf-steps-supporting.jpg`
 
 - Source: user-provided archive `南加大图片.zip`, original
   `IMG_2135 2.JPG`. The frame was selected after reviewing all 235 supplied
   still images plus representative frames from the supplied videos. It shows
   the real store's YANGGUOFU wordmark above a broad, colorful wall of
   vegetables, noodles, tofu, and toppings.
-- Processing: auto-oriented and resized from 5712 × 4284 to 2000 × 1500,
-  encoded as a progressive 4:2:0 JPEG at 550,163 bytes, and exported by Sharp
-  without source EXIF, IPTC, XMP, GPS, device, timestamp, or comment metadata.
+- Processing: the hero source was auto-oriented and resized from 5712 × 4284
+  to 2000 × 1500, encoded as a progressive 4:2:0 JPEG at 550,163 bytes, and
+  exported by Sharp without source EXIF, IPTC, XMP, GPS, device, timestamp, or
+  comment metadata. The supporting derivative is a metadata-stripped,
+  progressive 960 × 720 JPEG at 250,276 bytes so cold iPhone/WebKit image
+  decoding remains bounded while preserving the same audited frame.
 - Visual inspection: no people, faces, USC mark, private QR, redemption code,
   API key, email, or other account data is visible. The full derivative
   retains the YANGGUOFU store wordmark and small ingredient labels as
   authentic location context; responsive cover crops may place the wordmark
   outside the visible viewport.
 - Runtime use: source image for the July 29 responsive static home-page hero
-  derivatives documented below. The source itself is retained as an auditable
-  derivative and is not loaded directly into the first viewport.
+  derivatives documented below. Its smaller supporting derivative is, as of
+  the August phone-polish pass, the authentic photo in the “Three simple
+  steps” journey. The home page loads that supporting use lazily; the
+  standalone offer page may load it eagerly because the section appears
+  immediately after the introduction.
 - Rights status: **user-provided; pending brand-rights confirmation**.
   Receipt of the archive is not treated as a license or as public-use
   approval.

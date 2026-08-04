@@ -9,6 +9,10 @@ import { gotoApp } from "./navigation";
 test("establishes the single demo claim and first useful result", async ({
   page,
 }) => {
+  // This one-time setup compiles and traverses four routes serially in dev.
+  // Keep the default 30-second budget for the independent read-only specs.
+  test.setTimeout(120_000);
+
   await gotoApp(page, "/redeem#code=BOWL7K2A");
 
   await expect(page.getByLabel("8-character card code")).toHaveValue(

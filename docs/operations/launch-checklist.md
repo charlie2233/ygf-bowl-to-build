@@ -287,13 +287,15 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   YGF admin gift-revocation form with the row reference; never paste a gift
   URL or reward UUID as a manager selector.
 - [x] Generate the explicitly approved 500-credential production quantity.
-  Batch `c0313939-a965-41a6-8e61-67ba37db0c2c` is active with 500 eligible
-  rows. Its create and activate phases used persisted request IDs, were replayed
-  idempotently, and left zero admin profiles at rest. The plaintext CSV,
-  63-page Letter HTML/PDF, and immutable receipts remain ignored under a 0700
-  `private/` root with 0600 files. Database hash parity, HTML QR decode, and
-  final-PDF raster QR decode each passed 500/500. See
-  [the non-secret production receipt](./production-batch-2026-07-30.md).
+  Batch `929c4026-7cfc-4a5e-bf3b-420d26e01ae2` is active with 500 eligible
+  rows. Its create and activate phases used persisted request IDs, were
+  replayed idempotently, and left zero admin profiles at rest. The previous
+  batch has 497 audited revocations and 3 preserved redemptions, with zero
+  identity overlap. The plaintext CSV, 63-page Letter HTML/PDF, and immutable
+  receipts remain ignored under a 0700 `private/` root with 0600 files.
+  Database hash parity, HTML QR decode, and final-PDF raster QR decode each
+  passed 500/500. See
+  [the non-secret refresh receipt](./production-batch-refresh-2026-08-07.md).
 - [ ] Do not print or distribute that active inventory until a manager approves
   the physical release. Print at 100% with browser headers/footers disabled,
   conceal both credential forms, scan every imposition position, reconcile the

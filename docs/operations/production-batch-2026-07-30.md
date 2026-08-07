@@ -3,14 +3,22 @@
 This receipt contains no plaintext claim, claim URL, QR payload, individual
 code hash, API credential, or user identifier.
 
+## Retirement update — 2026-08-07
+
+This batch is retired and must not be printed or distributed. The 497 unused
+rows were revoked through 497 audited manager mutations. Its 3 redeemed rows,
+wallets, ledger entries, requests, usage entries, events, and provider-cost
+accounting were preserved. It was replaced by the wholly new 500-row batch in
+[the refresh receipt](./production-batch-refresh-2026-08-07.md).
+
 ## Production inventory
 
 - Batch ID: `c0313939-a965-41a6-8e61-67ba37db0c2c`
 - Approved quantity: 500
 - Source: `scratch-card`
 - Activated at: `2026-07-30T23:12:00.25157Z`
-- Production state after activation: 500 `eligible`, zero pending rows for
-  this batch
+- Historical state immediately after activation: 500 `eligible`, zero pending
+  rows for this batch
 - Code expiry: none; the wallet created by a successful redemption still
   expires 14 days after redemption
 - Audit evidence: one idempotent create mutation and one idempotent activate

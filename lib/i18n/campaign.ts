@@ -31,6 +31,7 @@ export type CampaignHomeCopy = Readonly<{
     disclaimer: string;
     navigationLabel: string;
     privacy: string;
+    review: string;
     staffHelp: string;
     terms: string;
   }>;
@@ -197,6 +198,7 @@ export const campaignHomeCopy: Record<
       navigationLabel: "Footer navigation",
       terms: "Terms",
       privacy: "Privacy",
+      review: "Review",
       creatorKit: "Creator kit",
       staffHelp: "Staff help",
       disclaimer:
@@ -314,6 +316,7 @@ export const campaignHomeCopy: Record<
       navigationLabel: "页脚导航",
       terms: "活动条款",
       privacy: "隐私",
+      review: "评价",
       creatorKit: "创作者工具包",
       staffHelp: "员工帮助",
       disclaimer: "面向 USC 社区。本活动与 USC 无隶属关系，也未获其赞助或认可。",
@@ -432,6 +435,7 @@ export const campaignHomeCopy: Record<
       navigationLabel: "Navegación del pie",
       terms: "Términos",
       privacy: "Privacidad",
+      review: "Reseña",
       creatorKit: "Kit de creadores",
       staffHelp: "Ayuda al personal",
       disclaimer:
@@ -551,6 +555,7 @@ export const campaignHomeCopy: Record<
       navigationLabel: "Navigation de pied de page",
       terms: "Conditions",
       privacy: "Confidentialité",
+      review: "Avis",
       creatorKit: "Kit créateur",
       staffHelp: "Aide au personnel",
       disclaimer:
@@ -670,6 +675,7 @@ export const campaignHomeCopy: Record<
       navigationLabel: "Навигация внизу страницы",
       terms: "Условия",
       privacy: "Конфиденциальность",
+      review: "Отзыв",
       creatorKit: "Набор автора",
       staffHelp: "Помощь персоналу",
       disclaimer:

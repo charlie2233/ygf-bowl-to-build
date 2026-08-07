@@ -35,6 +35,10 @@ const PUBLIC_ROUTES = [
     heading: "Staff help",
     path: "/staff",
   },
+  {
+    heading: "Share your YGF experience",
+    path: "/review",
+  },
 ] as const;
 
 const REAL_PHOTO_ROUTES = ["/", "/offer"] as const;

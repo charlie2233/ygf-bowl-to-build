@@ -130,6 +130,7 @@ export const privacySections: readonly LegalSection[] = [
       "History stores task type, generated title, an optional user-saved result, usage, and timestamps.",
       "If you create a developer key, YGF stores a keyed digest, a short prefix and last four characters, ownership, expiry, revocation, and usage/accounting records. YGF does not store the full plaintext key.",
       "Agent request accounting stores a keyed request fingerprint, selected allowlisted model, status, credits, provider cost, and timestamps. The raw request prompt is not stored in a separate database column.",
+      "If you contact YGF, the applicable form processes the email and request text you provide. The review form processes a rating, review text, and an optional email if you want a reply.",
     ],
   },
   {
@@ -143,7 +144,7 @@ export const privacySections: readonly LegalSection[] = [
     body: [
       "Supabase processes authentication, account identifiers, and campaign database records on YGF’s behalf.",
       "To generate a website or Agent result, YGF sends the prompt you submit, a non-PII HMAC safety identifier, and the minimum request context needed directly to OpenAI. OpenAI processes that request to return an output. The OpenAI credential remains on YGF’s server.",
-      "The privacy and staff issue-report forms send the email and request text you enter to Formspree. Formspree may also process technical request data under its own privacy terms while delivering the message to YGF.",
+      "The privacy and staff issue-report forms send the email and request text you enter to Formspree. The review form sends your rating, review text, and any optional email you provide. Formspree may also process technical request data under its own privacy terms while delivering these submissions to YGF.",
     ],
   },
   {
@@ -159,7 +160,7 @@ export const privacySections: readonly LegalSection[] = [
       "Personal API key plaintext is returned only when a key is created or rotated. Only its keyed digest and non-secret display metadata persist.",
       "A guest wallet remains tied to this browser until Google or Apple sign-in and the wallet combine both finish. Clearing browser site data can permanently remove access before then. Supabase anonymous-user cleanup is not automatic in this codebase.",
       "An account-merge intent becomes unusable after 10 minutes or after its first successful use. That expiry is not itself a promise that its audit record has already been physically deleted.",
-      "The current beta has no fixed deletion deadline or self-service deletion for account, redemption, ledger, history, saved-output, or privacy/contact records.",
+      "The current beta has no fixed deletion deadline or self-service deletion for account, redemption, ledger, history, saved-output, privacy/contact, or review/feedback records.",
       "A manager-approved, technically enforced retention/deletion schedule is a launch gate before accepting live redemptions.",
       "Long-lived dietary or allergy histories are avoided unless they are truly needed.",
     ],

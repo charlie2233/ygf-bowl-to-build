@@ -14,6 +14,7 @@ export function SiteFooter({
         <nav aria-label={copy.navigationLabel}>
           <a href="/terms">{copy.terms}</a>
           <a href="/privacy">{copy.privacy}</a>
+          <a href="/review">{copy.review}</a>
           <a href="/creator-kit">{copy.creatorKit}</a>
           <a href="/staff">{copy.staffHelp}</a>
         </nav>

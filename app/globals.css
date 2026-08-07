@@ -1145,6 +1145,7 @@ textarea {
 }
 
 .contact-form input,
+.contact-form select,
 .contact-form textarea {
   width: 100%;
   border: 1px solid #cfc5bc;
@@ -1152,7 +1153,8 @@ textarea {
   background: #fff;
 }
 
-.contact-form input {
+.contact-form input,
+.contact-form select {
   min-height: 3rem;
   padding: 0.65rem 0.8rem;
 }

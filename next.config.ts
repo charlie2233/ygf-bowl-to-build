@@ -23,7 +23,11 @@ const nextConfig: NextConfig = {
       },
       {
         headers: [
-          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "frame-ancestors 'none'; form-action 'self' https://formspree.io",
+          },
           { key: "X-Frame-Options", value: "DENY" },
         ],
         source: "/:path*",

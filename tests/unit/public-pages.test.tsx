@@ -7,6 +7,7 @@ import FAQPage from "@/app/(marketing)/faq/page";
 import HomePage from "@/app/(marketing)/page";
 import OfferPage from "@/app/(marketing)/offer/page";
 import PrivacyPage from "@/app/(marketing)/privacy/page";
+import ReviewPage from "@/app/(marketing)/review/page";
 import StaffPage from "@/app/(marketing)/staff/page";
 import TermsPage from "@/app/(marketing)/terms/page";
 
@@ -173,6 +174,9 @@ describe("public campaign pages", () => {
     expect(text).toMatch(/14 days.*not the same as record deletion/i);
     expect(text).toMatch(/saved web outputs persist when explicitly saved/i);
     expect(text).toMatch(/store:false.*not a zero-retention promise/i);
+    expect(text).toMatch(/review form sends your rating, review text/i);
+    expect(text).toMatch(/optional email/i);
+    expect(text).toMatch(/review\/feedback records/i);
     expect(text).toMatch(/abuse-monitoring logs.*up to 30 days/i);
     expect(text).toMatch(/stored in Postgres.*15-minute/i);
     expect(text).toMatch(/can repeat or echo submitted input/i);
@@ -208,5 +212,45 @@ describe("public campaign pages", () => {
     expect(text).toMatch(/Formspree/i);
     expect(text).toMatch(/technical request data/i);
     expectMinimalContactForm(body, "Staff issue report form");
+  });
+
+  it("routes reviews to the dedicated Formspree form", () => {
+    const body = renderPage(<ReviewPage />);
+    const text = normalizedText(body);
+    const form = body.querySelector<HTMLFormElement>(
+      'form[action="https://formspree.io/f/xbgrdldk"][method="post"]',
+    );
+    const rating = form?.querySelector<HTMLSelectElement>(
+      'select[name="rating"]',
+    );
+
+    expect(form).toBeTruthy();
+    expect(form?.getAttribute("aria-label")).toBe("YGF review form");
+    expect(
+      form?.querySelector('input[name="form_type"][value="ygf-review"]'),
+    ).toBeTruthy();
+    const email = form?.querySelector<HTMLInputElement>(
+      'input[type="email"][name="email"]',
+    );
+    const message = form?.querySelector<HTMLTextAreaElement>(
+      'textarea[name="message"]',
+    );
+
+    expect(email?.required).toBe(false);
+    expect(email?.maxLength).toBe(254);
+    expect(rating?.required).toBe(true);
+    expect(
+      rating?.querySelectorAll('option[value]:not([value=""])'),
+    ).toHaveLength(5);
+    expect(message?.required).toBe(true);
+    expect(message?.maxLength).toBe(2000);
+    expect(text).toMatch(/Email \(optional, if you want a reply\)/i);
+    expect(text).toMatch(/Formspree/i);
+    expect(text).toMatch(/technical request data/i);
+    expect(text).toMatch(/Do not submit SSNs, payment card numbers, medical data/i);
+    expect(body.querySelector('a[href="/review"]')).toBeTruthy();
+
+    expectMinimalContactForm(renderPage(<PrivacyPage />), "Privacy contact form");
+    expectMinimalContactForm(renderPage(<StaffPage />), "Staff issue report form");
   });
 });

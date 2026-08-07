@@ -119,6 +119,17 @@ describe("bootstrap configuration", () => {
     expect(homeMetadata.alternates?.canonical).toBe("/");
   });
 
+  it("allows native form posts only to this site and Formspree", async () => {
+    const headers = await nextConfig.headers?.();
+    const globalHeaders = headers?.find(({ source }) => source === "/:path*");
+
+    expect(globalHeaders?.headers).toContainEqual({
+      key: "Content-Security-Policy",
+      value:
+        "frame-ancestors 'none'; form-action 'self' https://formspree.io",
+    });
+  });
+
   it("uses a focus token with at least 3:1 contrast on campaign surfaces", () => {
     const css = readFileSync(
       resolve(repositoryRoot, "app/globals.css"),

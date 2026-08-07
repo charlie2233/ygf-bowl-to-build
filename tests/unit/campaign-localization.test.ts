@@ -8,6 +8,7 @@ import {
   campaignLocales,
 } from "@/lib/i18n/campaign";
 import { redeemCopy } from "@/lib/i18n/redeem";
+import { reviewPageCopy } from "@/lib/i18n/review";
 import { workspaceCopy } from "@/lib/i18n/workspace";
 
 const rewardContextExpectations = {
@@ -95,6 +96,26 @@ describe("campaign localization contract", () => {
     expect(campaignLanguageOptions.map(({ locale }) => locale)).toEqual(
       campaignLocales,
     );
+  });
+
+  it.each(campaignLocales)("localizes the review flow in %s", (locale) => {
+    const copy = reviewPageCopy[locale];
+
+    expect(copy.documentLanguage).toBeTruthy();
+    expect(copy.title).toBeTruthy();
+    expect(copy.lead).toBeTruthy();
+    expect(copy.warning).toBeTruthy();
+    expect(copy.disclosure).toMatch(/Formspree/i);
+    expect(copy.form.emailLabel).toBeTruthy();
+    expect(copy.form.ratingOptions.map(({ value }) => value)).toEqual([
+      "5",
+      "4",
+      "3",
+      "2",
+      "1",
+    ]);
+    expect(copy.form.messageLabel).toBeTruthy();
+    expect(copy.form.submitLabel).toBeTruthy();
   });
 
   it.each(campaignLocales)(

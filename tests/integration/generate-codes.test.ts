@@ -23,6 +23,7 @@ import {
   CODE_ALPHABET,
   generatePrivateRowReferences,
   generateUniqueCodes,
+  RESERVED_PUBLIC_SAMPLE_CODES,
   serializePrivateCodeCsv,
 } from "@/lib/admin/code-batch";
 import {
@@ -171,6 +172,30 @@ describe("private promo-code inventory contract", () => {
     expect(() =>
       generateUniqueCodes(2, () => 0),
     ).toThrow("UNIQUE_CODE_GENERATION_FAILED");
+  });
+
+  it("skips the reserved public sample code during deterministic generation", () => {
+    const indexes = [..."A7K3B9Q2", ..."23456789"].map(
+      (character) => CODE_ALPHABET.indexOf(character),
+    );
+
+    expect(RESERVED_PUBLIC_SAMPLE_CODES.has("A7K3B9Q2")).toBe(
+      true,
+    );
+    expect(
+      generateUniqueCodes(1, () => indexes.shift() ?? 0),
+    ).toEqual(["23456789"]);
+    expect(indexes).toEqual([]);
+  });
+
+  it("rejects the reserved public sample code in private claim rows", () => {
+    expect(() =>
+      buildPrivateClaimRows(
+        ["A7K3B9Q2"],
+        "https://build.ygf.example",
+        ["YGF-JKMNPQRS-0001"],
+      ),
+    ).toThrow("PUBLIC_SAMPLE_CODE_RESERVED");
   });
 
   it("creates non-secret batch row references with an approved alphabet and ordinal", () => {

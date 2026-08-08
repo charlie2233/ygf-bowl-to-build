@@ -84,3 +84,40 @@ brand rights, conceal both bearer credential forms, resolve bleed/color/stock
 and duplex requirements, print at 100%, scan every physical imposition
 position under store lighting, complete staff training and the 10–20 person
 soft test, and reconcile physical custody before release.
+
+## 2026-08-08 read-only inventory and Avery proof addendum
+
+At `2026-08-08 00:31 PDT`, a new aggregate-only production read confirmed the
+provider project was healthy and made no database, Auth, or provider mutation:
+
+- current batch: 500 `eligible`, zero redeemed/revoked/pending/expired, 500
+  distinct code IDs, digests, and row references, and no downstream grant,
+  wallet, user, key, request, usage, reward, task, or merge record;
+- retired batch: 497 `revoked` plus 3 `redeemed`, with the redeemed rows still
+  reconciling exactly to 3 grants, 3 wallets, 3 retained users/profiles, 1
+  active Agent key, 2 terminal requests, and 4 usage rows; and
+- separation: zero code-ID, digest, or row-reference overlap between batches.
+
+Both `promo_batches` records still report batch-level `active`. The retired
+inventory remains nonredeemable because every old code is individually revoked
+or redeemed and the redemption function checks code state. This metadata
+mismatch is documented only; no unreviewed batch-status mutation was made.
+
+The existing private CSV was reused to create the first local-only Avery 5260
+bundle. No credential was generated or changed, and no file was uploaded:
+
+- `private/ygf-production-500-20260807.avery-5260-labels.html` — mode 0600,
+  187,219 bytes, SHA-256
+  `d69f7521b9c5ca6a569d2c9b3736830ad70e04e76dfebeaccaa272d8e0033648`;
+- `private/ygf-production-500-20260807.avery-5260-labels.pdf` — mode 0600,
+  337,351 bytes, SHA-256
+  `42b4341e48fe063c42c7db17861c8d22c91cdbd7c0190aac8a48345d7256cfb5`;
+- read-only parity: 500/500 unique canonical labels across 17 Letter sheets,
+  with 20 labels on the final sheet and every code/row-reference token found
+  exactly once; and
+- source CSV SHA-256 remained
+  `94934b3c7a52de5e13eb0ef5c74e9d8f1a68b34c716785d01201a89e496e5353`.
+
+These are digital custody artifacts, not a physical-print approval. Brand,
+visible-code custody or concealment, exact-stock printing, label application,
+store-lighting scan, soft test, training, and inventory handoff remain open.

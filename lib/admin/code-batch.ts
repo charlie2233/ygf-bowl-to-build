@@ -1,6 +1,8 @@
 import { randomInt } from "node:crypto";
 
 export const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+export const RESERVED_PUBLIC_SAMPLE_CODES: ReadonlySet<string> =
+  new Set(["A7K3B9Q2"]);
 const CODE_LENGTH = 8;
 const MAX_CODES = 3_000;
 const ROW_REFERENCE_PREFIX = "YGF";
@@ -61,7 +63,13 @@ export function generateUniqueCodes(
   let attempts = 0;
 
   while (codes.size < count && attempts < maximumAttempts) {
-    codes.add(generateAlphabetValue(CODE_LENGTH, randomIndex));
+    const candidate = generateAlphabetValue(
+      CODE_LENGTH,
+      randomIndex,
+    );
+    if (!RESERVED_PUBLIC_SAMPLE_CODES.has(candidate)) {
+      codes.add(candidate);
+    }
     attempts += 1;
   }
   if (codes.size !== count) {
@@ -124,6 +132,13 @@ export function buildPrivateClaimRows(
     new Set(rowReferences).size !== rowReferences.length
   ) {
     throw new Error("PRIVATE_CODE_ROWS_INVALID");
+  }
+  if (
+    codes.some((code) =>
+      RESERVED_PUBLIC_SAMPLE_CODES.has(code),
+    )
+  ) {
+    throw new Error("PUBLIC_SAMPLE_CODE_RESERVED");
   }
   const firstReference = ROW_REFERENCE_PATTERN.exec(
     rowReferences[0] ?? "",

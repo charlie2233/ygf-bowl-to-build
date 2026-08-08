@@ -29,7 +29,8 @@
     "visibleCodeLabel": true,
     "concealmentLayer": false,
     "physicalDistributionAuthorized": false,
-    "visibleCodePolicyApprovalRequired": true
+    "visibleCodePolicyApprovalRequired": true,
+    "sampleCodeReservedFromProduction": true
   },
   "sources": {
     "photo": "public/media/ygf-authentic-hero-mobile-card.png",

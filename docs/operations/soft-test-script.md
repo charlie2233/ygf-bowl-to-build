@@ -16,15 +16,19 @@ test transactions; do not collect real payment details or sensitive prompts.
 - Engineering owner: watches error, rate-limit, provider-cost, and audit
   signals without viewing plaintext codes or prompt content.
 
-Never copy a full code, private claim QR, claim URL, receipt, email, or prompt
-into the test log. Use a non-secret fixture/row identifier.
+Never copy a full code, live Avery label, private claim QR, claim URL, receipt,
+email, or prompt into the test log. Use a non-secret fixture/row identifier.
 
 ## Entry criteria
 
 - A release candidate is deployed over HTTPS with production-like auth,
   database, limits, and AI-provider controls.
-- Public campaign QR fixtures and paired human-readable code/private claim QR
-  rows were produced by the release process.
+- Public campaign QR fixtures, credential-free static `/redeem` cards, and
+  synthetic Avery 5260 code labels were produced by the reviewed release
+  process. Do not use the active 2026-08-07 production codes for this soft test.
+- The static QR, sample label, final stock, label placement, and local-only
+  merge proof have manager approval for testing. No private CSV or live label
+  document was uploaded to a vendor or cloud service.
 - Terms, privacy, offer copy, menu and prices, and the $25+ threshold have
   owner approval.
 - The manager and engineering owner can set the server-only
@@ -42,8 +46,8 @@ times.
 | --- | --- | --- |
 | 1 | Scan a printed public poster QR | HTTPS offer page opens with the correct poster source; no code is prefilled |
 | 2 | Scan the counter-card public campaign QR | Offer opens with `counter-card-5x7` attribution |
-| 3 | After a qualifying checkout, scan a private claim QR | Claim page prefills the same code printed in human-readable form |
-| 4 | Manually enter the paired text code | Same result as the private QR; no confusing character ambiguity |
+| 3 | After a qualifying checkout, scan the static QR on an Avery-label card | HTTPS `/redeem` opens and no code is present in the URL or prefilled in the form |
+| 4 | Manually enter the synthetic eight-character Avery-label code | The exact synthetic fixture is accepted; the static QR and label remain clearly separate and no character is confusing |
 | 5 | Redeem with no existing session | Anonymous sign-in completes behind the scan-first flow and returns safely to the pending claim without a Google/Apple/Magic Link screen |
 | 6a | Submit the same valid code again from its original account after spending credits | Current wallet and current remaining balance return; no second grant, reset to 3,000, expiry extension, or second wallet |
 | 6b | Submit that redeemed code from a different account | Already-used state; no wallet, ownership, or code-state information crosses accounts |
@@ -87,7 +91,8 @@ For each run capture only:
 After each participant, ask:
 
 1. What did you think the public QR would do?
-2. Could you tell the public campaign QR from the private claim QR?
+2. Could you tell the public campaign QR, static redemption QR, and visible
+   Avery code label apart?
 3. Did you understand that each distinct card grants once and a successful
    new-card top-up sets the whole wallet's expiry to 14 days from that top-up?
 4. At any point did you feel asked to share more information than necessary?
@@ -96,8 +101,14 @@ After each participant, ask:
 ## Exit criteria
 
 - 100% of tested public QRs resolve to the correct `/offer?utm_source=...`.
-- 100% of tested private QRs decode to the paired text code with no crop or
-  quiet-zone failure.
+- 100% of tested static-card QRs resolve to HTTPS `/redeem`, contain no claim,
+  and scan from the final stock under store lighting at the intended distance.
+- 100% of synthetic Avery labels in the test set match their non-secret fixture
+  references, remain legible after application, and support correct manual
+  entry without exposing a production code.
+- If a legacy private-QR format is also in release scope, 100% of those tested
+  private QRs must still decode to the paired text code with no crop or
+  quiet-zone failure; that is a separate acceptance path.
 - Each distinct valid code grants exactly once across retries and sign-in;
   same-code retries never regrant or extend expiry.
 - A second distinct card adds 3,000 Credits to the same identity wallet and

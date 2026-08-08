@@ -4,23 +4,40 @@ Owner: YGF store manager
 
 Audience: counter staff and shift leads
 
-Applies to: controlled distribution from the approved 500-credential
-production inventory batch recorded on 2026-07-30. Activation does not by
-itself authorize printing or distribution; the launch checklist still
-requires physical proof, staff training, and manager release sign-off.
+Applies to: controlled distribution from the active 500-credential production
+inventory batch created on 2026-08-07, batch
+`929c4026-7cfc-4a5e-bf3b-420d26e01ae2`. The static-QR/Avery-label format reuses
+those existing credentials; it does not reset or regenerate them. Activation
+does not by itself authorize printing or distribution. The launch checklist
+still requires brand approval, an approved visible-code custody or concealment
+model, physical proof, staff training, reconciliation, and manager release
+sign-off.
 
 ## Before the shift
 
-1. Confirm the register has only the current manager-issued claim rows.
-2. Each row must show a human-readable code and a private claim QR for the
-   same code. Set aside any row that is cut off, duplicated, or unreadable.
-3. Confirm the public campaign QR on the counter card opens the offer page.
-   It is marketing material, not a customer claim code.
-4. Confirm the escalation contact and the manager on duty.
+1. Confirm the manager signed the static-card physical release record for this
+   shift. If the visible-code custody or concealment decision is still open, do
+   not put labeled cards at the register.
+2. Confirm the register has only the current manager-issued cards. Each approved
+   static card has the same credential-free QR opening
+   `https://malatangai.com/redeem` and one readable Avery 5260 label carrying a
+   distinct eight-character code.
+3. Confirm the manager-controlled handoff record pairs each card or label liner
+   with its non-secret row reference. Staff count and escalate by that reference,
+   never by copying the code. Set aside any cut-off, duplicated, loose,
+   mismatched, or unreadable label.
+4. Scan a credential-free proof card and confirm it opens `/redeem` without
+   prefilling a code. Do not test a live label by redeeming it.
+5. Confirm the public campaign QR on the counter card opens the offer page. It
+   is marketing material, not a customer claim code.
+6. Confirm the escalation contact and the manager on duty.
 
-Claim rows are private bearer credentials. Keep unused rows behind the
-counter. Do not photograph, copy, post, or leave them where guests can scan
-them.
+An unlabeled static card is credential-free. Once a live Avery label is applied,
+the card is a private bearer credential. Keep unused labeled cards and loose
+labels in the manager-controlled location. Do not photograph, copy, post, read
+aloud, or leave them where guests can see or take a code before a qualifying
+purchase. Never upload a private CSV or live label document to a printer or
+cloud service.
 
 ## Qualifying checkout
 
@@ -33,31 +50,35 @@ qualifying purchases to the same account wallet.
 
 Use this handoff:
 
-> Your purchase qualifies for limited YGF Build Credits. This row has the
-> same private code in text and QR form. Scan it or enter the code at the
-> claim page. This distinct card adds 3,000 Credits once. A successful new-card
-> top-up sets the whole wallet to expire 14 days later.
+> Your purchase qualifies for limited YGF Build Credits. This card has the YGF
+> claim page QR on the back. Scan it to open the claim page, then enter the
+> eight-character code on the label. This distinct card adds 3,000 Credits once.
+> A successful new-card top-up sets the whole wallet to expire 14 days later.
 
-Hand over exactly one complete row. The human-readable code is the fallback
-when a camera cannot scan; the private claim QR opens
-`/redeem#code=<same-code>`. Do not separate the two. Never read the code
-aloud across the room or enter it on the guest's device.
+Hand over exactly one complete, manager-reconciled card. The static QR opens
+`/redeem` but does not contain or prefill a code. The customer enters the Avery
+label's human-readable code themselves. Never read the code aloud across the
+room, photograph it, or enter it on the guest's device. Record the issuance by
+non-secret row reference only.
 
-## Know the two QR types
+## Know the three QR types
 
 | QR | Where it appears | Destination | Treatment |
 | --- | --- | --- | --- |
 | Public campaign QR | Poster, counter card, social creative | `/offer?utm_source=<asset>` | Safe to display publicly; it contains no claim credential. |
-| Private claim QR | Printed claim row handed after purchase | `/redeem#code=<same-code>` | Treat like cash until handed over; never publish or reuse. |
+| Static redemption QR | Every static Avery-label card back | `/redeem` | Safe before a live label is applied; it opens the form but contains no code. |
+| Legacy private claim QR | A separately approved older claim-row format | `/redeem#code=<same-code>` | Treat like cash until handed over; never publish or reuse. It is not printed on the static/Avery card. |
 
-The fragment after `#` stays in the browser and is used to prefill the claim
-form. The customer should confirm the visible human-readable code matches the
-printed row if a scan behaves unexpectedly.
+The current static/Avery flow has no claim fragment and does not prefill the
+form. If a legacy private-QR row is separately approved, its fragment after `#`
+stays in the browser and prefills the paired code. Staff must not mix the two
+physical formats in one handoff count.
 
 ## If a claim does not work
 
-- **Invalid:** Ask the guest to re-scan the original row or manually enter the
-  visible characters once. Do not guess characters or promise a replacement.
+- **Invalid:** Ask the guest to reopen the static QR and manually enter the
+  visible Avery-label characters once. Do not guess characters, read the code
+  into a staff device, or promise a replacement.
 - **Already used:** This means the current account does not own that code.
   Direct the guest to the original account. Re-entering the same code from its
   original account safely returns the current wallet; it does not restore
@@ -92,7 +113,10 @@ through the approved private incident channel.
 
 ## End of shift
 
-Count unused claim rows without copying their codes. Return them to the
-manager-controlled location, report the number issued and any issue
-categories, and destroy only rows the manager has marked for secure disposal.
-Do not put unused or spoiled claim rows in ordinary trash.
+Count unused labeled cards, loose labels, spoiled labels, quarantined cards,
+and issued cards by non-secret row reference without copying their codes. The
+manager must reconcile those categories to the shift's opening count. Return
+unused inventory to the manager-controlled location, report only counts and
+issue categories, and destroy only credentials the manager has revoked and
+marked for secure disposal. Do not put unused labels, spoiled labels, label
+liners, or labeled cards in ordinary trash.

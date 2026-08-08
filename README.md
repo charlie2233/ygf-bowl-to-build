@@ -527,6 +527,51 @@ then activate the pending batch, secure it, and reconcile every unused row.
 Public poster QRs are different: they contain no claim and open
 `/offer?utm_source=<asset>`.
 
+### Static QR card plus Avery 5260 label
+
+The approved 2026-08-07 production inventory can also supply a static-card
+format without resetting, reissuing, or regenerating its 500 credentials. The
+credential-free card artwork uses one static QR that opens
+`https://malatangai.com/redeem`; it never contains a claim. After a qualifying
+checkout, staff hand over one manager-reconciled card and the customer manually
+enters the eight-character code printed on its Avery 5260 label.
+
+Render only the credential-free artwork and checked-in fake-code proof with:
+
+```sh
+node scripts/render-static-redemption-card.mts
+node scripts/render-avery-5260-labels.mts --sample
+```
+
+After the existing private batch passes the dependency and 500/500 audit, the
+local-only merge consumes that CSV without generating or changing inventory:
+
+```sh
+umask 077
+node scripts/render-avery-5260-labels.mts \
+  --input private/<batch>.csv \
+  --html private/<batch>.avery-5260-labels.html \
+  --pdf private/<batch>.avery-5260-labels.pdf
+node scripts/render-avery-5260-labels.mts --verify-only \
+  --input private/<batch>.csv \
+  --html private/<batch>.avery-5260-labels.html \
+  --pdf private/<batch>.avery-5260-labels.pdf
+```
+
+The command requires exactly 500 canonical, unique production rows, lays them
+out as 17 Letter sheets with 20 labels on the last sheet, publishes the HTML
+and PDF as a no-overwrite mode-0600 bundle under ignored `private/`, and reports
+only counts and SHA-256 digests. Do not upload the private CSV or a live label
+document to Avery, Staples, a print vendor, or another cloud service. No upload,
+physical print, order, or payment is authorized by this workflow.
+
+The visible label is a bearer credential even though the static QR is not.
+Brand approval, a manager-approved visible-code custody or concealment model,
+physical print and label-placement proof, store-lighting scans, staff training,
+and final inventory handoff remain release gates. Follow
+[the Avery 5260 production runbook](docs/operations/avery-5260-label-production.md)
+before handling any live label output.
+
 ## Collectible Agent Pass artwork
 
 Render and verify the public, credential-free four-theme system:

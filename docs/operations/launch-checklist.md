@@ -53,6 +53,27 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
 - [ ] Decode sample private claim QRs from the actual claim-row printer. The
   decoded `/redeem#code=...` value must match the paired human-readable code,
   with an intact four-module quiet zone.
+- [ ] Regenerate the credential-free static redemption-card pack with
+  `node scripts/render-static-redemption-card.mts`. Confirm the committed
+  front, back, duplex PDF, review image, and manifest contain only the fixed
+  `SAMPLE ONLY` code; decode the static QR to exact HTTPS `/redeem` and confirm
+  it contains no claim or query value.
+- [ ] Creative/brand owner approves the static card's user-source/AI-composite
+  food image, official-site logo use, Simplified Chinese and English copy,
+  bleed, trim, color, and final proof. Public availability of an image or logo
+  is not itself print permission.
+- [ ] Follow
+  [the Avery 5260 label production runbook](./avery-5260-label-production.md).
+  Render the checked-in fake-code sheet first. Then run the local-only live
+  merge and `--verify-only` pass against the already-audited CSV. Confirm
+  500/500 distinct labels across 17 Letter sheets, 20 labels on the final
+  sheet, exact source commitment, no overwrite, and mode 0600 for both outputs.
+  Never upload a source or output to a label or card vendor.
+- [ ] Approve either a documented visible-code custody model or a concealment
+  layer for the Avery label. Print the final static card and locally produced
+  label at 100%, apply the label, verify trim/placement/adhesion and physical
+  legibility, scan the static QR under store lighting, and manually enter only
+  an approved synthetic or soft-test code.
 - [ ] Regenerate and verify the four Agent Pass fronts, shared no-secret back,
   Letter/A4 sheets, SVG/PDF files, and raster previews with
   `node scripts/render-agent-pass-assets.mts` followed by `--verify-only`.
@@ -296,11 +317,23 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   Database hash parity, HTML QR decode, and final-PDF raster QR decode each
   passed 500/500. See
   [the non-secret refresh receipt](./production-batch-refresh-2026-08-07.md).
+- [ ] Reuse that exact 2026-08-07 batch for the static-QR/Avery-label format;
+  do not reset, reactivate, or regenerate its credentials. Before printing,
+  reconcile exactly 500 distinct label rows to the batch's non-secret row
+  references and prove that no live code appears in public artwork, Git, chat,
+  logs, tickets, or vendor systems.
+- [ ] Keep a manager-controlled label handoff record using non-secret row
+  references only. Record source, printed, applied, spoiled, quarantined,
+  issued, unused, and manager-revoked lifecycle totals, and balance
+  non-overlapping counts to the same 500 references at each checkpoint. Never
+  use plaintext codes as the operating ledger selector.
 - [ ] Do not print or distribute that active inventory until a manager approves
-  the physical release. Print at 100% with browser headers/footers disabled,
-  conceal both credential forms, scan every imposition position, reconcile the
-  physical count without copying codes, and close the printer, rights, soft
-  test, training, and custody gates in the production receipt.
+  the physical release. For legacy claim rows, conceal both credential forms.
+  For static cards, the QR is credential-free but the Avery code label is a
+  bearer credential: conceal it or operate under the explicitly approved
+  visible-code custody model. Print at 100%, scan every physical imposition
+  position, reconcile by non-secret row reference, and close the printer,
+  rights, soft-test, training, and custody gates in the production receipt.
 - [ ] For future batches, use the named-manager admin workflow to create a
   pending durable batch and save its one-time CSV directly into ignored
   `private/`. Set the CSV to mode 0600, render and verify the matching private
@@ -319,6 +352,9 @@ below needs a named owner, evidence link or note, date, and explicit sign-off.
   blocker.
 - [ ] Put the current staff help URL and manager contact where staff can reach
   them without exposing an admin link to customers.
+- [ ] Confirm the static/Avery documentation caused no artwork or inventory
+  upload, vendor order, payment, or distribution. Those are separate explicit
+  manager actions after all gates close.
 
 ## Go/no-go review
 

@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 import jsQR from "jsqr";
 import QRCode from "qrcode";
 
+// @ts-expect-error Node 22's type-stripping runtime requires the source extension.
+import { RESERVED_PUBLIC_SAMPLE_CODES } from "../lib/admin/code-batch.ts";
+
 import {
   buildAgentPassRasterPdf,
   decodeAgentPassPngRgb,
@@ -272,6 +275,9 @@ function verifyQr(png: Buffer): void {
 }
 
 async function main(): Promise<void> {
+  if (!RESERVED_PUBLIC_SAMPLE_CODES.has(SAMPLE_CODE)) {
+    throw new Error("STATIC_CARD_SAMPLE_CODE_NOT_RESERVED");
+  }
   const [photo, logo] = await Promise.all([
     readFile(photoPath),
     readFile(logoPath),
@@ -375,6 +381,7 @@ async function main(): Promise<void> {
       concealmentLayer: false,
       physicalDistributionAuthorized: false,
       visibleCodePolicyApprovalRequired: true,
+      sampleCodeReservedFromProduction: true,
     },
     sources: {
       photo: "public/media/ygf-authentic-hero-mobile-card.png",
@@ -408,7 +415,7 @@ async function main(): Promise<void> {
       "- Upload canvas: 3.75 x 2.25 inches with 0.125-inch bleed.",
       "- Export resolution: 300 DPI.",
       `- Static QR: ${STATIC_REDEEM_URL}`,
-      "- Variable field: Avery 5260, 2.625 x 1 inch label, printed locally from the ignored private CSV.",
+      "- Variable field: Avery 5260, 2.625 x 1 inch label, produced only through an approved local-only workflow from the ignored private CSV.",
       "- The checked-in label uses SAMPLE ONLY value A7K3B9Q2. No live redemption code is included.",
       "- Do not upload the private code CSV to Staples or another card printer.",
       "- This version uses a visible code label with no concealment layer. Current operations documentation still requires manager approval for that custody model before physical distribution.",
@@ -416,6 +423,13 @@ async function main(): Promise<void> {
       "- Logo source: https://www.ygfus.com/images/logoone.png, referenced by the official YGF US home page. Brand approval remains required for production use.",
       "- Core offer, instructions, and code-label warnings are presented in Simplified Chinese and English.",
       "- Scan the physical proof under store lighting before release.",
+      "- The static QR opens `/redeem` and never contains a claim; the customer manually enters the Avery label's eight-character code.",
+      "- Reuse production batch `929c4026-7cfc-4a5e-bf3b-420d26e01ae2` from 2026-08-07. Do not reset or regenerate it for this card format.",
+      "- Render the public fake-code sheet with `node scripts/render-avery-5260-labels.mts --sample`; it uses only `SAMPLE01` through `SAMPLE30`, which are invalid under the production alphabet.",
+      "- The approved local-only merge command and its read-only verifier are documented in `docs/operations/avery-5260-label-production.md`. They consume the existing canonical CSV and cannot create, reset, or register codes.",
+      "- Keep every private CSV and live label artifact directly under ignored `private/` at mode 0600. Reconcile labels with non-secret row references, never copied plaintext codes.",
+      "- This documentation and renderer do not upload artwork or inventory, physically print labels, place an order, authorize distribution, or make a payment.",
+      "- Follow `docs/operations/avery-5260-label-production.md` for the custody, proof, reconciliation, and release gates.",
       "",
     ].join("\n"),
   );

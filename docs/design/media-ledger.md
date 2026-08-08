@@ -90,6 +90,11 @@ licenses or permissions that have not been supplied.
   portrait JPEG is 1122 × 1402 and 169,063 bytes. The two art-directed frames
   were generated separately rather than forcing one landscape crop to cover
   both aspect ratios, then compressed as sRGB JPEGs for the web.
+- Card-print derivative: `public/media/ygf-authentic-hero-mobile-card.png` is a
+  lossless PNG conversion of the existing mobile composite for the static
+  redemption-card renderer, which requires a PNG photo source. It does not
+  alter the composition or add new visual content and inherits the same source,
+  disclosure, and approval status.
 - Visual inspection: both frames contain the ingredient display and one
   finished bowl, with no people, embedded campaign copy, USC mark, private QR,
   redemption code, API key, email, or other account data. No new or invented

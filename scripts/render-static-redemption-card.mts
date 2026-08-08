@@ -19,9 +19,9 @@ const outputRoot = path.join(repositoryRoot, "output", "redemption-card");
 const pdfOutputRoot = path.join(repositoryRoot, "output", "pdf");
 const photoPath = path.join(
   repositoryRoot,
-  "output",
-  "imagegen",
-  "ygf-cooked-malatang-bowl.png",
+  "public",
+  "media",
+  "ygf-authentic-hero-mobile-card.png",
 );
 
 const STATIC_REDEEM_URL = "https://malatangai.com/redeem";
@@ -114,10 +114,10 @@ export function renderStaticCardFrontSvg(): string {
     `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="front-title front-description" width="${BLEED_WIDTH_IN}in" height="${BLEED_HEIGHT_IN}in" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">`,
     '<title id="front-title">YGF Bowl-to-Build redemption card front</title>',
     '<desc id="front-description">A photo-forward YGF card for a 3,000-Credit Bowl-to-Build promotion.</desc>',
-    `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="${BLEED_WIDTH_IN}" data-bleed-height-in="${BLEED_HEIGHT_IN}" data-trim-width-in="${TRIM_WIDTH_IN}" data-trim-height-in="${TRIM_HEIGHT_IN}" data-photo-source="ai-generated" data-rights-status="brand-approval-required"/>`,
+    `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="${BLEED_WIDTH_IN}" data-bleed-height-in="${BLEED_HEIGHT_IN}" data-trim-width-in="${TRIM_WIDTH_IN}" data-trim-height-in="${TRIM_HEIGHT_IN}" data-photo-source="ygf-existing-ai-enhanced-composite" data-rights-status="pending-creative-brand-approval"/>`,
     '<defs>',
     '<clipPath id="front-photo-clip"><path d="M610 0 H1125 V675 H535 L650 0 Z"/></clipPath>',
-    `<image id="agent-pass-photo-source" href="../imagegen/ygf-cooked-malatang-bowl.png" x="510" y="0" width="615" height="675" preserveAspectRatio="xMidYMid slice"/>`,
+    `<image id="agent-pass-photo-source" href="../../public/media/ygf-authentic-hero-mobile-card.png" x="460" y="-230" width="820" height="1025" preserveAspectRatio="xMidYMid slice"/>`,
     '</defs>',
     `<rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="${COLOR.red}"/>`,
     '<g clip-path="url(#front-photo-clip)"><use href="#agent-pass-photo-source"/></g>',
@@ -340,9 +340,9 @@ async function main(): Promise<void> {
       visibleCodePolicyApprovalRequired: true,
     },
     sources: {
-      photo: "output/imagegen/ygf-cooked-malatang-bowl.png",
+      photo: "public/media/ygf-authentic-hero-mobile-card.png",
       photoSha256: digest(photo),
-      photoRightsStatus: "ai-generated-brand-approval-required",
+      photoRightsStatus: "user-source-ai-enhanced-pending-creative-brand-approval",
     },
     files: Object.fromEntries([
       ...[...outputs].map(([file, contents]) => [
@@ -371,7 +371,7 @@ async function main(): Promise<void> {
       "- The checked-in label uses SAMPLE ONLY value A7K3B9Q2. No live redemption code is included.",
       "- Do not upload the private code CSV to Staples or another card printer.",
       "- This version uses a visible code label with no concealment layer. Current operations documentation still requires manager approval for that custody model before physical distribution.",
-      "- Front image: AI-generated cooked malatang bowl. Brand approval is required before production use.",
+      "- Front image: existing YGF mobile hero composite, derived from the user-provided ingredient-wall source with an AI-generated bowl. Creative and brand approval remain required.",
       "- Scan the physical proof under store lighting before release.",
       "",
     ].join("\n"),

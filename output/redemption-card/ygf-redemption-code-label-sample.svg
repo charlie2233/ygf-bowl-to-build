@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="label-title label-description" width="2.625in" height="1in" viewBox="0 0 788 300">
+<title id="label-title">Avery 5260 YGF code label sample</title>
+<desc id="label-description">A sample-only visible eight-character redemption label using A7K3B9Q2. It is not a live credential.</desc>
+<metadata data-renderer="ygf-static-redemption-card-v1" data-side="label-sample" data-placeholder="true" data-label-width-in="2.625" data-label-height-in="1"/>
+<rect width="788" height="300" rx="18" fill="#FFFFFF"/>
+<rect x="3" y="3" width="782" height="294" rx="16" fill="none" stroke="#D84A32" stroke-width="6"/>
+<text x="394" y="55" text-anchor="middle" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" letter-spacing="2">您的 8 位兑换码 · YOUR CODE</text>
+<text x="394" y="165" text-anchor="middle" fill="#16261F" font-family="SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace" font-size="76" font-weight="900" letter-spacing="13">A7K3B9Q2</text>
+<text x="394" y="222" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="800">每张仅兑换一次 · 请勿拍照分享</text>
+<text x="394" y="258" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="1.2">SAMPLE ONLY · NOT A LIVE CODE</text>
+</svg>

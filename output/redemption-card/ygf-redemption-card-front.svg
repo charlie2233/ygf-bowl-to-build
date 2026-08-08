@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="front-title front-description" width="3.75in" height="2.25in" viewBox="0 0 1125 675">
+<title id="front-title">YGF Bowl-to-Build redemption card front</title>
+<desc id="front-description">A photo-forward YGF card for a 3,000-Credit Bowl-to-Build promotion.</desc>
+<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="3.75" data-bleed-height-in="2.25" data-trim-width-in="3.5" data-trim-height-in="2" data-photo-source="user-provided" data-rights-status="pending-brand-rights-confirmation"/>
+<defs>
+<clipPath id="front-photo-clip"><path d="M610 0 H1125 V675 H535 L650 0 Z"/></clipPath>
+<image id="agent-pass-photo-source" href="../../public/media/ygf-user-photo.png" x="510" y="0" width="615" height="675" preserveAspectRatio="xMidYMid slice"/>
+</defs>
+<rect width="1125" height="675" fill="#D84A32"/>
+<g clip-path="url(#front-photo-clip)"><use href="#agent-pass-photo-source"/></g>
+<path d="M610 0 H680 L565 675 H495 Z" fill="#E8B94A"/>
+<rect x="58" y="58" width="1009" height="559" rx="26" fill="none" stroke="#E8B94A" stroke-width="4"/>
+<text x="94" y="118" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="24" font-weight="900" letter-spacing="4">YGF BOWL-TO-BUILD</text>
+<text x="94" y="218" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="59" font-weight="900"><tspan x="94" dy="0">吃一碗，</tspan><tspan x="94" dy="72">给 AI 充点算力。</tspan></text>
+<text x="94" y="386" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="34" font-weight="900">领取 3,000 YGF AI Credits</text>
+<rect x="94" y="430" width="186" height="58" rx="29" fill="#E8B94A"/>
+<text x="187" y="468" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="23" font-weight="900">14 天有效</text>
+<text x="94" y="541" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="22" font-weight="800">学习 · 编程 · 求职 · 下一碗</text>
+<text x="94" y="583" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900">#一碗一算力</text>
+</svg>

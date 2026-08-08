@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="label-title label-description" width="2.625in" height="1in" viewBox="0 0 788 300">
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="label-title label-description" width="2.625in" height="1in" viewBox="0 0 787.5 300">
 <title id="label-title">Avery 5260 YGF code label sample</title>
 <desc id="label-description">A sample-only visible eight-character redemption label using A7K3B9Q2. It is not a live credential.</desc>
-<metadata data-renderer="ygf-static-redemption-card-v1" data-side="label-sample" data-placeholder="true" data-label-width-in="2.625" data-label-height-in="1"/>
-<rect width="788" height="300" rx="18" fill="#FFFFFF"/>
-<rect x="3" y="3" width="782" height="294" rx="16" fill="none" stroke="#D84A32" stroke-width="6"/>
-<text x="394" y="51" text-anchor="middle" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="22" font-weight="900" letter-spacing="1">您的 8 位兑换码 · YOUR 8-CHARACTER CODE</text>
-<text x="394" y="153" text-anchor="middle" fill="#16261F" font-family="SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace" font-size="72" font-weight="900" letter-spacing="13">A7K3B9Q2</text>
-<text x="394" y="207" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="16" font-weight="800">每张卡仅兑换一次 · ONE CLAIM PER CARD</text>
-<text x="394" y="238" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="800">钱包从最新新卡起 14 天 · WALLET: 14 DAYS FROM LATEST NEW CARD</text>
-<text x="394" y="270" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" letter-spacing="0.8">示例码，非真实兑换码 · SAMPLE ONLY - NOT A LIVE CODE</text>
+<metadata data-renderer="ygf-static-redemption-card-v1" data-side="label-sample" data-placeholder="true" data-label-width-in="2.625" data-label-height-in="1" data-min-customer-text-pt="6" data-borderless="true" data-content-inset-in="0.0625"/>
+<rect width="787.5" height="300" rx="18" fill="#FFFFFF"/>
+<text data-customer-copy="true" x="393.75" y="45" text-anchor="middle" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900" letter-spacing="0.5">您的 8 位兑换码 · YOUR 8-CHARACTER CODE</text>
+<text data-customer-copy="true" x="393.75" y="140" text-anchor="middle" fill="#16261F" font-family="SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace" font-size="72" font-weight="900" letter-spacing="13">A7K3B9Q2</text>
+<text data-customer-copy="true" x="393.75" y="191" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900">每卡一次 · ONE CLAIM PER CARD</text>
+<text data-customer-copy="true" x="393.75" y="232" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900">最新新卡起 14 天 · 14 DAYS FROM LATEST NEW CARD</text>
+<text data-customer-copy="true" x="393.75" y="274" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900">示例码 · SAMPLE ONLY - NOT LIVE</text>
 </svg>

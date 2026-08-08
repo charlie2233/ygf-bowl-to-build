@@ -94,6 +94,19 @@ describe("Avery 5260 label production contract", () => {
     );
     expect(html).toContain("padding: 0.5in 0.1875in");
     expect(html).toContain("column-gap: 0.125in");
+    expect(AVERY_5260).toMatchObject({
+      codeTextPoints: 18.5,
+      contentInsetInches: 0.0625,
+      minimumTextPoints: 7,
+    });
+    expect(html).toContain("padding: 0.0625in 0.08in; border: 0;");
+    expect(html).toContain(".label-code { margin: 0.014in 0 0.005in;");
+    expect(html).toContain("font-size: 18.5pt");
+    expect(html.match(/font-size: 7pt/g)).toHaveLength(4);
+    expect(html).not.toContain("border: 0.75pt");
+    expect(html).not.toContain("font-size: 6.2pt");
+    expect(html).not.toContain("font-size: 5.9pt");
+    expect(html).not.toContain("font-size: 5.7pt");
     expect(html).toContain(fixture.codes[0]);
     expect(html).toContain(fixture.rowReferences[0]);
     expect(html).not.toContain("#code=");

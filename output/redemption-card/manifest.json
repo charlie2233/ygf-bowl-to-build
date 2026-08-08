@@ -1,7 +1,7 @@
 {
   "version": 1,
   "renderer": "ygf-static-redemption-card-v1",
-  "sourceDigest": "b346c37e764e2d9f41c0545ca433ad18fe493af42ce8886a544413afc0cb8bef",
+  "sourceDigest": "9c3d11fa968375ae927d7840112a6909a7e76f80b9cc485acd6586a20b81cc08",
   "design": {
     "bleedInches": [
       3.75,
@@ -12,13 +12,46 @@
       2
     ],
     "dpi": 300,
+    "minimumCustomerTextPoints": 6,
+    "minimumActionTextPoints": 7,
+    "safeInsetInches": 0.125,
+    "pdfBoxes": {
+      "bleedAndMediaInches": [
+        3.75,
+        2.25
+      ],
+      "trimInches": [
+        3.5,
+        2
+      ],
+      "trimInsetInches": [
+        0.125,
+        0.125
+      ]
+    },
     "staticQr": "https://malatangai.com/redeem",
+    "qr": {
+      "quietZoneModules": 4,
+      "sizeInches": 0.7,
+      "xInches": 0.25333333333333335,
+      "yInches": 0.25
+    },
     "label": {
       "product": "Avery 5260",
       "sizeInches": [
         2.625,
         1
       ],
+      "placementInches": [
+        0.5625,
+        1
+      ],
+      "trimClearanceInches": {
+        "bottom": 0.125,
+        "left": 0.4375,
+        "right": 0.4375,
+        "top": 0.875
+      },
       "sampleCode": "A7K3B9Q2",
       "sampleOnly": true
     }
@@ -42,15 +75,15 @@
     "logoRightsStatus": "official-site-source-brand-approval-required"
   },
   "files": {
-    "output/redemption-card/ygf-redemption-card-front.svg": "6693ea830f80314d3582089f9baba7d2467d92d2fe275c084a8ed7f181c05c6a",
-    "output/redemption-card/ygf-redemption-card-back.svg": "9b93e430fbca5636a7cca3202abc144df8031e66cc1997268b2b0617f1ef881a",
-    "output/redemption-card/ygf-redemption-code-label-sample.svg": "64f053ae4e79f7e8479c3dce788f959ec280c5ee9a4754d91dca567253778345",
-    "output/redemption-card/ygf-redemption-card-front.png": "4bfcca7f58bdb70a18a3bd64d1b503905204cc5d8a468f3f354baf632e0c6892",
-    "output/redemption-card/ygf-redemption-card-back.png": "c8e305ebb515dec3b03613e441f9ca979bbfc2f5938165c7a093f32e2a788b3a",
-    "output/redemption-card/ygf-redemption-code-label-sample.png": "fb37097c51dd029641659f6d243a3920e7a855df2a00b425f9491c0cb02d22ee",
-    "output/redemption-card/ygf-redemption-card-review.png": "9ed7de6b8786870f89ee6b1b346ab7b0441a1c755995a610ce59f644ac2bba2b",
-    "output/pdf/ygf-redemption-card-front.pdf": "3e3b962fd216f1b8447b9ed28227a2dc9e3eae89bea698656b009bd1843ae48e",
-    "output/pdf/ygf-redemption-card-back.pdf": "c38c2c7df82df3f404ba199eae0a97ef3479fcef5d36d77095a654c96dd73044",
-    "output/pdf/ygf-redemption-card-duplex.pdf": "23964a96d4ed92f044cda91d89889c64154fd521d2a8aa7eb7e3d77dfb8086a8"
+    "output/redemption-card/ygf-redemption-card-front.svg": "b9dd258117f2443827d70e402f99a6f0d594e1c89a9db82f9d10c15d80ff87a5",
+    "output/redemption-card/ygf-redemption-card-back.svg": "375c593381f6a0fe55c3a49baaecc4dc6af21f6bc5f546931da75efde66a02da",
+    "output/redemption-card/ygf-redemption-code-label-sample.svg": "1f782fa8251c2808123d07093078e2edd1a5aa6681547090709a7036f4933555",
+    "output/redemption-card/ygf-redemption-card-front.png": "8240a58e8a8a00f6f28234d131b904d2d8f1d5adeed0f3bb4375c51003ece747",
+    "output/redemption-card/ygf-redemption-card-back.png": "510ea600e0a95cd84dcffc815a40f098875b28a5969b7c5a10ab76f3ebca340b",
+    "output/redemption-card/ygf-redemption-code-label-sample.png": "ab6ddd8cb524331378d63b2364283bd508f39eaf65177da9670830a13e630af2",
+    "output/redemption-card/ygf-redemption-card-review.png": "35e86f3a4247128763ed225f9044a939f3514684b4482a03228b4093402fd2b7",
+    "output/pdf/ygf-redemption-card-front.pdf": "08393cc48cf88ab3a2b1384c4b34d48f8fb9ea47477a81fef0df0eec634314c3",
+    "output/pdf/ygf-redemption-card-back.pdf": "230fad81c56ac3d0913a8b71f2c56e4d88d0f7efec95729b23b95d5e2bde329e",
+    "output/pdf/ygf-redemption-card-duplex.pdf": "303d72e313ac8db53cf335537e3f4c97c24f49af02093cf73f6c7431d7e1f22a"
   }
 }

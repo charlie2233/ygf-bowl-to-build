@@ -36,6 +36,7 @@ import {
   agentPassImpositionCardPosition,
   agentPassMillimetersToPixels,
   agentPassMillimetersToPoints,
+  buildAgentPassRasterPdf,
   decodeAgentPassPngRgb,
   inspectAgentPassPhoto,
   verifyAgentPassAssets,
@@ -654,6 +655,34 @@ describe("print-ready Agent Pass outputs", () => {
         /\/Font\b|\/BaseFont\b|\/Subtype\s+\/Type[01]\b|(?:^|\s)(?:Tf|Tj|TJ)(?:\s|$)/m,
       );
     }
+  });
+
+  it("writes an optional centered TrimBox while preserving the full bleed MediaBox", async () => {
+    const png = await readFile(
+      path.join(repositoryRoot, "public/media/ygf-official-logo.png"),
+    );
+    const pdf = buildAgentPassRasterPdf({
+      pageHeightPt: 162,
+      pages: [png, png],
+      pageWidthPt: 270,
+      sourceDigest: "0".repeat(64),
+      title: "Trim box test",
+      trimSizePt: { height: 144, width: 252 },
+    }).toString("latin1");
+
+    expect(pdf.match(/\/MediaBox \[0 0 270 162\]/g)).toHaveLength(2);
+    expect(pdf.match(/\/BleedBox \[0 0 270 162\]/g)).toHaveLength(2);
+    expect(pdf.match(/\/TrimBox \[9 9 261 153\]/g)).toHaveLength(2);
+    expect(() =>
+      buildAgentPassRasterPdf({
+        pageHeightPt: 162,
+        pages: [png],
+        pageWidthPt: 270,
+        sourceDigest: "0".repeat(64),
+        title: "Invalid trim box test",
+        trimSizePt: { height: 163, width: 252 },
+      }),
+    ).toThrow("AGENT_PASS_PDF_TRIM_INVALID");
   });
 
   it("passes pdffonts and 300-DPI Poppler raster geometry checks with four distinct photo crops", async () => {

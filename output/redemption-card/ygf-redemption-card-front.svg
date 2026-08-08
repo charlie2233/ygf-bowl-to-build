@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="front-title front-description" width="3.75in" height="2.25in" viewBox="0 0 1125 675">
 <title id="front-title">YGF Bowl-to-Build redemption card front</title>
 <desc id="front-description">A photo-forward YGF card for a 3,000-Credit Bowl-to-Build promotion.</desc>
-<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="3.75" data-bleed-height-in="2.25" data-trim-width-in="3.5" data-trim-height-in="2" data-photo-source="ygf-existing-ai-enhanced-composite" data-photo-rights-status="pending-creative-brand-approval" data-logo-source="https://www.ygfus.com/images/logoone.png" data-logo-rights-status="brand-approval-required" data-languages="zh-CN,en"/>
+<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="3.75" data-bleed-height-in="2.25" data-trim-width-in="3.5" data-trim-height-in="2" data-min-customer-text-pt="6" data-min-action-text-pt="7" data-safe-inset-in="0.125" data-photo-source="ygf-existing-ai-enhanced-composite" data-photo-rights-status="pending-creative-brand-approval" data-logo-source="https://www.ygfus.com/images/logoone.png" data-logo-rights-status="brand-approval-required" data-languages="zh-CN,en"/>
 <defs>
 <clipPath id="front-photo-clip"><path d="M610 0 H1125 V675 H535 L650 0 Z"/></clipPath>
 <image id="agent-pass-photo-source" href="../../public/media/ygf-authentic-hero-mobile-card.png" x="460" y="-230" width="820" height="1025" preserveAspectRatio="xMidYMid slice"/>
@@ -13,12 +13,12 @@
 <rect x="58" y="58" width="1009" height="559" rx="26" fill="none" stroke="#E8B94A" stroke-width="4"/>
 <rect x="82" y="68" width="306" height="90" rx="18" fill="#F6F0E4"/>
 <image id="ygf-official-logo-source" href="../../public/media/ygf-official-logo.png" x="103" y="74" width="264" height="82" preserveAspectRatio="xMidYMid meet"/>
-<text x="94" y="218" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="49" font-weight="900"><tspan x="94" dy="0">吃一碗。</tspan><tspan x="94" dy="60">用 AI 开始创造。</tspan></text>
-<text x="94" y="316" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="17" font-weight="900" letter-spacing="1.1">BUY A BOWL. BUILD WITH AI.</text>
-<text x="94" y="367" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="27" font-weight="900">领取 / CLAIM 3,000 AI Credits</text>
-<rect x="94" y="394" width="344" height="52" rx="26" fill="#E8B94A"/>
-<text x="266" y="428" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="15" font-weight="900">单笔消费满 $25 · SPEND $25+ AT YGF</text>
-<text x="94" y="486" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="800">学习 STUDY · 编程 CODING</text>
-<text x="94" y="521" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="800">求职 CAREER · 选碗 PICK MY BOWL</text>
-<text x="94" y="565" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="17" font-weight="900">结账时领取 · GET YOUR CARD AT CHECKOUT</text>
+<text data-customer-copy="true" x="94" y="218" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="49" font-weight="900"><tspan x="94" dy="0">吃一碗。</tspan><tspan x="94" dy="60">用 AI 开始创造。</tspan></text>
+<text data-customer-copy="true" x="94" y="320" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900" letter-spacing="0.7">BUY A BOWL. BUILD WITH AI.</text>
+<text data-customer-copy="true" x="94" y="371" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="30" font-weight="900">领取 / CLAIM 3,000 AI Credits</text>
+<rect x="94" y="396" width="344" height="88" rx="28" fill="#E8B94A"/>
+<text data-customer-copy="true" x="266" y="432" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900">单笔消费满 $25</text>
+<text data-customer-copy="true" x="266" y="466" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="25" font-weight="900">SPEND $25+ AT YGF</text>
+<text data-customer-copy="true" data-action-copy="true" x="94" y="535" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="30" font-weight="900">结账时领取</text>
+<text data-customer-copy="true" data-action-copy="true" x="94" y="576" fill="#E8B94A" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="30" font-weight="900">GET CARD AT CHECKOUT</text>
 </svg>

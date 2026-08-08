@@ -606,6 +606,10 @@ export function buildAgentPassRasterPdf(options: Readonly<{
   pageWidthPt: number;
   sourceDigest: string;
   title: string;
+  trimSizePt?: Readonly<{
+    height: number;
+    width: number;
+  }>;
 }>): Buffer {
   if (options.pages.length < 1) {
     throw new Error("AGENT_PASS_PDF_PAGE_INVALID");
@@ -622,6 +626,27 @@ export function buildAgentPassRasterPdf(options: Readonly<{
     )
   ) {
     throw new Error("AGENT_PASS_PDF_PAGE_INVALID");
+  }
+  let pageBoxSuffix = "";
+  if (options.trimSizePt) {
+    const { height, width } = options.trimSizePt;
+    if (
+      !Number.isFinite(width) ||
+      !Number.isFinite(height) ||
+      width <= 0 ||
+      height <= 0 ||
+      width > options.pageWidthPt ||
+      height > options.pageHeightPt
+    ) {
+      throw new Error("AGENT_PASS_PDF_TRIM_INVALID");
+    }
+    const left = (options.pageWidthPt - width) / 2;
+    const bottom = (options.pageHeightPt - height) / 2;
+    const right = left + width;
+    const top = bottom + height;
+    pageBoxSuffix =
+      ` /BleedBox [0 0 ${formatNumber(options.pageWidthPt)} ${formatNumber(options.pageHeightPt)}]` +
+      ` /TrimBox [${formatNumber(left)} ${formatNumber(bottom)} ${formatNumber(right)} ${formatNumber(top)}]`;
   }
 
   const pageObjectNumbers = images.map(
@@ -652,7 +677,7 @@ export function buildAgentPassRasterPdf(options: Readonly<{
     );
     objects.push(
       Buffer.from(
-        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${formatNumber(options.pageWidthPt)} ${formatNumber(options.pageHeightPt)}] /Resources << /XObject << /Im0 ${imageObjectNumber} 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`,
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${formatNumber(options.pageWidthPt)} ${formatNumber(options.pageHeightPt)}]${pageBoxSuffix} /Resources << /XObject << /Im0 ${imageObjectNumber} 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`,
         "ascii",
       ),
       pdfStream(

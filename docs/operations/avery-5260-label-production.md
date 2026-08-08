@@ -14,6 +14,10 @@ order, payment, production run, or physical distribution.
 - The Avery 5260 label is 2.625 x 1 inch and carries one eight-character bearer
   code. After a qualifying checkout, the customer scans the static QR and
   manually enters that label code.
+- The label template is borderless so no printed rule rides the die-cut edge.
+  It keeps at least 0.0625 inch of content inset on every side, renders the code
+  at 18.5 pt, and renders the heading, one-claim rule, row reference, and custody
+  warning at 7 pt. Do not reduce those sizes to fit alternate copy.
 - The checked-in card label uses reserved public sample `A7K3B9Q2`, marked
   `SAMPLE ONLY - NOT A LIVE CODE`. The public Avery sheet uses only
   `SAMPLE01` through `SAMPLE30`; those values are eight characters but invalid
@@ -128,7 +132,8 @@ Before any live merge, create a local proof with synthetic, non-production
 values and non-secret fixture references. On the exact Avery 5260 stock:
 
 1. print at 100% or Actual Size with Fit and Scale to Fit disabled;
-2. confirm the label grid, margins, pitch, code size, and row-reference pairing;
+2. confirm the label grid, margins, pitch, borderless 0.0625-inch content inset,
+   18.5-point code, 7-point supporting copy, and row-reference pairing;
 3. apply labels to trimmed proof cards and check placement tolerance, adhesion,
    legibility, and bleed/cut clearance;
 4. scan every static-QR imposition position under store lighting and at the

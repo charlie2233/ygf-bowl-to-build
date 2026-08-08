@@ -115,6 +115,26 @@ licenses or permissions that have not been supplied.
 
 ## Agent Pass production inspection
 
+### `public/media/ygf-official-logo.png`
+
+- Source: the official YGF US home page at `https://www.ygfus.com/` references
+  `https://www.ygfus.com/images/logoone.png` as its `img.logo` asset. The file
+  was retrieved byte-for-byte from that URL on 2026-08-08 for the bilingual
+  static redemption-card artwork.
+- Processing: none. The source is an 890 × 277 transparent RGBA PNG with SHA-256
+  `2ca49bbfea8f006e8f02af60bbedd46b219c6b8b3cde26716650836358656a23`.
+- Visual inspection: the orange circular emblem, `YANGGUOFU` wordmark, and
+  `杨国福` Chinese lettering are intact. The image contains no campaign claim,
+  redemption code, QR, API credential, university mark, or personal data.
+- Runtime use: static bilingual redemption-card front and back only. The card
+  renderer inlines the file for deterministic 300-DPI PNG and PDF exports while
+  preserving a relative source reference in the editable SVG files.
+- Rights and approval status: **official-site source; brand approval required
+  before production printing or distribution**. Public availability does not
+  itself establish a print license. Replace this raster with a brand-supplied
+  SVG/EPS/PDF lockup if one becomes available, then regenerate and re-proof the
+  affected outputs.
+
 - Public SVG review: all four fronts and the shared empty back were inspected
   at card scale. The supplied food remains the dominant front visual; Chinese
   and English labels render; red, gold, and cream hierarchy is intact; and no

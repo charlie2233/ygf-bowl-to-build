@@ -9,4 +9,6 @@
 - Do not upload the private code CSV to Staples or another card printer.
 - This version uses a visible code label with no concealment layer. Current operations documentation still requires manager approval for that custody model before physical distribution.
 - Front image: existing YGF mobile hero composite, derived from the user-provided ingredient-wall source with an AI-generated bowl. Creative and brand approval remain required.
+- Logo source: https://www.ygfus.com/images/logoone.png, referenced by the official YGF US home page. Brand approval remains required for production use.
+- Core offer, instructions, and code-label warnings are presented in Simplified Chinese and English.
 - Scan the physical proof under store lighting before release.

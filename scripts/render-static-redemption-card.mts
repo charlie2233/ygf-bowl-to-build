@@ -23,6 +23,12 @@ const photoPath = path.join(
   "media",
   "ygf-authentic-hero-mobile-card.png",
 );
+const logoPath = path.join(
+  repositoryRoot,
+  "public",
+  "media",
+  "ygf-official-logo.png",
+);
 
 const STATIC_REDEEM_URL = "https://malatangai.com/redeem";
 const SAMPLE_CODE = "A7K3B9Q2";
@@ -65,6 +71,21 @@ function escapeXml(value: string): string {
 
 function digest(value: string | Buffer): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function inlineOfficialLogo(svg: string, logo: Buffer): string {
+  const dataUrl = `data:image/png;base64,${logo.toString("base64")}`;
+  const inlined = svg.replace(
+    /(<image id="ygf-official-logo-source" href=")[^"]+(")/,
+    `$1${dataUrl}$2`,
+  );
+  if (
+    svg.includes('id="ygf-official-logo-source"') &&
+    inlined === svg
+  ) {
+    throw new Error("STATIC_CARD_LOGO_REFERENCE_INVALID");
+  }
+  return inlined;
 }
 
 function qrGeometry(value: string): Readonly<{
@@ -114,7 +135,7 @@ export function renderStaticCardFrontSvg(): string {
     `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="front-title front-description" width="${BLEED_WIDTH_IN}in" height="${BLEED_HEIGHT_IN}in" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">`,
     '<title id="front-title">YGF Bowl-to-Build redemption card front</title>',
     '<desc id="front-description">A photo-forward YGF card for a 3,000-Credit Bowl-to-Build promotion.</desc>',
-    `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="${BLEED_WIDTH_IN}" data-bleed-height-in="${BLEED_HEIGHT_IN}" data-trim-width-in="${TRIM_WIDTH_IN}" data-trim-height-in="${TRIM_HEIGHT_IN}" data-photo-source="ygf-existing-ai-enhanced-composite" data-rights-status="pending-creative-brand-approval"/>`,
+    `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="front" data-bleed-width-in="${BLEED_WIDTH_IN}" data-bleed-height-in="${BLEED_HEIGHT_IN}" data-trim-width-in="${TRIM_WIDTH_IN}" data-trim-height-in="${TRIM_HEIGHT_IN}" data-photo-source="ygf-existing-ai-enhanced-composite" data-photo-rights-status="pending-creative-brand-approval" data-logo-source="https://www.ygfus.com/images/logoone.png" data-logo-rights-status="brand-approval-required" data-languages="zh-CN,en"/>`,
     '<defs>',
     '<clipPath id="front-photo-clip"><path d="M610 0 H1125 V675 H535 L650 0 Z"/></clipPath>',
     `<image id="agent-pass-photo-source" href="../../public/media/ygf-authentic-hero-mobile-card.png" x="460" y="-230" width="820" height="1025" preserveAspectRatio="xMidYMid slice"/>`,
@@ -123,43 +144,50 @@ export function renderStaticCardFrontSvg(): string {
     '<g clip-path="url(#front-photo-clip)"><use href="#agent-pass-photo-source"/></g>',
     `<path d="M610 0 H680 L565 675 H495 Z" fill="${COLOR.gold}"/>`,
     `<rect x="58" y="58" width="1009" height="559" rx="26" fill="none" stroke="${COLOR.gold}" stroke-width="4"/>`,
-    `<text x="94" y="118" fill="${COLOR.gold}" font-family="${FONT_FAMILY}" font-size="24" font-weight="900" letter-spacing="4">YGF BOWL-TO-BUILD</text>`,
-    `<text x="94" y="218" fill="${COLOR.white}" font-family="${FONT_FAMILY}" font-size="59" font-weight="900"><tspan x="94" dy="0">吃一碗，</tspan><tspan x="94" dy="72">给 AI 充点算力。</tspan></text>`,
-    `<text x="94" y="386" fill="${COLOR.gold}" font-family="${FONT_FAMILY}" font-size="34" font-weight="900">领取 3,000 YGF AI Credits</text>`,
-    `<rect x="94" y="430" width="186" height="58" rx="29" fill="${COLOR.gold}"/>`,
-    `<text x="187" y="468" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="23" font-weight="900">14 天有效</text>`,
-    `<text x="94" y="541" fill="${COLOR.white}" font-family="${FONT_FAMILY}" font-size="22" font-weight="800">学习 · 编程 · 求职 · 下一碗</text>`,
-    `<text x="94" y="583" fill="${COLOR.gold}" font-family="${FONT_FAMILY}" font-size="25" font-weight="900">#一碗一算力</text>`,
+    `<rect x="82" y="68" width="306" height="90" rx="18" fill="${COLOR.cream}"/>`,
+    `<image id="ygf-official-logo-source" href="../../public/media/ygf-official-logo.png" x="103" y="74" width="264" height="82" preserveAspectRatio="xMidYMid meet"/>`,
+    `<text x="94" y="218" fill="${COLOR.white}" font-family="${FONT_FAMILY}" font-size="49" font-weight="900"><tspan x="94" dy="0">吃一碗。</tspan><tspan x="94" dy="60">用 AI 开始创造。</tspan></text>`,
+    `<text x="94" y="316" fill="${COLOR.white}" font-family="${FONT_FAMILY}" font-size="17" font-weight="900" letter-spacing="1.1">BUY A BOWL. BUILD WITH AI.</text>`,
+    `<text x="94" y="367" fill="${COLOR.gold}" font-family="${FONT_FAMILY}" font-size="27" font-weight="900">领取 / CLAIM 3,000 AI Credits</text>`,
+    `<rect x="94" y="394" width="344" height="52" rx="26" fill="${COLOR.gold}"/>`,
+    `<text x="266" y="428" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="15" font-weight="900">单笔消费满 $25 · SPEND $25+ AT YGF</text>`,
+    `<text x="94" y="486" fill="${COLOR.white}" font-family="${FONT_FAMILY}" font-size="18" font-weight="800">学习 STUDY · 编程 CODING</text>`,
+    `<text x="94" y="521" fill="${COLOR.white}" font-family="${FONT_FAMILY}" font-size="18" font-weight="800">求职 CAREER · 选碗 PICK MY BOWL</text>`,
+    `<text x="94" y="565" fill="${COLOR.gold}" font-family="${FONT_FAMILY}" font-size="17" font-weight="900">结账时领取 · GET YOUR CARD AT CHECKOUT</text>`,
     '</svg>',
     '',
   ].join("\n");
 }
 
 export function renderStaticCardBackSvg(): string {
-  const qr = renderQr(STATIC_REDEEM_URL, 76, 75, 240);
+  const qr = renderQr(STATIC_REDEEM_URL, 76, 78, 230);
   const labelX = (CARD_WIDTH - LABEL_WIDTH) / 2;
-  const labelY = 312;
+  const labelY = 326;
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="back-title back-description" width="${BLEED_WIDTH_IN}in" height="${BLEED_HEIGHT_IN}in" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">`,
     '<title id="back-title">YGF static redemption QR card back</title>',
     '<desc id="back-description">A credential-free static QR back with an exact Avery 5260 visible-code label placement area.</desc>',
-    `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="back" data-static-qr="${STATIC_REDEEM_URL}" data-bleed-width-in="${BLEED_WIDTH_IN}" data-bleed-height-in="${BLEED_HEIGHT_IN}" data-trim-width-in="${TRIM_WIDTH_IN}" data-trim-height-in="${TRIM_HEIGHT_IN}" data-label-width-in="${LABEL_WIDTH_IN}" data-label-height-in="${LABEL_HEIGHT_IN}" data-visible-code-policy="manager-approval-required"/>`,
+    `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="back" data-static-qr="${STATIC_REDEEM_URL}" data-bleed-width-in="${BLEED_WIDTH_IN}" data-bleed-height-in="${BLEED_HEIGHT_IN}" data-trim-width-in="${TRIM_WIDTH_IN}" data-trim-height-in="${TRIM_HEIGHT_IN}" data-label-width-in="${LABEL_WIDTH_IN}" data-label-height-in="${LABEL_HEIGHT_IN}" data-visible-code-policy="manager-approval-required" data-logo-source="https://www.ygfus.com/images/logoone.png" data-logo-rights-status="brand-approval-required" data-languages="zh-CN,en"/>`,
     `<rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="${COLOR.cream}"/>`,
     `<rect x="0" y="0" width="46" height="${CARD_HEIGHT}" fill="${COLOR.red}"/>`,
     `<path d="M46 0 H158 L46 112 Z" fill="${COLOR.gold}"/>`,
     `<rect x="58" y="58" width="1009" height="559" rx="26" fill="none" stroke="${COLOR.gold}" stroke-width="4"/>`,
     qr,
-    `<text x="365" y="115" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="25" font-weight="900" letter-spacing="2">YGF BOWL-TO-BUILD</text>`,
-    `<text x="365" y="178" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="39" font-weight="900">扫码进入兑换页</text>`,
-    `<text x="365" y="217" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="20" font-weight="900" letter-spacing="2.5">SCAN TO REDEEM</text>`,
-    `<text x="365" y="264" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="20" font-weight="800">1 扫码  ·  2 输入标签上的 8 位兑换码</text>`,
-    `<text x="365" y="296" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="16" font-weight="700">完成 $25+ 消费后领取 · 每张卡仅兑换一次</text>`,
+    `<rect x="356" y="66" width="246" height="76" rx="15" fill="${COLOR.white}"/>`,
+    `<image id="ygf-official-logo-source" href="../../public/media/ygf-official-logo.png" x="370" y="72" width="218" height="68" preserveAspectRatio="xMidYMid meet"/>`,
+    `<text x="622" y="100" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="15" font-weight="900" letter-spacing="1.2">BOWL-TO-BUILD · 兑换卡</text>`,
+    `<text x="365" y="176" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="34" font-weight="900">扫码兑换</text>`,
+    `<text x="365" y="207" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="18" font-weight="900" letter-spacing="2">SCAN TO CLAIM</text>`,
+    `<text x="365" y="250" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="16" font-weight="800">1 扫码打开兑换页 · SCAN TO OPEN THE REDEEM PAGE</text>`,
+    `<text x="365" y="282" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="16" font-weight="800">2 输入标签上的 8 位兑换码 · ENTER THE 8-CHARACTER CODE</text>`,
+    `<text x="365" y="312" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="14" font-weight="800">单笔消费满 $25 · SPEND $25+ IN ONE TRANSACTION</text>`,
     `<g data-avery-label-slot="5260" data-label-width-in="${LABEL_WIDTH_IN}" data-label-height-in="${LABEL_HEIGHT_IN}">`,
     `<rect x="${labelX}" y="${labelY}" width="${LABEL_WIDTH}" height="${LABEL_HEIGHT}" rx="18" fill="${COLOR.white}" stroke="${COLOR.red}" stroke-width="4" stroke-dasharray="14 10"/>`,
-    `<text x="${CARD_WIDTH / 2}" y="${labelY + 121}" text-anchor="middle" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="28" font-weight="900">在此粘贴 Avery 5260 兑换码标签</text>`,
-    `<text x="${CARD_WIDTH / 2}" y="${labelY + 165}" text-anchor="middle" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="17" font-weight="800" letter-spacing="1.5">APPLY UNIQUE CODE LABEL HERE</text>`,
-    `<text x="${CARD_WIDTH / 2}" y="${labelY + 213}" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="16" font-weight="700">真实兑换码只在本地合并打印，不上传给卡片印刷商</text>`,
+    `<text x="${CARD_WIDTH / 2}" y="${labelY + 112}" text-anchor="middle" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="25" font-weight="900">在此粘贴 Avery 5260 兑换码标签</text>`,
+    `<text x="${CARD_WIDTH / 2}" y="${labelY + 150}" text-anchor="middle" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="16" font-weight="800" letter-spacing="1">APPLY AVERY 5260 CODE LABEL HERE</text>`,
+    `<text x="${CARD_WIDTH / 2}" y="${labelY + 207}" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="14" font-weight="700">真实兑换码仅在本地合并打印，不上传给印刷商</text>`,
+    `<text x="${CARD_WIDTH / 2}" y="${labelY + 235}" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="12" font-weight="800" letter-spacing="0.5">MERGE LIVE CODES LOCALLY. NEVER UPLOAD THE CSV.</text>`,
     '</g>',
     '</svg>',
     '',
@@ -175,10 +203,11 @@ export function renderCodeLabelSampleSvg(): string {
     `<metadata data-renderer="ygf-static-redemption-card-v1" data-side="label-sample" data-placeholder="true" data-label-width-in="${LABEL_WIDTH_IN}" data-label-height-in="${LABEL_HEIGHT_IN}"/>`,
     `<rect width="${LABEL_WIDTH}" height="${LABEL_HEIGHT}" rx="18" fill="${COLOR.white}"/>`,
     `<rect x="3" y="3" width="${LABEL_WIDTH - 6}" height="${LABEL_HEIGHT - 6}" rx="16" fill="none" stroke="${COLOR.red}" stroke-width="6"/>`,
-    `<text x="${LABEL_WIDTH / 2}" y="55" text-anchor="middle" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="26" font-weight="900" letter-spacing="2">您的 8 位兑换码 · YOUR CODE</text>`,
-    `<text x="${LABEL_WIDTH / 2}" y="165" text-anchor="middle" fill="${COLOR.ink}" font-family="${MONO_FONT}" font-size="76" font-weight="900" letter-spacing="13">${SAMPLE_CODE}</text>`,
-    `<text x="${LABEL_WIDTH / 2}" y="222" text-anchor="middle" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="18" font-weight="800">每张仅兑换一次 · 请勿拍照分享</text>`,
-    `<text x="${LABEL_WIDTH / 2}" y="258" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="15" font-weight="800" letter-spacing="1.2">SAMPLE ONLY · NOT A LIVE CODE</text>`,
+    `<text x="${LABEL_WIDTH / 2}" y="51" text-anchor="middle" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="22" font-weight="900" letter-spacing="1">您的 8 位兑换码 · YOUR 8-CHARACTER CODE</text>`,
+    `<text x="${LABEL_WIDTH / 2}" y="153" text-anchor="middle" fill="${COLOR.ink}" font-family="${MONO_FONT}" font-size="72" font-weight="900" letter-spacing="13">${SAMPLE_CODE}</text>`,
+    `<text x="${LABEL_WIDTH / 2}" y="207" text-anchor="middle" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="16" font-weight="800">每张卡仅兑换一次 · ONE CLAIM PER CARD</text>`,
+    `<text x="${LABEL_WIDTH / 2}" y="238" text-anchor="middle" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="13" font-weight="800">钱包从最新新卡起 14 天 · WALLET: 14 DAYS FROM LATEST NEW CARD</text>`,
+    `<text x="${LABEL_WIDTH / 2}" y="270" text-anchor="middle" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="13" font-weight="800" letter-spacing="0.8">示例码，非真实兑换码 · SAMPLE ONLY - NOT A LIVE CODE</text>`,
     '</svg>',
     '',
   ].join("\n");
@@ -199,7 +228,7 @@ function renderReviewSvg(options: Readonly<{
     '<desc id="review-description">Front, back, and visible-code label sample shown together for review.</desc>',
     `<rect width="2000" height="1350" fill="#EEE8DD"/>`,
     `<text x="100" y="108" fill="${COLOR.ink}" font-family="${FONT_FAMILY}" font-size="54" font-weight="900">YGF Redemption Card</text>`,
-    `<text x="100" y="155" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="25" font-weight="700">STATIC QR · VISIBLE UNIQUE CODE LABEL · 300 DPI</text>`,
+    `<text x="100" y="155" fill="${COLOR.sage}" font-family="${FONT_FAMILY}" font-size="25" font-weight="700">BILINGUAL ZH + EN · OFFICIAL-SITE LOGO SOURCE · 300 DPI</text>`,
     '<rect x="92" y="212" width="858" height="531" rx="26" fill="#000000" opacity="0.13"/>',
     `<image href="${front}" x="72" y="190" width="858" height="515"/>`,
     `<text x="72" y="752" fill="${COLOR.red}" font-family="${FONT_FAMILY}" font-size="24" font-weight="900">FRONT · 品牌面</text>`,
@@ -243,22 +272,30 @@ function verifyQr(png: Buffer): void {
 }
 
 async function main(): Promise<void> {
-  const photo = await readFile(photoPath);
+  const [photo, logo] = await Promise.all([
+    readFile(photoPath),
+    readFile(logoPath),
+  ]);
   const frontSvg = renderStaticCardFrontSvg();
   const backSvg = renderStaticCardBackSvg();
   const labelSvg = renderCodeLabelSampleSvg();
   verifyNoScratchLanguage(frontSvg, backSvg, labelSvg);
+  const frontSvgForRaster = inlineOfficialLogo(frontSvg, logo);
+  const backSvgForRaster = inlineOfficialLogo(backSvg, logo);
 
   const [frontPng, backPng, labelPng] = await Promise.all([
-    rasterizeAgentPassSvg(frontSvg, CARD_WIDTH, CARD_HEIGHT, photo),
-    rasterizeAgentPassSvg(backSvg, CARD_WIDTH, CARD_HEIGHT, photo),
+    rasterizeAgentPassSvg(frontSvgForRaster, CARD_WIDTH, CARD_HEIGHT, photo),
+    rasterizeAgentPassSvg(backSvgForRaster, CARD_WIDTH, CARD_HEIGHT, photo),
     rasterizeAgentPassSvg(labelSvg, LABEL_WIDTH, LABEL_HEIGHT, photo),
   ]);
   verifyQr(backPng);
 
-  const frontDigest = digest(frontSvg);
-  const backDigest = digest(backSvg);
-  const combinedDigest = digest(`${frontSvg}\n${backSvg}`);
+  const logoDigest = digest(logo);
+  const frontDigest = digest(`${frontSvg}\nlogo:${logoDigest}`);
+  const backDigest = digest(`${backSvg}\nlogo:${logoDigest}`);
+  const combinedDigest = digest(
+    `${frontSvg}\n${backSvg}\nlogo:${logoDigest}`,
+  );
   const pageWidthPt = BLEED_WIDTH_IN * 72;
   const pageHeightPt = BLEED_HEIGHT_IN * 72;
   const frontPdf = buildAgentPassRasterPdf({
@@ -343,6 +380,10 @@ async function main(): Promise<void> {
       photo: "public/media/ygf-authentic-hero-mobile-card.png",
       photoSha256: digest(photo),
       photoRightsStatus: "user-source-ai-enhanced-pending-creative-brand-approval",
+      logo: "public/media/ygf-official-logo.png",
+      logoSourceUrl: "https://www.ygfus.com/images/logoone.png",
+      logoSha256: logoDigest,
+      logoRightsStatus: "official-site-source-brand-approval-required",
     },
     files: Object.fromEntries([
       ...[...outputs].map(([file, contents]) => [
@@ -372,6 +413,8 @@ async function main(): Promise<void> {
       "- Do not upload the private code CSV to Staples or another card printer.",
       "- This version uses a visible code label with no concealment layer. Current operations documentation still requires manager approval for that custody model before physical distribution.",
       "- Front image: existing YGF mobile hero composite, derived from the user-provided ingredient-wall source with an AI-generated bowl. Creative and brand approval remain required.",
+      "- Logo source: https://www.ygfus.com/images/logoone.png, referenced by the official YGF US home page. Brand approval remains required for production use.",
+      "- Core offer, instructions, and code-label warnings are presented in Simplified Chinese and English.",
       "- Scan the physical proof under store lighting before release.",
       "",
     ].join("\n"),

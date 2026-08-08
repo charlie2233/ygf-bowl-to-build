@@ -1,7 +1,7 @@
 {
   "version": 1,
   "renderer": "ygf-static-redemption-card-v1",
-  "sourceDigest": "853a47d3672a5aa1940a5fef93530eeed6c18f40725f14f7101f4b2087a0482b",
+  "sourceDigest": "b346c37e764e2d9f41c0545ca433ad18fe493af42ce8886a544413afc0cb8bef",
   "design": {
     "bleedInches": [
       3.75,
@@ -34,18 +34,22 @@
   "sources": {
     "photo": "public/media/ygf-authentic-hero-mobile-card.png",
     "photoSha256": "dc9602d5d9a145f53b47c9f24df8c9aa58ffab25547fd83c360799d95577fa95",
-    "photoRightsStatus": "user-source-ai-enhanced-pending-creative-brand-approval"
+    "photoRightsStatus": "user-source-ai-enhanced-pending-creative-brand-approval",
+    "logo": "public/media/ygf-official-logo.png",
+    "logoSourceUrl": "https://www.ygfus.com/images/logoone.png",
+    "logoSha256": "2ca49bbfea8f006e8f02af60bbedd46b219c6b8b3cde26716650836358656a23",
+    "logoRightsStatus": "official-site-source-brand-approval-required"
   },
   "files": {
-    "output/redemption-card/ygf-redemption-card-front.svg": "f8c3ab348d82601f3363b0e19bdff48b8ecae5d3fe8122fdbc306f7dd88be939",
-    "output/redemption-card/ygf-redemption-card-back.svg": "c67c0960b78dd3450d1fc5ab606dd7f6bd22d41163ea6ababf43370f0e8b5040",
-    "output/redemption-card/ygf-redemption-code-label-sample.svg": "ff3039fb561df94e6bd3be22ac4067c94574b2f8ed3042220fd79bf987ce6394",
-    "output/redemption-card/ygf-redemption-card-front.png": "7148a260acab1d0cdabd01363e013f1a1d6a97e931d28f95380c862554bb254b",
-    "output/redemption-card/ygf-redemption-card-back.png": "8309c86318fa7c70b3e50fdbc28def538497a66b75deb950d816652aeb694616",
-    "output/redemption-card/ygf-redemption-code-label-sample.png": "64c595b2a23ee258e24da0c58c4b6da9afa2cabee78345e14ba1fcd7686d7b5d",
-    "output/redemption-card/ygf-redemption-card-review.png": "e4d8ec14773653c42983bd99969bab7ffdc65e924a76d24d3784c4638d1f6fdc",
-    "output/pdf/ygf-redemption-card-front.pdf": "241e5cb649fd71b0be25afaf2f6e57636833841174fc17983e7738aa3cafa447",
-    "output/pdf/ygf-redemption-card-back.pdf": "30d345521525906b7faf2f682d6c9e95a1da2ee041c13ba2de01898ded8dd1b0",
-    "output/pdf/ygf-redemption-card-duplex.pdf": "cd7536afb00c651b0bdabceeb41dd7aafa61c1273acba2c2e4907dd81448ed9d"
+    "output/redemption-card/ygf-redemption-card-front.svg": "6693ea830f80314d3582089f9baba7d2467d92d2fe275c084a8ed7f181c05c6a",
+    "output/redemption-card/ygf-redemption-card-back.svg": "9b93e430fbca5636a7cca3202abc144df8031e66cc1997268b2b0617f1ef881a",
+    "output/redemption-card/ygf-redemption-code-label-sample.svg": "64f053ae4e79f7e8479c3dce788f959ec280c5ee9a4754d91dca567253778345",
+    "output/redemption-card/ygf-redemption-card-front.png": "4bfcca7f58bdb70a18a3bd64d1b503905204cc5d8a468f3f354baf632e0c6892",
+    "output/redemption-card/ygf-redemption-card-back.png": "c8e305ebb515dec3b03613e441f9ca979bbfc2f5938165c7a093f32e2a788b3a",
+    "output/redemption-card/ygf-redemption-code-label-sample.png": "fb37097c51dd029641659f6d243a3920e7a855df2a00b425f9491c0cb02d22ee",
+    "output/redemption-card/ygf-redemption-card-review.png": "9ed7de6b8786870f89ee6b1b346ab7b0441a1c755995a610ce59f644ac2bba2b",
+    "output/pdf/ygf-redemption-card-front.pdf": "3e3b962fd216f1b8447b9ed28227a2dc9e3eae89bea698656b009bd1843ae48e",
+    "output/pdf/ygf-redemption-card-back.pdf": "c38c2c7df82df3f404ba199eae0a97ef3479fcef5d36d77095a654c96dd73044",
+    "output/pdf/ygf-redemption-card-duplex.pdf": "23964a96d4ed92f044cda91d89889c64154fd521d2a8aa7eb7e3d77dfb8086a8"
   }
 }

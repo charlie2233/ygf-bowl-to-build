@@ -5,8 +5,9 @@
 <metadata data-renderer="ygf-static-redemption-card-v1" data-side="label-sample" data-placeholder="true" data-label-width-in="2.625" data-label-height-in="1"/>
 <rect width="788" height="300" rx="18" fill="#FFFFFF"/>
 <rect x="3" y="3" width="782" height="294" rx="16" fill="none" stroke="#D84A32" stroke-width="6"/>
-<text x="394" y="55" text-anchor="middle" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" letter-spacing="2">您的 8 位兑换码 · YOUR CODE</text>
-<text x="394" y="165" text-anchor="middle" fill="#16261F" font-family="SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace" font-size="76" font-weight="900" letter-spacing="13">A7K3B9Q2</text>
-<text x="394" y="222" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="18" font-weight="800">每张仅兑换一次 · 请勿拍照分享</text>
-<text x="394" y="258" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="1.2">SAMPLE ONLY · NOT A LIVE CODE</text>
+<text x="394" y="51" text-anchor="middle" fill="#D84A32" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="22" font-weight="900" letter-spacing="1">您的 8 位兑换码 · YOUR 8-CHARACTER CODE</text>
+<text x="394" y="153" text-anchor="middle" fill="#16261F" font-family="SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace" font-size="72" font-weight="900" letter-spacing="13">A7K3B9Q2</text>
+<text x="394" y="207" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="16" font-weight="800">每张卡仅兑换一次 · ONE CLAIM PER CARD</text>
+<text x="394" y="238" text-anchor="middle" fill="#667868" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="800">钱包从最新新卡起 14 天 · WALLET: 14 DAYS FROM LATEST NEW CARD</text>
+<text x="394" y="270" text-anchor="middle" fill="#16261F" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" letter-spacing="0.8">示例码，非真实兑换码 · SAMPLE ONLY - NOT A LIVE CODE</text>
 </svg>
